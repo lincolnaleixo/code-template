@@ -1,0 +1,21 @@
+{
+  "name": "@matrix/mobile",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync": "cap sync",
+    "android": "cap open android",
+    "ios": "cap open ios",
+    "build": "bun run --cwd ../web build && cap sync",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@capacitor/core": "latest"
+  },
+  "devDependencies": {
+    "@capacitor/android": "latest",
+    "@capacitor/cli": "latest",
+    "@capacitor/ios": "latest",
+    "typescript": "latest"
+  }
+}
