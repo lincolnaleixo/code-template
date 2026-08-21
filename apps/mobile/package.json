@@ -6,7 +6,7 @@
     "sync": "cap sync",
     "android": "cap open android",
     "ios": "cap open ios",
-    "build": "bun run --cwd ../web build && cap sync",
+    "build": "bun run --cwd ../web build:native && cap sync",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
