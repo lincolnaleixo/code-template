@@ -1,39 +1,146 @@
+name: matrix-code-template
+
 services:
   postgres:
     image: postgres:17-alpine
     environment:
-      POSTGRES_USER: matrix
-      POSTGRES_PASSWORD: matrix
-      POSTGRES_DB: matrix
+      POSTGRES_USER: ${POSTGRES_USER:-matrix}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-matrix}
+      POSTGRES_DB: ${POSTGRES_DB:-matrix}
     ports:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U matrix -d matrix"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-matrix} -d ${POSTGRES_DB:-matrix}"]
       interval: 5s
       timeout: 5s
       retries: 10
+    restart: unless-stopped
 
   minio:
     image: minio/minio:latest
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: minio
-      MINIO_ROOT_PASSWORD: miniosecret
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-minio}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-miniosecret}
     ports:
       - "9000:9000"
       - "9001:9001"
     volumes:
       - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-minio}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-miniosecret}
+      S3_BUCKET: ${S3_BUCKET:-matrix}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD"
+        mc mb --ignore-existing "local/$$S3_BUCKET"
+    restart: "no"
+
+  migrate:
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: migration
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-matrix}:${POSTGRES_PASSWORD:-matrix}@postgres:5432/${POSTGRES_DB:-matrix}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: runtime
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3001
+      DATABASE_URL: postgres://${POSTGRES_USER:-matrix}:${POSTGRES_PASSWORD:-matrix}@postgres:5432/${POSTGRES_DB:-matrix}
+      WEB_URL: ${PUBLIC_WEB_URL:-http://localhost:8080}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080,capacitor://localhost,tauri://localhost}
+      AUTH_TRUSTED_ORIGINS: ${AUTH_TRUSTED_ORIGINS:-http://localhost:8080,capacitor://localhost,tauri://localhost}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-change-me-with-at-least-32-random-characters}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:8080}
+      S3_ENDPOINT: http://minio:9000
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_BUCKET: ${S3_BUCKET:-matrix}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-minio}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-miniosecret}
+    ports:
+      - "3001:3001"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      minio-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "bun", "-e", "const response = await fetch('http://localhost:3001/ready'); process.exit(response.ok ? 0 : 1)"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
+  web:
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: runtime
+      args:
+        VITE_API_URL: ${VITE_API_URL:-}
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+      API_URL: http://api:3001
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "bun", "-e", "const response = await fetch('http://localhost:3000'); process.exit(response.ok ? 0 : 1)"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
 
   caddy:
+    profiles: ["full"]
     image: caddy:2-alpine
-    profiles: ["proxy"]
     ports:
       - "8080:80"
     volumes:
       - ./infra/Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   postgres-data:
