@@ -1,0 +1,16 @@
+{
+  "name": "@matrix/api-client",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@elysiajs/eden": "latest",
+    "@matrix/api": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "latest",
+    "bun-types": "latest"
+  }
+}
