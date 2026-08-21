@@ -7,7 +7,8 @@
     "build": "bun --bun vite build",
     "start": "bun run .output/server/index.mjs",
     "build:native": "bun --bun vite build --mode native",
-    "typecheck": "tsc -p tsconfig.json"
+    "generate:routes": "tsr generate",
+    "typecheck": "bun run generate:routes && tsc -p tsconfig.json"
   },
   "dependencies": {
     "@matrix/api-client": "workspace:*",
@@ -21,6 +22,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "latest",
+    "@tanstack/router-cli": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "@vitejs/plugin-react": "latest",
