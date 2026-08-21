@@ -3,9 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --port 3000",
-    "build": "vite build",
-    "build:native": "vite build --mode native",
+    "dev": "bun --bun vite --port 3000",
+    "build": "bun --bun vite build",
+    "start": "bun run .output/server/index.mjs",
+    "build:native": "bun --bun vite build --mode native",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
@@ -23,6 +24,7 @@
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "@vitejs/plugin-react": "latest",
+    "nitro": "latest",
     "tailwindcss": "latest",
     "typescript": "latest",
     "vite": "latest"
