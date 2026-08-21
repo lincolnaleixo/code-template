@@ -3,11 +3,12 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/app.ts"
   },
   "scripts": {
     "dev": "bun --hot src/index.ts",
-    "build": "bun build src/index.ts --target=bun --outdir=dist",
+    "start": "bun src/index.ts",
+    "build": "bun build src/index.ts --target=bun --outdir=dist --sourcemap=external",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
