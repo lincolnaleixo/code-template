@@ -1,7 +1,7 @@
 {
   "name": "@matrix/code-template",
   "private": true,
-  "packageManager": "bun@1.2.21",
+  "packageManager": "bun@1.3.14",
   "workspaces": [
     "apps/*",
     "packages/*"
