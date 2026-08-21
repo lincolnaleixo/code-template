@@ -1,0 +1,17 @@
+{
+  "name": "@matrix/auth",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts"
+  },
+  "scripts": {
+    "generate": "bunx @better-auth/cli@latest generate --config src/index.ts"
+  },
+  "dependencies": {
+    "@better-auth/drizzle-adapter": "latest",
+    "@matrix/db": "workspace:*",
+    "better-auth": "latest"
+  }
+}
