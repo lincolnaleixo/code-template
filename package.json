@@ -33,6 +33,7 @@
   },
   "devDependencies": {
     "@playwright/test": "latest",
+    "bun-types": "latest",
     "concurrently": "latest"
   }
 }
