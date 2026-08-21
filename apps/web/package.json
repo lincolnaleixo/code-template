@@ -5,13 +5,16 @@
   "scripts": {
     "dev": "vite --port 3000",
     "build": "vite build",
+    "build:native": "vite build --mode native",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
     "@matrix/api-client": "workspace:*",
+    "@matrix/ui": "workspace:*",
     "@tanstack/react-query": "latest",
     "@tanstack/react-router": "latest",
     "@tanstack/react-start": "latest",
+    "@tanstack/react-table": "latest",
     "react": "latest",
     "react-dom": "latest"
   },
