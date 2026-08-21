@@ -9,7 +9,7 @@ test('serves the web app and persists data through the proxied API', async ({ pa
   const createResponse = await request.post('/api/users', {
     data: {
       email,
-      name: 'E2E User',
+      name: email,
     },
   })
 
@@ -17,5 +17,5 @@ test('serves the web app and persists data through the proxied API', async ({ pa
 
   await page.goto('/')
   await expect(page.getByRole('heading', { name: /One TypeScript stack/i })).toBeVisible()
-  await expect(page.getByText('E2E User')).toBeVisible()
+  await expect(page.getByText(email, { exact: true })).toBeVisible()
 })
