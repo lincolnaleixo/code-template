@@ -13,18 +13,26 @@
     "build": "bun run build:api && bun run build:web",
     "build:web": "bun run --cwd apps/web build",
     "build:api": "bun run --cwd apps/api build",
+    "build:native": "bun run --cwd apps/web build:native",
     "build:mobile": "bun run --cwd apps/mobile build",
     "build:desktop": "bun run --cwd apps/desktop build",
     "typecheck": "bun run --filter '*' typecheck",
-    "test": "bun test",
+    "test": "bun run test:unit",
+    "test:unit": "bun test apps/api/test/health.test.ts",
+    "test:integration": "bun test apps/api/test/app.integration.test.ts",
+    "test:e2e": "playwright test",
     "db:generate": "bun run --cwd packages/db generate",
     "db:migrate": "bun run --cwd packages/db migrate",
     "db:studio": "bun run --cwd packages/db studio",
     "auth:generate": "bun run --cwd packages/auth generate",
-    "infra:up": "docker compose up -d",
-    "infra:down": "docker compose down"
+    "infra:up": "docker compose up -d postgres minio minio-init",
+    "infra:full": "docker compose --profile full up --build -d",
+    "infra:logs": "docker compose --profile full logs -f",
+    "infra:down": "docker compose --profile full down",
+    "infra:reset": "docker compose --profile full down -v --remove-orphans"
   },
   "devDependencies": {
+    "@playwright/test": "latest",
     "concurrently": "latest"
   }
 }
