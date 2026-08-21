@@ -1,9 +1,18 @@
 import { cors } from '@elysiajs/cors'
+import { auth } from '@matrix/auth'
 import { db, users } from '@matrix/db'
 import { Elysia, t } from 'elysia'
 
 export const app = new Elysia()
-  .use(cors({ origin: true, credentials: true }))
+  .use(
+    cors({
+      origin: process.env.WEB_URL ?? 'http://localhost:3000',
+      credentials: true,
+      allowedHeaders: ['Content-Type', 'Authorization'],
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    }),
+  )
+  .mount(auth.handler)
   .get('/health', () => ({ ok: true, runtime: 'bun' }))
   .get('/api/users', async () => db.select().from(users))
   .post(
