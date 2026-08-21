@@ -1,5 +1,9 @@
 node_modules/
 dist/
+.output/
+coverage/
+playwright-report/
+test-results/
 .env
 .env.*
 !.env.example
