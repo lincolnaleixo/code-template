@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@elysiajs/cors": "latest",
+    "@matrix/auth": "workspace:*",
     "@matrix/db": "workspace:*",
     "elysia": "latest"
   },
