@@ -81,7 +81,7 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080,capacitor://localhost,tauri://localhost}
       AUTH_TRUSTED_ORIGINS: ${AUTH_TRUSTED_ORIGINS:-http://localhost:8080,capacitor://localhost,tauri://localhost}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-change-me-with-at-least-32-random-characters}
-      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:8080}
+      BETTER_AUTH_URL: ${PUBLIC_WEB_URL:-http://localhost:8080}
       S3_ENDPOINT: http://minio:9000
       S3_REGION: ${S3_REGION:-us-east-1}
       S3_BUCKET: ${S3_BUCKET:-matrix}
