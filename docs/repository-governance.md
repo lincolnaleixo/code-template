@@ -38,19 +38,26 @@ The command normalizes topics to lowercase, removes duplicates, enforces GitHub 
 
 ## Main branch baseline
 
-The intended `main` branch policy is:
+The safe baseline for a repository with one maintainer is:
 
 - changes arrive through pull requests
-- at least one approval is required
-- code-owner review is required for owned paths
-- stale approvals are dismissed after new commits
 - unresolved review conversations block merge
 - administrators follow the same protection
 - force pushes are disabled
 - branch deletion is disabled
+- zero approvals are required until an independent reviewer exists
+- code-owner review is not enforced until a different code owner can review the author
 - required status checks are added only after their final names and execution infrastructure are stable
 
-Requiring broken or ambiguous checks can block all merges. Add required checks only after they have completed successfully with unique names.
+A pull request requirement still prevents direct pushes while allowing a solo maintainer to merge through the reviewed PR interface. Requiring an approval or code-owner review when the only owner is also the author can make every change unmergeable.
+
+When two or more qualified maintainers exist, raise the policy deliberately:
+
+```bash
+bun run repo:protect --approvals=1 --code-owner-review=true
+```
+
+Requiring broken or ambiguous checks can also block all merges. Add required checks only after they have completed successfully with unique names.
 
 ## Applying protection
 
@@ -60,7 +67,7 @@ Preview the exact API payload without changing GitHub:
 bun run repo:protect
 ```
 
-Apply the baseline with a token that can administer repository branch protection:
+Apply the solo-maintainer baseline with a token that can administer repository branch protection:
 
 ```bash
 GITHUB_ADMIN_TOKEN=... bun run repo:protect --apply
@@ -76,6 +83,17 @@ GITHUB_ADMIN_TOKEN=... \
   --repository=owner/product \
   --branch=main
 ```
+
+To require one independent approval and code-owner review:
+
+```bash
+GITHUB_ADMIN_TOKEN=... \
+  bun run repo:protect --apply \
+  --approvals=1 \
+  --code-owner-review=true
+```
+
+Do not enable that policy until another eligible reviewer is available.
 
 ## Adding required checks
 
@@ -106,7 +124,7 @@ Settings
   -> main
 ```
 
-Confirm that direct pushes, force pushes, branch deletion, missing reviews, missing code-owner review, and unresolved conversations are rejected as expected.
+Confirm that direct pushes, force pushes, branch deletion, and unresolved conversations are rejected. When approval or code-owner review is enabled, confirm those requirements with a PR authored by a different maintainer.
 
 Also verify the API response with an administrative token:
 
@@ -127,8 +145,9 @@ Repository metadata and branch protection settings are not assumed to match a ge
 1. replace `CODEOWNERS`
 2. set its real description and topics
 3. decide its review count and bypass policy
-4. establish stable status-check names
-5. apply the metadata and protection commands against its own repository
-6. verify protection with a rejected direct push or equivalent administrative test
+4. confirm that the chosen policy cannot lock out the current maintainers
+5. establish stable status-check names
+6. apply the metadata and protection commands against its own repository
+7. verify protection with a rejected direct push or equivalent administrative test
 
 The product bootstrap is incomplete until ownership, metadata, and branch policy match the real team and risk level.
