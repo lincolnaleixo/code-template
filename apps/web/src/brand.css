@@ -1,0 +1,23 @@
+:root {
+  --brand-hue: 264;
+  --brand-chroma: 0.18;
+  --brand-lightness: 0.55;
+
+  --primary: oklch(var(--brand-lightness) var(--brand-chroma) var(--brand-hue));
+  --primary-foreground: oklch(0.985 0.004 var(--brand-hue));
+  --ring: oklch(0.64 calc(var(--brand-chroma) * 0.85) var(--brand-hue));
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+
+  --chart-1: oklch(0.62 0.19 var(--brand-hue));
+  --chart-2: oklch(0.69 0.15 calc(var(--brand-hue) + 65));
+  --chart-3: oklch(0.66 0.14 calc(var(--brand-hue) - 55));
+  --chart-4: oklch(0.74 0.14 calc(var(--brand-hue) + 135));
+  --chart-5: oklch(0.58 0.16 calc(var(--brand-hue) - 115));
+}
+
+.dark {
+  --primary: oklch(0.72 calc(var(--brand-chroma) * 0.82) var(--brand-hue));
+  --primary-foreground: oklch(0.18 0.025 var(--brand-hue));
+  --ring: oklch(0.72 calc(var(--brand-chroma) * 0.72) var(--brand-hue));
+}

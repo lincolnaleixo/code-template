@@ -8,8 +8,32 @@ The format follows Keep a Changelog and the project uses semantic versioning for
 
 ### Added
 
+- Repository-owned UI foundation inspired by shadcn with semantic OKLCH tokens.
+- Project-level `brand.css` for hue, chroma, lightness, chart, and dark-theme customization.
+- Light, dark, and system appearance modes with a CSP-safe, flash-free bootstrap.
+- Compact and comfortable density modes.
+- Shared alert, avatar, badge, button, card, checkbox, dialog, input, label, select, separator, sheet, skeleton, switch, table, tabs, textarea, and tooltip primitives.
+- App shell, confirmation dialog, typed data table, empty state, error state, form field, loading state, page container, page header, pagination, search input, settings section, and stat card patterns.
+- `/ui` core playground and `/ui-advanced` product-pattern playground.
+- `typeset` rich-content styling for markdown, documentation, and AI output.
+- Dedicated architecture, deployment, native, UI, and template customization documentation.
+
+### Changed
+
+- Refactored the starter product flow to use semantic UI primitives rather than hardcoded Zinc and red utilities.
+- Reworked `RULES.md` to contain engineering and coding standards only.
+- Moved template operation and module removal instructions to `README.md` and `docs/template-customization.md`.
+- Reduced `AGENTS.md` to repository navigation, validation, and documentation responsibilities.
+- Added UI as an explicit capability in `template.config.ts`.
+- Replaced the custom mobile navigation overlay with a focus-managed native sheet.
+- Added arrow, Home, and End keyboard navigation to tabs.
+- Replaced the inline appearance script with a same-origin external script compatible with the Tauri CSP.
+
+## [0.3.0] - 2026-08-22
+
+### Added
+
 - Root feature manifest and validation command for optional template capabilities.
-- Agent rules that explicitly allow clean removal of unnecessary template modules.
 - Bun dependency catalogs, isolated workspace installs, and a supply-chain release-age gate.
 - Biome formatting and linting.
 - Typed server, client, native, and test environment validation.

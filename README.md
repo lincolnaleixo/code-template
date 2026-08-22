@@ -1,8 +1,8 @@
 # Matrix Code Template
 
-A TypeScript-first, self-hostable product template for web, API, iOS, Android, macOS, Windows and Linux with one shared product codebase and minimal vendor lock-in.
+A TypeScript-first, self-hostable product template for web, API, iOS, Android, macOS, Windows, and Linux with one shared product codebase and minimal vendor lock-in.
 
-The repository is deliberately modular. It is a capability library, not a mandate to keep every component. Read `RULES.md` before adapting it. Agents and developers may disable features that the target project does not need, provided the feature manifest, dependencies, infrastructure, tests and documentation are cleaned up together.
+The repository is deliberately modular. Keep only the capabilities justified by the target product. Operational customization is documented in `README.md` and `docs/`; engineering style is defined in `RULES.md`.
 
 ## Included stack
 
@@ -10,6 +10,7 @@ The repository is deliberately modular. It is a capability library, not a mandat
 | --- | --- |
 | Language and tooling | TypeScript 7, Bun workspaces, Bun Test, Biome |
 | Web | React, TanStack Start, Router, Query and Table, Tailwind CSS |
+| UI | Repository-owned shadcn-inspired primitives, OKLCH tokens, light/dark/system themes |
 | API | Bun, Elysia, Eden and OpenAPI |
 | Database | PostgreSQL, Drizzle ORM and committed SQL migrations |
 | Identity | Better Auth with cookie sessions, signed bearer sessions and organizations |
@@ -27,7 +28,7 @@ The repository is deliberately modular. It is a capability library, not a mandat
 ```text
 apps/
   api/              Elysia API, HTTP adapters and Docker image
-  web/              TanStack Start application and Docker image
+  web/              TanStack Start application, brand overrides and Docker image
   mobile/           Capacitor wrapper around the native web bundle
   desktop/          Tauri wrapper around the native web bundle
 packages/
@@ -38,41 +39,20 @@ packages/
   env/              Typed server, browser, native and test environment parsing
   observability/    Structured logging, metrics and optional tracing
   storage/          S3-compatible storage operations
-  ui/               Shared local UI primitives
+  ui/               Semantic tokens, primitives, patterns and appearance state
 tests/
   e2e/              Playwright lifecycle through the full Compose stack
-infra/
-  Caddyfile
-  otel-collector.yaml
-  prometheus.yml
-scripts/
-  validate-template.ts
-  check-generated.ts
-  pin-catalog.ts
+docs/
+  architecture.md
+  deployment.md
+  native.md
+  template-customization.md
+  ui.md
 ```
 
-## Optional capabilities
+## Quick start
 
-`template.config.ts` is the source of truth for enabled template capabilities. It currently enables web, API, PostgreSQL, authentication, organizations, object storage, mobile, desktop, observability, Docker, E2E tests and release workflows.
-
-A project may disable any capability that is unnecessary. For example:
-
-- web-only products can remove Capacitor, Tauri and native release jobs
-- products without uploads can remove S3 and MinIO
-- single-user tools can remove organizations and project membership rules
-- prototypes can disable telemetry exporters while keeping structured logs
-- deployments that already provide ingress can replace Caddy
-
-Follow the removal procedure in `RULES.md` and run:
-
-```bash
-bun run template:validate
-bun run lint:ci
-bun run typecheck
-bun run test:unit
-```
-
-## Prerequisites
+Prerequisites:
 
 - Bun 1.3.14
 - Docker with Docker Compose
@@ -80,9 +60,7 @@ bun run test:unit
 - Xcode only for iOS builds
 - Java 21 and the Android SDK only for Android builds
 
-## Fast local development
-
-This mode keeps Vite and the Bun API on the host for fast reloads. Docker runs PostgreSQL and MinIO.
+Start the fast local development mode:
 
 ```bash
 cp .env.example .env
@@ -92,23 +70,22 @@ bun run db:migrate
 bun dev
 ```
 
-Local services:
+Open:
 
 ```text
-Web and auth proxy   http://localhost:3000
-API                  http://localhost:3001
-OpenAPI              http://localhost:3001/openapi
-Health               http://localhost:3001/health
-Readiness            http://localhost:3001/ready
-Metrics              http://localhost:3001/metrics
-PostgreSQL           localhost:5432
-MinIO API            http://localhost:9000
-MinIO console        http://localhost:9001
+Web and auth proxy       http://localhost:3000
+API                      http://localhost:3001
+OpenAPI                  http://localhost:3001/openapi
+Core UI playground       http://localhost:3000/ui
+Advanced UI playground   http://localhost:3000/ui-advanced
+MinIO console            http://localhost:9001
 ```
 
-Vite proxies `/api`, `/health`, `/ready`, `/metrics` and Better Auth calls to Elysia. Browser cookies therefore remain same-origin during development.
+Vite and the Bun API run on the host for fast reloads. Docker runs PostgreSQL and MinIO.
 
-The starter application demonstrates this lifecycle:
+## Product demonstration
+
+The starter application exercises a real, tested lifecycle:
 
 ```text
 create account
@@ -118,26 +95,89 @@ create account
   -> sign out
 ```
 
-## Production-like Docker Compose
+This proves the path from React and TanStack Query through Eden, Elysia, Better Auth, domain services, Drizzle, and PostgreSQL.
 
-The `full` profile builds and starts migrations, API, web and Caddy in addition to PostgreSQL and MinIO.
+## UI foundation
+
+`packages/ui` is a repository-owned design system inspired by shadcn. It includes:
+
+- semantic OKLCH tokens
+- light, dark, and system themes
+- compact and comfortable density
+- accessible controls, surfaces, feedback, overlays, tables, and typography
+- app shell, page headers, states, settings, typed data table, search, and pagination patterns
+- core and advanced playground routes for visual review
+- a prose `typeset` class for markdown and rich content
+- a CSP-safe external appearance bootstrap for Tauri and web
+
+Project identity lives in:
+
+```text
+apps/web/src/brand.css
+```
+
+Change `--brand-hue`, `--brand-chroma`, `--brand-lightness`, radius, typography, sidebar colors, or chart colors without changing reusable components. Components use semantic roles such as `primary`, `muted`, `border`, `success`, and `destructive` rather than hardcoded brand colors.
+
+The lightweight `DataTable` pattern covers common lists. TanStack Table remains part of the web stack for advanced sorting, grouping, column control, and virtualization.
+
+See [docs/ui.md](docs/ui.md).
+
+## Adapting the template
+
+`template.config.ts` is the capability manifest. A project may disable or replace web, API, database, authentication, organizations, object storage, UI, mobile, desktop, observability, Docker, browser tests, or release workflows when the requirement does not justify them.
+
+A clean removal updates all connected surfaces:
+
+- source code and imports
+- workspaces and dependencies
+- environment variables and validators
+- migrations and generated files
+- Docker services, networks, volumes, and health checks
+- CI, security, preview, release, and native workflows
+- tests and documentation
+
+Follow [docs/template-customization.md](docs/template-customization.md), update `CHANGELOG.md`, and run:
 
 ```bash
-cp .env.example .env
-# Replace BETTER_AUTH_SECRET before using NODE_ENV=production.
+bun run template:validate
+bun run check
+bun run build
+```
+
+## Development commands
+
+```bash
+bun dev                 # API and web with fast reloads
+bun run check           # manifest, lint, generated files, types and unit tests
+bun run build           # API and SSR web builds
+bun run build:native    # SPA bundle for Capacitor and Tauri
+bun run test:integration
+bun run test:e2e
+bun run db:migrate
+bun run db:studio
+```
+
+## Docker Compose
+
+Start only development infrastructure:
+
+```bash
+bun run infra:up
+```
+
+Start the production-like stack:
+
+```bash
 bun run infra:full
 ```
 
-Open the application at:
+Start the stack with Prometheus and OpenTelemetry Collector:
 
-```text
-Application and API  http://localhost:8080
-MinIO console        http://localhost:9001
+```bash
+bun run infra:observability
 ```
 
-The web and API containers are not published directly to the host. Caddy is the public boundary.
-
-Startup order:
+The full startup order is dependency-aware:
 
 ```text
 PostgreSQL ready
@@ -148,243 +188,88 @@ PostgreSQL ready
   -> Caddy accepts traffic
 ```
 
-Application containers run as non-root with a read-only filesystem, restricted Linux capabilities, temporary writable memory and separate edge/data networks.
+Application containers run as non-root with read-only filesystems, restricted capabilities, temporary writable memory, and separated edge/data networks.
 
-Useful commands:
-
-```bash
-bun run infra:logs
-bun run infra:down
-bun run infra:reset
-```
-
-`infra:reset` also removes local PostgreSQL, MinIO and Prometheus volumes.
-
-## Optional observability stack
-
-The API always supports structured JSON logs, request IDs and Prometheus metrics. OpenTelemetry export is disabled unless explicitly enabled.
-
-```bash
-bun run infra:observability
-```
-
-This starts the full application plus:
-
-```text
-Prometheus             http://localhost:9090
-OpenTelemetry OTLP     internal ports 4317 and 4318
-```
-
-The example Collector writes received spans to its debug exporter. Replace that exporter with the project's chosen self-hosted or managed backend.
-
-Set `METRICS_TOKEN` to require a bearer token for `/metrics`. Update the Prometheus scrape configuration when enabling that protection.
+See [docs/deployment.md](docs/deployment.md).
 
 ## Database workflow
 
-Application tables are composed in `packages/db/src/schema.ts`. Better Auth tables are generated into `packages/db/src/auth-schema.ts`; domain tables live in their own schema files.
+Application tables are composed in `packages/db/src/schema.ts`. Better Auth tables are generated into `packages/db/src/auth-schema.ts`. Domain tables live in dedicated schema files.
 
-For an application schema change:
+For a schema change:
 
 ```bash
-# Edit the Drizzle schema.
+bun run auth:generate   # only when Better Auth configuration changed
 bun run db:generate
-# Review packages/db/drizzle/*.sql.
+# Review packages/db/drizzle/*.sql
 bun run db:migrate
 bun run test:integration
 ```
 
-For a Better Auth configuration change:
-
-```bash
-bun run auth:generate
-bun run db:generate
-bun run test:integration
-```
-
-Commit both the TypeScript schema and generated SQL. Deployment runs only `bun run db:migrate`. It never generates SQL at runtime.
-
-CI runs `bun run generated:check` and fails if the auth schema or migrations drift from committed files.
+Commit the TypeScript schema and generated SQL. Deployment runs only `bun run db:migrate` and never generates SQL at runtime.
 
 ## Authentication and authorization
 
-Better Auth uses the same PostgreSQL database and requires no external auth service.
-
 The template includes:
 
-- email and password authentication with a 12-character minimum
-- HTTP-only cookie sessions for the browser
-- signed bearer sessions for native clients
-- organizations, memberships and invitations
-- owner, admin and member roles
-- server-side project permissions
-- `/api/me` as a protected session example
+- email and password authentication
+- HTTP-only browser cookie sessions
+- signed native bearer sessions
+- organizations, memberships, and invitations
+- owner, admin, and member roles
+- protected project routes
+- `SecureTokenStore` for platform-specific native credential storage
 
-The browser must never be trusted for authorization. Project routes query membership in PostgreSQL before calling the domain service.
-
-For native clients, `@matrix/auth/native` exposes `createNativeAuthFetch`. It requires an injected `SecureTokenStore` and intentionally has no `localStorage` fallback. Implement that interface with the operating system keychain or secure enclave appropriate to the target platform.
+Authorization is enforced by the API, not by hidden UI or client state.
 
 ## Architecture
-
-HTTP handlers translate transport concerns and call application services:
 
 ```text
 React and TanStack Query
   -> Eden typed client
   -> Elysia validation and session guard
   -> application service in packages/domain
-  -> repository and authorizer interfaces
+  -> repository and authorization interfaces
   -> Drizzle adapters
   -> PostgreSQL
 ```
 
-Domain code does not import React, Elysia, Drizzle, Capacitor, Tauri or vendor SDKs. This keeps business rules testable and replaceable.
+Domain code does not import React, Elysia, Drizzle, Capacitor, Tauri, or provider SDKs.
 
-API errors use a stable envelope:
-
-```json
-{
-  "error": {
-    "code": "PERMISSION_DENIED",
-    "message": "Permission project:read is required.",
-    "requestId": "..."
-  }
-}
-```
-
-The same request ID is returned in `X-Request-Id` and included in structured logs.
-
-## Quality commands
-
-```bash
-bun run check
-bun run lint
-bun run lint:ci
-bun run typecheck
-bun run test:unit
-bun run test:coverage
-bun run test:integration
-bun run test:e2e
-bun run generated:check
-bun run template:validate
-```
-
-Test layers:
-
-| Layer | Purpose | Infrastructure |
-| --- | --- | --- |
-| Unit | Domain rules, environment guards, observability and native token transport | None |
-| Integration | Better Auth, bearer/cookie sessions, organizations and project authorization | Real PostgreSQL |
-| E2E | Account, organization, project, reload and logout through Caddy | Full Docker Compose |
-| Native | Tauri, Android and iOS compilation | Platform-specific GitHub runners |
+See [docs/architecture.md](docs/architecture.md).
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` contains four required stages:
+The main pipeline validates:
 
-1. Feature validation, Biome, schema drift, TypeScript and coverage.
-2. API, SSR web and native SPA builds.
-3. PostgreSQL authentication and authorization integration tests.
-4. Hardened Docker Compose plus Playwright E2E.
+1. capability manifest, Biome, generated schema and migration drift, TypeScript, and coverage
+2. API, SSR web, native SPA, and UI builds
+3. PostgreSQL authentication and authorization integration tests
+4. hardened Docker Compose and Playwright end-to-end behavior
 
-Playwright traces, screenshots and the HTML report are uploaded as workflow artifacts.
+Security workflows add dependency audit, secret scanning, filesystem and image scanning, SBOM, and provenance. Native workflows compile the retained desktop and mobile targets.
 
-## Security automation
+## Native delivery
 
-`.github/workflows/security.yml` runs:
-
-- Bun dependency audit
-- Gitleaks against Git history
-- Trivy against source, configuration and both OCI images
-- Dependency Review for supported repositories
-- CodeQL for public repositories or repositories with `GHAS_ENABLED=true`
-
-`renovate.json` keeps Bun dependencies, Cargo crates, Docker images and GitHub Actions current while preserving exact versions and immutable action digests.
-
-See `SECURITY.md` for private vulnerability reporting and operational responsibilities.
-
-## Container releases
-
-A tag such as `v0.3.0` triggers `.github/workflows/release-containers.yml`.
-
-It publishes multi-architecture images:
-
-```text
-ghcr.io/matrix-hq/code-template-api:<version>
-ghcr.io/matrix-hq/code-template-web:<version>
-```
-
-Each build includes an SBOM, maximum provenance and a GitHub artifact attestation. Stable tags also update the major, minor and `latest` aliases.
-
-## Mobile
-
-The Capacitor wrapper consumes the native SPA bundle.
+Capacitor and Tauri consume the same native SPA build. Native production builds require an externally reachable HTTPS API URL:
 
 ```bash
 export VITE_API_URL=https://api.example.com
 bun run build:native
-cd apps/mobile
-bunx cap add android
-bunx cap add ios
-bunx cap sync
 ```
 
-Generated `android/` and `ios/` directories are ignored until a real project starts native customization. At that point, commit them so signing, entitlements, permissions and store metadata are reviewable.
+See [docs/native.md](docs/native.md).
 
-## Desktop
+## Documentation index
 
-Tauri consumes the same native SPA bundle and applies a restrictive WebView content security policy.
-
-```bash
-export VITE_API_URL=https://api.example.com
-bun run --cwd apps/desktop dev
-bun run build:desktop
-```
-
-The Rust surface is intentionally minimal. Add native commands only when the web platform cannot provide a capability cleanly.
-
-## Native build workflow
-
-`.github/workflows/release-native.yml` compiles:
-
-- Tauri on Linux, Windows and macOS
-- an Android debug APK
-- an unsigned iOS simulator application
-
-It runs for relevant pull requests, manual dispatches and release tags. Signed production binaries require protected environment secrets, Apple provisioning, notarization, Android keystores and store-specific review.
-
-## Object storage
-
-`@matrix/storage` speaks the S3 protocol and provides presigned upload/download URLs plus deletion. Local development uses MinIO and creates the configured bucket automatically. Production can use any compatible implementation without changing domain code.
-
-## Dependency changes
-
-The root Bun catalog contains exact versions and `bun.lock` is committed.
-
-```bash
-# Make an intentional dependency change.
-bun add <package> --catalog
-# Review package.json and bun.lock.
-bun run check
-```
-
-CI and Docker use `bun ci`, so an out-of-date lockfile fails instead of being rewritten.
-
-## Main commands
-
-```bash
-bun dev
-bun run build
-bun run build:native
-bun run check
-bun run db:migrate
-bun run db:studio
-bun run infra:up
-bun run infra:full
-bun run infra:observability
-bun run infra:logs
-bun run infra:down
-bun run infra:reset
-```
+- [Engineering and coding style](RULES.md)
+- [Architecture](docs/architecture.md)
+- [UI foundation and branding](docs/ui.md)
+- [Template customization](docs/template-customization.md)
+- [Deployment](docs/deployment.md)
+- [Native delivery](docs/native.md)
+- [Security policy](SECURITY.md)
+- [Change history](CHANGELOG.md)
 
 ## Template principles
 
@@ -394,7 +279,7 @@ bun run infra:reset
 4. Enforce identity and authorization on the server.
 5. Prefer open protocols and replaceable implementations.
 6. Keep domain code independent from frameworks.
-7. Use fast unit tests and real infrastructure where behavior matters.
-8. Treat observability, security and rollback as product capabilities.
-9. Keep native wrappers thin and secure platform secrets appropriately.
-10. Document every material deviation from the template in `CHANGELOG.md`.
+7. Use semantic design tokens and own the UI source.
+8. Use fast unit tests and real infrastructure where behavior matters.
+9. Keep native wrappers thin and store credentials securely.
+10. Document material deviations and architectural changes.

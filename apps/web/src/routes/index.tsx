@@ -1,6 +1,38 @@
 import { api } from '@matrix/api-client'
 import { authClient, signIn, signOut, signUp, useSession } from '@matrix/auth/client'
-import { Button } from '@matrix/ui'
+import {
+  Alert,
+  AlertDescription,
+  AppShell,
+  ArrowRightIcon,
+  Badge,
+  BuildingIcon,
+  Button,
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  DensityToggle,
+  EmptyState,
+  FolderIcon,
+  FormField,
+  Input,
+  LogOutIcon,
+  PageHeader,
+  PaletteIcon,
+  PlusIcon,
+  Separator,
+  SidebarItem,
+  SidebarLabel,
+  SidebarSection,
+  Skeleton,
+  SparklesIcon,
+  StatCard,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  ThemeToggle,
+} from '@matrix/ui'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { type FormEvent, useEffect, useMemo, useState } from 'react'
@@ -41,6 +73,27 @@ function createSlug(name: string): string {
   return `${normalized || 'workspace'}-${crypto.randomUUID().slice(0, 8)}`
 }
 
+const productCapabilities = [
+  'Typed React and Elysia contracts',
+  'PostgreSQL migrations and authorization',
+  'Capacitor and Tauri native packaging',
+  'Docker, observability, security, and releases',
+]
+
+function BrandMark() {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+        <SparklesIcon className="size-4" />
+      </div>
+      <div>
+        <p className="text-sm font-semibold tracking-tight">Matrix Template</p>
+        <p className="text-xs text-muted-foreground">TypeScript product foundation</p>
+      </div>
+    </div>
+  )
+}
+
 function AuthPanel() {
   const queryClient = useQueryClient()
   const session = useSession()
@@ -75,88 +128,118 @@ function AuthPanel() {
   }
 
   return (
-    <section className="grid gap-8 rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 md:grid-cols-[1.1fr_0.9fr] md:p-10">
-      <div className="space-y-5">
-        <span className="inline-flex rounded-full border border-zinc-300 px-3 py-1 text-sm dark:border-zinc-700">
-          Production-ready starter
-        </span>
-        <h1 className="max-w-xl text-4xl font-semibold tracking-tight sm:text-5xl">
-          One TypeScript product across web, API, mobile and desktop.
-        </h1>
-        <p className="max-w-xl text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-          Create an account to exercise Better Auth, organizations, permission checks, Eden, Elysia,
-          Drizzle and PostgreSQL through one tested flow.
-        </p>
-        <div className="grid gap-3 text-sm text-zinc-600 dark:text-zinc-400 sm:grid-cols-2">
-          <p className="rounded-2xl bg-zinc-100 p-4 dark:bg-zinc-900">Self-hosted PostgreSQL and S3-compatible storage</p>
-          <p className="rounded-2xl bg-zinc-100 p-4 dark:bg-zinc-900">Cookie sessions for web and signed bearer sessions for native clients</p>
-          <p className="rounded-2xl bg-zinc-100 p-4 dark:bg-zinc-900">Organization roles enforced by the API</p>
-          <p className="rounded-2xl bg-zinc-100 p-4 dark:bg-zinc-900">Docker, E2E, observability and release automation included</p>
+    <div className="relative min-h-dvh overflow-hidden bg-background">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[34rem] bg-[radial-gradient(circle_at_top_left,color-mix(in_oklab,var(--primary)_16%,transparent),transparent_56%)]" />
+      <header className="relative z-10 flex h-20 items-center justify-between px-[var(--page-gutter)]">
+        <BrandMark />
+        <div className="flex items-center gap-1">
+          <Button asChild size="sm" variant="ghost">
+            <a href="/ui">
+              <PaletteIcon className="size-4" />
+              UI lab
+            </a>
+          </Button>
+          <ThemeToggle />
         </div>
-      </div>
+      </header>
 
-      <form className="space-y-4 rounded-2xl bg-zinc-50 p-5 dark:bg-zinc-900" onSubmit={submit}>
-        <div className="flex rounded-xl bg-zinc-200 p-1 dark:bg-zinc-800">
-          {(['sign-up', 'sign-in'] as const).map((value) => (
-            <button
-              className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition ${
-                mode === value ? 'bg-white shadow-sm dark:bg-zinc-950' : 'text-zinc-600 dark:text-zinc-400'
-              }`}
-              key={value}
-              onClick={() => setMode(value)}
-              type="button"
-            >
-              {value === 'sign-up' ? 'Create account' : 'Sign in'}
-            </button>
-          ))}
-        </div>
+      <main className="ui-container relative z-10 grid min-h-[calc(100dvh-5rem)] items-center gap-10 py-10 lg:grid-cols-[1.08fr_0.92fr] lg:py-16">
+        <section className="max-w-2xl">
+          <Badge className="mb-6" variant="outline">
+            Production-ready, modular, self-hostable
+          </Badge>
+          <h1 className="ui-balance text-4xl font-semibold tracking-[-0.045em] sm:text-5xl lg:text-6xl">
+            One TypeScript product across web, API, mobile and desktop.
+          </h1>
+          <p className="mt-6 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg sm:leading-8">
+            A clean product foundation with typed contracts, secure identity, replaceable infrastructure,
+            and a design system that adapts through semantic tokens.
+          </p>
 
-        {mode === 'sign-up' && (
-          <label className="grid gap-2 text-sm font-medium">
-            Name
-            <input
-              autoComplete="name"
-              className="rounded-xl border border-zinc-300 bg-white px-3 py-2.5 outline-none ring-zinc-900 focus:ring-2 dark:border-zinc-700 dark:bg-zinc-950 dark:ring-zinc-100"
-              minLength={2}
-              onChange={(event) => setName(event.target.value)}
-              required
-              value={name}
-            />
-          </label>
-        )}
+          <div className="mt-8 grid gap-3 sm:grid-cols-2">
+            {productCapabilities.map((capability) => (
+              <div className="flex items-start gap-3 rounded-xl border bg-card/70 p-4 shadow-xs backdrop-blur" key={capability}>
+                <div className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                  <ArrowRightIcon className="size-3.5" />
+                </div>
+                <p className="text-sm leading-6 text-muted-foreground">{capability}</p>
+              </div>
+            ))}
+          </div>
+        </section>
 
-        <label className="grid gap-2 text-sm font-medium">
-          Email
-          <input
-            autoComplete="email"
-            className="rounded-xl border border-zinc-300 bg-white px-3 py-2.5 outline-none ring-zinc-900 focus:ring-2 dark:border-zinc-700 dark:bg-zinc-950 dark:ring-zinc-100"
-            onChange={(event) => setEmail(event.target.value)}
-            required
-            type="email"
-            value={email}
-          />
-        </label>
+        <Card className="mx-auto w-full max-w-md border-border/80 bg-card/92 shadow-xl shadow-foreground/5 backdrop-blur-xl">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-2xl">Start with the complete flow</CardTitle>
+            <CardDescription>
+              Create an account, organization, and protected project against the real API and database.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs onValueChange={(value) => setMode(value as AuthMode)} value={mode}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="sign-up">Create account</TabsTrigger>
+                <TabsTrigger value="sign-in">Sign in</TabsTrigger>
+              </TabsList>
+            </Tabs>
 
-        <label className="grid gap-2 text-sm font-medium">
-          Password
-          <input
-            autoComplete={mode === 'sign-up' ? 'new-password' : 'current-password'}
-            className="rounded-xl border border-zinc-300 bg-white px-3 py-2.5 outline-none ring-zinc-900 focus:ring-2 dark:border-zinc-700 dark:bg-zinc-950 dark:ring-zinc-100"
-            minLength={12}
-            onChange={(event) => setPassword(event.target.value)}
-            required
-            type="password"
-            value={password}
-          />
-        </label>
+            <form className="mt-5 space-y-4" onSubmit={submit}>
+              {mode === 'sign-up' && (
+                <FormField htmlFor="auth-name" label="Name">
+                  <Input
+                    autoComplete="name"
+                    id="auth-name"
+                    minLength={2}
+                    onChange={(event) => setName(event.target.value)}
+                    placeholder="Ada Lovelace"
+                    required
+                    value={name}
+                  />
+                </FormField>
+              )}
 
-        {errorMessage && <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-200">{errorMessage}</p>}
+              <FormField htmlFor="auth-email" label="Email">
+                <Input
+                  autoComplete="email"
+                  id="auth-email"
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="ada@example.com"
+                  required
+                  type="email"
+                  value={email}
+                />
+              </FormField>
 
-        <Button className="w-full" disabled={authenticate.isPending} type="submit">
-          {authenticate.isPending ? 'Working...' : mode === 'sign-up' ? 'Create account' : 'Sign in'}
-        </Button>
-      </form>
-    </section>
+              <FormField
+                description={mode === 'sign-up' ? 'Use at least 12 characters.' : undefined}
+                htmlFor="auth-password"
+                label="Password"
+              >
+                <Input
+                  autoComplete={mode === 'sign-up' ? 'new-password' : 'current-password'}
+                  id="auth-password"
+                  minLength={12}
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                  type="password"
+                  value={password}
+                />
+              </FormField>
+
+              {errorMessage && (
+                <Alert variant="destructive">
+                  <AlertDescription>{errorMessage}</AlertDescription>
+                </Alert>
+              )}
+
+              <Button className="w-full" disabled={authenticate.isPending} type="submit">
+                {authenticate.isPending ? 'Working...' : mode === 'sign-up' ? 'Create account' : 'Sign in'}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </main>
+    </div>
   )
 }
 
@@ -238,94 +321,118 @@ function Workspace() {
     queryClient.clear()
   }
 
-  return (
-    <section className="space-y-6">
-      <header className="flex flex-col justify-between gap-4 rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 sm:flex-row sm:items-center">
-        <div>
-          <p className="text-sm text-zinc-500">Signed in as</p>
-          <h1 className="text-2xl font-semibold">{session.data?.user.name}</h1>
-          <p className="text-sm text-zinc-500">{session.data?.user.email}</p>
-        </div>
-        <Button onClick={logOut} variant="outline">Sign out</Button>
-      </header>
+  const sidebar = (
+    <div className="flex min-h-full flex-col gap-6">
+      <BrandMark />
+      <Separator />
 
-      {errorMessage && <p className="rounded-xl bg-red-50 p-4 text-sm text-red-700 dark:bg-red-950 dark:text-red-200">{errorMessage}</p>}
+      <div>
+        <p className="text-xs text-muted-foreground">Signed in as</p>
+        <h1 className="mt-1 truncate text-lg font-semibold tracking-tight">{session.data?.user.name}</h1>
+        <p className="truncate text-xs text-muted-foreground">{session.data?.user.email}</p>
+      </div>
 
-      <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
-        <aside className="space-y-5 rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-          <div>
-            <h2 className="text-lg font-semibold">Organizations</h2>
-            <p className="mt-1 text-sm text-zinc-500">Every project is isolated by membership and role.</p>
+      <SidebarSection>
+        <SidebarLabel>Organizations</SidebarLabel>
+        {organizations.isPending && (
+          <div className="space-y-2 px-2">
+            <Skeleton className="h-9" />
+            <Skeleton className="h-9" />
           </div>
-
-          <div className="space-y-2">
-            {organizations.isPending && <p className="text-sm text-zinc-500">Loading organizations...</p>}
-            {organizations.data?.map((item) => (
-              <button
-                className={`w-full rounded-xl border px-3 py-3 text-left text-sm transition ${
-                  activeOrganizationId === item.id
-                    ? 'border-zinc-950 bg-zinc-950 text-white dark:border-white dark:bg-white dark:text-zinc-950'
-                    : 'border-zinc-200 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900'
-                }`}
-                key={item.id}
-                onClick={() => setActiveOrganizationId(item.id)}
-                type="button"
-              >
-                <span className="block font-medium">{item.name}</span>
-                <span className="block text-xs opacity-70">{item.slug}</span>
-              </button>
-            ))}
-          </div>
-
-          <form
-            className="space-y-3 border-t border-zinc-200 pt-5 dark:border-zinc-800"
-            onSubmit={(event) => {
-              event.preventDefault()
-              createOrganization.mutate()
-            }}
+        )}
+        {organizations.data?.map((item) => (
+          <SidebarItem
+            active={activeOrganizationId === item.id}
+            icon={<BuildingIcon className="size-4" />}
+            key={item.id}
+            onClick={() => setActiveOrganizationId(item.id)}
           >
-            <label className="grid gap-2 text-sm font-medium">
-              New organization
-              <input
-                className="rounded-xl border border-zinc-300 bg-white px-3 py-2.5 outline-none ring-zinc-900 focus:ring-2 dark:border-zinc-700 dark:bg-zinc-950 dark:ring-zinc-100"
-                minLength={2}
-                onChange={(event) => setOrganizationName(event.target.value)}
-                placeholder="Matrix Labs"
-                required
-                value={organizationName}
-              />
-            </label>
-            <Button className="w-full" disabled={createOrganization.isPending} type="submit" variant="secondary">
-              {createOrganization.isPending ? 'Creating...' : 'Create organization'}
-            </Button>
-          </form>
-        </aside>
+            {item.name}
+          </SidebarItem>
+        ))}
+      </SidebarSection>
 
-        <main className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 md:p-8">
-          {!activeOrganization ? (
-            <div className="grid min-h-80 place-items-center text-center">
-              <div>
-                <h2 className="text-2xl font-semibold">Create your first organization</h2>
-                <p className="mt-2 text-zinc-500">It becomes the security boundary for projects and members.</p>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-8">
-              <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-                <div>
-                  <p className="text-sm text-zinc-500">Active organization</p>
-                  <h2 className="text-3xl font-semibold">{activeOrganization.name}</h2>
-                </div>
+      <form
+        className="space-y-3 rounded-xl border bg-background/55 p-3"
+        onSubmit={(event) => {
+          event.preventDefault()
+          createOrganization.mutate()
+        }}
+      >
+        <FormField htmlFor="organization-name" label="New organization">
+          <Input
+            id="organization-name"
+            minLength={2}
+            onChange={(event) => setOrganizationName(event.target.value)}
+            placeholder="Matrix Labs"
+            required
+            value={organizationName}
+          />
+        </FormField>
+        <Button className="w-full" disabled={createOrganization.isPending} size="sm" type="submit" variant="secondary">
+          <PlusIcon className="size-3.5" />
+          {createOrganization.isPending ? 'Creating...' : 'Create organization'}
+        </Button>
+      </form>
+
+      <div className="mt-auto space-y-1">
+        <Button asChild className="w-full justify-start" variant="ghost">
+          <a href="/ui">
+            <PaletteIcon className="size-4" />
+            UI playground
+          </a>
+        </Button>
+      </div>
+    </div>
+  )
+
+  return (
+    <AppShell
+      header={
+        <>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium">{activeOrganization?.name ?? 'Workspace setup'}</p>
+            <p className="hidden text-xs text-muted-foreground sm:block">Authenticated product skeleton</p>
+          </div>
+          <div className="flex items-center gap-1">
+            <DensityToggle />
+            <ThemeToggle />
+            <Button onClick={logOut} size="sm" type="button" variant="outline">
+              <LogOutIcon className="size-4" />
+              Sign out
+            </Button>
+          </div>
+        </>
+      }
+      sidebar={sidebar}
+    >
+      <div className="mx-auto max-w-6xl space-y-[var(--section-gap)]">
+        {errorMessage && (
+          <Alert variant="destructive">
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
+        )}
+
+        {!activeOrganization ? (
+          <EmptyState
+            description="Create an organization in the sidebar. It becomes the security boundary for projects and members."
+            icon={<BuildingIcon className="size-5" />}
+            title="Create your first organization"
+          />
+        ) : (
+          <>
+            <PageHeader
+              actions={
                 <form
-                  className="flex gap-2"
+                  className="flex w-full gap-2 sm:w-auto"
                   onSubmit={(event) => {
                     event.preventDefault()
                     createProject.mutate()
                   }}
                 >
-                  <input
+                  <Input
                     aria-label="Project name"
-                    className="min-w-0 rounded-xl border border-zinc-300 bg-white px-3 py-2.5 outline-none ring-zinc-900 focus:ring-2 dark:border-zinc-700 dark:bg-zinc-950 dark:ring-zinc-100"
+                    className="min-w-0 sm:w-56"
                     minLength={2}
                     onChange={(event) => setProjectName(event.target.value)}
                     placeholder="New product"
@@ -333,47 +440,102 @@ function Workspace() {
                     value={projectName}
                   />
                   <Button disabled={createProject.isPending} type="submit">
+                    <PlusIcon className="size-4" />
                     {createProject.isPending ? 'Creating...' : 'Add project'}
                   </Button>
                 </form>
+              }
+              description="Projects are scoped by organization membership and server-side permission checks."
+              eyebrow="Active organization"
+              title={activeOrganization.name}
+            />
+
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <StatCard
+                description="Loaded from the protected API"
+                icon={<FolderIcon className="size-5" />}
+                label="Projects"
+                value={projects.data?.length ?? 0}
+              />
+              <StatCard
+                description="Cookie session with API authorization"
+                icon={<BuildingIcon className="size-5" />}
+                label="Security boundary"
+                value="Organization"
+              />
+              <StatCard
+                description="One shared UI and domain layer"
+                icon={<SparklesIcon className="size-5" />}
+                label="Delivery targets"
+                value="6 platforms"
+              />
+            </div>
+
+            <section>
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-semibold tracking-tight">Projects</h2>
+                  <p className="text-sm text-muted-foreground">A clean card grid ready for real product data.</p>
+                </div>
+                <Badge variant="secondary">{projects.data?.length ?? 0} total</Badge>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {projects.isPending && <p className="text-sm text-zinc-500">Loading projects...</p>}
-                {projects.data?.length === 0 && (
-                  <div className="rounded-2xl border border-dashed border-zinc-300 p-8 text-center text-sm text-zinc-500 dark:border-zinc-700">
-                    No projects yet. Create one above.
-                  </div>
-                )}
-                {projects.data?.map((item) => (
-                  <article className="rounded-2xl border border-zinc-200 p-5 dark:border-zinc-800" key={item.id}>
-                    <h3 className="font-semibold">{item.name}</h3>
-                    <p className="mt-2 text-xs text-zinc-500">Created {new Date(item.createdAt).toLocaleString()}</p>
-                  </article>
-                ))}
-              </div>
-            </div>
-          )}
-        </main>
+              {projects.isPending ? (
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {['project-a', 'project-b', 'project-c'].map((placeholder) => (
+                    <Card key={placeholder}>
+                      <CardHeader>
+                        <Skeleton className="h-5 w-2/3" />
+                        <Skeleton className="h-4 w-1/2" />
+                      </CardHeader>
+                    </Card>
+                  ))}
+                </div>
+              ) : projects.data?.length === 0 ? (
+                <EmptyState
+                  description="Use the project form above to exercise the typed, authorized API flow."
+                  icon={<FolderIcon className="size-5" />}
+                  title="No projects yet"
+                />
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {projects.data?.map((item) => (
+                    <Card className="group transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-md" key={item.id}>
+                      <CardHeader>
+                        <div className="mb-3 grid size-10 place-items-center rounded-lg bg-primary/10 text-primary">
+                          <FolderIcon className="size-5" />
+                        </div>
+                        <CardTitle>{item.name}</CardTitle>
+                        <CardDescription>
+                          Created {new Date(item.createdAt).toLocaleString()}
+                        </CardDescription>
+                      </CardHeader>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </section>
+          </>
+        )}
       </div>
-    </section>
+    </AppShell>
   )
 }
 
 function Home() {
   const session = useSession()
 
-  return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-950 dark:bg-black dark:text-zinc-50">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12">
-        {session.isPending ? (
-          <div className="grid min-h-[60vh] place-items-center text-zinc-500">Loading session...</div>
-        ) : session.data ? (
-          <Workspace />
-        ) : (
-          <AuthPanel />
-        )}
+  if (session.isPending) {
+    return (
+      <div className="grid min-h-dvh place-items-center bg-background">
+        <div className="w-full max-w-sm space-y-4 px-6">
+          <Skeleton className="mx-auto size-12 rounded-xl" />
+          <Skeleton className="mx-auto h-6 w-48" />
+          <Skeleton className="mx-auto h-4 w-64" />
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
+
+  return session.data ? <Workspace /> : <AuthPanel />
 }

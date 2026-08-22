@@ -1,5 +1,8 @@
 # Agent Instructions
 
-Read and follow `RULES.md` before modifying this repository.
-
-The template is modular. Agents may disable or remove optional capabilities when the target project does not require them, provided the feature manifest, dependencies, workflows, infrastructure, tests, and documentation are updated consistently.
+1. Read `RULES.md` before changing code.
+2. Read `README.md` and the relevant files in `docs/` before changing architecture, infrastructure, UI, or template capabilities.
+3. Use `template.config.ts` as the capability manifest and follow `docs/template-customization.md` when enabling, disabling, replacing, or removing a module.
+4. Keep `CHANGELOG.md` updated for meaningful behavior, architecture, dependency, security, deployment, and design-system changes.
+5. Do not claim support for a platform or workflow unless it is validated or the limitation is documented.
+6. Run `bun run check` plus the relevant integration, end-to-end, container, or native build before considering the work complete.
