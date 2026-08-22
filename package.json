@@ -86,6 +86,7 @@
     "generated:check": "bun run scripts/check-generated.ts",
     "security:audit": "bun audit --audit-level=high",
     "template:validate": "bun run scripts/validate-template.ts",
+    "version:set": "bun run scripts/set-version.ts",
     "ui:add": "bunx shadcn@4.19.0 add -c apps/web",
     "ui:info": "bunx shadcn@4.19.0 info -c apps/web",
     "ui:info:shared": "bunx shadcn@4.19.0 info -c packages/ui",
