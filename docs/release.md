@@ -1,6 +1,6 @@
 # Release Process
 
-Template releases establish a reproducible baseline for repositories created afterward. Do not publish a release merely because implementation is merged. Publish when the version, changelog, generated artifacts, tests, builds, and delivery paths agree.
+Template releases establish a reproducible baseline for repositories created afterward. Do not publish a release merely because implementation is merged. Publish when the version, changelog, generated artifacts, tests, builds, governance, and delivery paths agree.
 
 ## Versioning
 
@@ -55,11 +55,13 @@ bun ci
 bun run check
 bun run build
 VITE_API_URL=https://api.example.com bun run build:native
+bun run test:template-consumer
 ```
 
 `bun run check` validates:
 
 - capability dependencies and complete removals
+- explicit license policy
 - exact dependency versions and committed lockfiles
 - synchronized template versions
 - shadcn monorepo configuration
@@ -70,7 +72,9 @@ VITE_API_URL=https://api.example.com bun run build:native
 - TypeScript
 - unit tests
 
-## Infrastructure checks
+The consumer smoke test copies the working tree into a temporary repository, creates a clean initial commit, installs from the committed lockfile, runs repository checks, and builds both server and native web outputs. It must leave tracked source unchanged.
+
+## Infrastructure and browser checks
 
 With PostgreSQL and Docker available:
 
@@ -79,7 +83,9 @@ bun run infra:up
 bun run db:migrate
 bun run test:integration
 bun run infra:full
+bunx playwright install --with-deps chromium
 bun run test:e2e
+bun run test:a11y
 ```
 
 Confirm that:
@@ -88,6 +94,8 @@ Confirm that:
 - authentication and authorization behavior passes against PostgreSQL
 - the full Compose stack reaches readiness
 - the browser lifecycle passes through the public reverse-proxy boundary
+- axe reports no configured WCAG A or AA violations on public product and UI routes in light and dark themes
+- browser and accessibility reports are retained with the release evidence
 - shutdown removes temporary resources without deleting expected persistent data
 
 ## Container checks
@@ -118,7 +126,7 @@ Unsigned simulator or debug artifacts prove compilation only. Production distrib
 
 A platform that was not compiled must be documented as unverified for that release.
 
-## Security checks
+## Security and governance checks
 
 Review:
 
@@ -130,20 +138,32 @@ Review:
 - authentication and authorization regressions
 - CSP and native permission changes
 - new environment variables and log redaction
+- root license policy and third-party obligations
+- `CODEOWNERS` accuracy
+- branch protection and required-check configuration
 
 Security exceptions need an owner, justification, compensating control, and expiration or review date.
+
+Preview repository protection with:
+
+```bash
+bun run repo:protect
+```
+
+Do not require status checks until their final names have completed successfully. See [repository-governance.md](repository-governance.md) and [licensing.md](licensing.md).
 
 ## Publish
 
 After all required checks pass:
 
 1. merge the release preparation pull request
-2. create an annotated semantic version tag such as `v0.4.0`
-3. push the tag
-4. verify container and native release workflows
-5. create or verify the GitHub release notes
-6. attach or link the expected artifacts
-7. record any platform-specific limitation
+2. verify `main` protection and code ownership
+3. create an annotated semantic version tag such as `v0.4.0`
+4. push the tag
+5. verify container and native release workflows
+6. create or verify the GitHub release notes
+7. attach or link the expected artifacts and reports
+8. record any platform-specific limitation
 
 Do not move or reuse a published version tag.
 
@@ -151,13 +171,17 @@ Do not move or reuse a published version tag.
 
 After publishing:
 
-- create a temporary repository from the GitHub template
+- create a temporary repository using the GitHub **Use this template** action
 - follow [project-bootstrap.md](project-bootstrap.md)
-- install with the committed lockfile
+- run `bun run test:template-consumer` from the release commit as automated supporting evidence
+- install the generated repository with its committed lockfile
 - run the minimal web/API flow
 - confirm documentation links and commands are correct for a fresh clone
+- replace ownership and licensing placeholders
 - verify published images can be pulled by the intended audience
 - confirm release artifacts match the tag and expected architectures
+
+The automated consumer smoke test does not replace the real GitHub template operation. Both are required for a release that changes bootstrap, file layout, generated configuration, or repository metadata.
 
 ## Rollback and correction
 
