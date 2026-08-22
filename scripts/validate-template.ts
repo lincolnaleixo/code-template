@@ -130,9 +130,11 @@ if (templateFeatures.ui) {
     errors.push('The web root must not use an inline appearance script.')
   }
 
-  const tauriConfig = await Bun.file('apps/desktop/src-tauri/tauri.conf.json').text()
-  if (!tauriConfig.includes("script-src 'self'")) {
-    errors.push('The Tauri CSP must keep scripts restricted to same-origin resources.')
+  if (templateFeatures.desktop) {
+    const tauriConfig = await Bun.file('apps/desktop/src-tauri/tauri.conf.json').text()
+    if (!tauriConfig.includes("script-src 'self'")) {
+      errors.push('The Tauri CSP must keep scripts restricted to same-origin resources.')
+    }
   }
 }
 
