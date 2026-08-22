@@ -30,7 +30,7 @@ jobs:
       - name: Commit generated assets
         shell: bash
         run: |
-          if git diff --quiet -- packages/db/src/auth-schema.ts packages/db/drizzle; then
+          if [ -z "$(git status --porcelain -- packages/db/src/auth-schema.ts packages/db/drizzle)" ]; then
             echo "Generated database assets are already current."
             exit 0
           fi
