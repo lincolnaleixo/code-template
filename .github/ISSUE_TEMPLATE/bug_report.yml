@@ -1,0 +1,75 @@
+name: Bug report
+description: Report reproducible incorrect behavior in the template
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include secrets, tokens, private data, or production connection strings.
+        Security vulnerabilities should follow SECURITY.md instead of this form.
+  - type: dropdown
+    id: capability
+    attributes:
+      label: Affected capability
+      options:
+        - Web and UI
+        - API
+        - Database and migrations
+        - Authentication and authorization
+        - Object storage
+        - Docker and deployment
+        - Observability
+        - Mobile
+        - Desktop
+        - Tooling and documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: Problem
+      description: Describe what is incorrect and why it matters.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: List the smallest reliable sequence that reproduces the problem.
+      placeholder: |
+        1. Create a repository from the template
+        2. Run ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include operating system, architecture, Bun version, Docker version, and relevant platform tooling.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized logs or screenshots
+      description: Remove credentials, cookies, tokens, personal data, and internal hostnames when necessary.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks performed
+      options:
+        - label: I reproduced the issue from a clean clone or generated repository.
+          required: true
+        - label: I searched existing issues and pull requests.
+          required: true
+        - label: I removed sensitive information from this report.
+          required: true
