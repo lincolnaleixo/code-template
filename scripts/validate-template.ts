@@ -12,7 +12,16 @@ interface PackageManifest {
 
 const requiredPaths: Partial<Record<TemplateFeature, string[]>> = {
   web: ['apps/web/package.json'],
-  ui: ['packages/ui/package.json', 'packages/ui/src/styles.css', 'apps/web/src/brand.css'],
+  ui: [
+    'packages/ui/package.json',
+    'packages/ui/src/index.ts',
+    'packages/ui/src/styles.css',
+    'packages/ui/src/theme-provider.tsx',
+    'apps/web/public/appearance-bootstrap.js',
+    'apps/web/src/brand.css',
+    'apps/web/src/routes/ui.tsx',
+    'apps/web/src/routes/ui-advanced.tsx',
+  ],
   api: ['apps/api/package.json'],
   database: ['packages/db/package.json', 'packages/db/drizzle/meta/_journal.json'],
   authentication: ['packages/auth/package.json', 'packages/db/src/auth-schema.ts'],
@@ -101,9 +110,35 @@ for (const path of ['docker-compose.yml', 'apps/api/Dockerfile', 'apps/web/Docke
   if (content.includes(':latest')) errors.push(`${path} contains a mutable Docker image tag.`)
 }
 
+if (templateFeatures.ui) {
+  const literalPaletteClass =
+    /(?:bg|border|fill|from|ring|stroke|text|to|via)-(?:amber|blue|cyan|emerald|fuchsia|gray|green|indigo|lime|neutral|orange|pink|purple|red|rose|sky|slate|stone|teal|violet|yellow|zinc)-\d{2,3}/
+  const uiSourceGlob = new Bun.Glob('packages/ui/src/**/*.{ts,tsx}')
+
+  for await (const path of uiSourceGlob.scan('.')) {
+    const content = await Bun.file(path).text()
+    if (literalPaletteClass.test(content)) {
+      errors.push(`${path} hardcodes a palette color instead of using a semantic token.`)
+    }
+  }
+
+  const rootRoute = await Bun.file('apps/web/src/routes/__root.tsx').text()
+  if (!rootRoute.includes('src="/appearance-bootstrap.js"')) {
+    errors.push('The web root must load the external appearance bootstrap.')
+  }
+  if (rootRoute.includes('dangerouslySetInnerHTML')) {
+    errors.push('The web root must not use an inline appearance script.')
+  }
+
+  const tauriConfig = await Bun.file('apps/desktop/src-tauri/tauri.conf.json').text()
+  if (!tauriConfig.includes("script-src 'self'")) {
+    errors.push('The Tauri CSP must keep scripts restricted to same-origin resources.')
+  }
+}
+
 if (errors.length > 0) {
   console.error(errors.join('\n'))
   process.exit(1)
 }
 
-console.log('Template features, lockfiles and dependency versions are consistent.')
+console.log('Template features, UI contracts, lockfiles and dependency versions are consistent.')
