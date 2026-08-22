@@ -102,17 +102,17 @@ export function useAppearance() {
   return value
 }
 
-const themeOptions: Array<{ icon: typeof SunIcon; label: string; value: Theme }> = [
+const themeOptions = [
   { icon: SunIcon, label: 'Light theme', value: 'light' },
   { icon: MoonIcon, label: 'Dark theme', value: 'dark' },
   { icon: MonitorIcon, label: 'System theme', value: 'system' },
-]
+] as const satisfies ReadonlyArray<{ icon: typeof SunIcon; label: string; value: Theme }>
 
 export function ThemeToggle() {
   const { setTheme, theme } = useAppearance()
   const option = themeOptions.find((item) => item.value === theme) ?? themeOptions[2]
-  const nextIndex = (themeOptions.indexOf(option) + 1) % themeOptions.length
-  const next = themeOptions[nextIndex]
+  const currentIndex = themeOptions.indexOf(option)
+  const next = themeOptions[(currentIndex + 1) % themeOptions.length] ?? themeOptions[0]
   const Icon = option.icon
 
   return (
