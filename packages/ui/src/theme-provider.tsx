@@ -22,17 +22,6 @@ interface AppearanceContextValue {
 const THEME_STORAGE_KEY = 'matrix-theme'
 const DENSITY_STORAGE_KEY = 'matrix-density'
 
-export const APPEARANCE_BOOTSTRAP_SCRIPT = `(() => {
-  try {
-    const theme = localStorage.getItem('${THEME_STORAGE_KEY}') || 'system'
-    const density = localStorage.getItem('${DENSITY_STORAGE_KEY}') || 'comfortable'
-    const dark = theme === 'dark' || (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)
-    document.documentElement.classList.toggle('dark', dark)
-    document.documentElement.dataset.theme = theme
-    document.documentElement.dataset.density = density
-  } catch {}
-})()`
-
 const AppearanceContext = createContext<AppearanceContextValue | null>(null)
 
 function isTheme(value: string | null): value is Theme {
