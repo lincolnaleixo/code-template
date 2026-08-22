@@ -19,9 +19,21 @@ function integerOption(name: string, fallback: number): number {
   return value
 }
 
+function booleanOption(name: string, fallback: boolean): boolean {
+  const rawValue = option(name)
+  if (rawValue === undefined) return fallback
+  if (rawValue === 'true') return true
+  if (rawValue === 'false') return false
+  throw new Error(`--${name} must be true or false.`)
+}
+
 const repository = option('repository') ?? process.env.GITHUB_REPOSITORY ?? 'matrix-hq/code-template'
 const branch = option('branch') ?? process.env.BRANCH_NAME ?? 'main'
-const approvals = integerOption('approvals', 1)
+const approvals = integerOption('approvals', 0)
+const requireCodeOwnerReview = booleanOption(
+  'code-owner-review',
+  process.env.REQUIRE_CODE_OWNER_REVIEW === 'true',
+)
 const requiredChecks = (option('checks') ?? process.env.BRANCH_REQUIRED_CHECKS ?? '')
   .split('|')
   .map((check) => check.trim())
@@ -42,8 +54,8 @@ const protection = {
       : null,
   enforce_admins: true,
   required_pull_request_reviews: {
-    dismiss_stale_reviews: true,
-    require_code_owner_reviews: true,
+    dismiss_stale_reviews: approvals > 0 || requireCodeOwnerReview,
+    require_code_owner_reviews: requireCodeOwnerReview,
     required_approving_review_count: approvals,
     require_last_push_approval: false,
   },
