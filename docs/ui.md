@@ -16,16 +16,19 @@ The UI system is owned by the repository and follows the shadcn model: accessibl
 ## File layout
 
 ```text
-packages/ui/src/
-  components/       controls, surfaces, feedback, overlays, tables
-  patterns/         app shell, page states, settings, data composition
-  styles.css        semantic tokens, Tailwind mappings, base styles
-  theme-provider.tsx appearance state after hydration
+packages/ui/
+  components.json   shadcn CLI install targets and aliases
+  src/
+    components/     controls, surfaces, feedback, overlays, tables
+    patterns/       app shell, page states, settings, data composition
+    styles.css      semantic tokens, Tailwind mappings, base styles
+    theme-provider.tsx appearance state after hydration
 apps/web/
-  public/appearance-bootstrap.js  CSP-safe pre-hydration appearance setup
-  src/brand.css                   project-specific identity
-  src/routes/ui.tsx               core foundation playground
-  src/routes/ui-advanced.tsx      product pattern playground
+  components.json               app and shared-workspace aliases
+  public/appearance-bootstrap.js CSP-safe pre-hydration appearance setup
+  src/brand.css                 project-specific identity
+  src/routes/ui.tsx             core foundation playground
+  src/routes/ui-advanced.tsx    product pattern playground
 ```
 
 ## Semantic tokens
@@ -168,6 +171,38 @@ StatCard
 Components are source code, not an opaque dependency. Modify them when a product needs a different interaction or visual language, while preserving accessibility and semantic tokens.
 
 Primitives remain generic. Product-specific combinations belong in a product feature or in a reusable pattern whose purpose is clear.
+
+## shadcn CLI workflow
+
+The monorepo has one `components.json` in `apps/web` and another in `packages/ui`. They use the same base style, semantic CSS variables, neutral base color, and icon-library setting. Package import aliases route shared UI source into `packages/ui`.
+
+Inspect the resolved setup:
+
+```bash
+bun run ui:info
+```
+
+Add a component directly to the shared package:
+
+```bash
+bun run ui:add alert-dialog
+```
+
+The command uses an exact CLI version rather than an unbounded `latest` tag. It may add package dependencies and update `bun.lock` when the selected component requires them.
+
+After generation:
+
+1. review every changed file
+2. preserve repository naming and semantic tokens
+3. reconcile generated imports with existing primitives
+4. verify keyboard and screen-reader behavior
+5. export the component deliberately from `packages/ui/src/index.ts`
+6. add an example to `/ui` or `/ui-advanced`
+7. run `bun run check` and relevant builds
+
+Do not use an overwrite-all command against customized components without a dedicated review branch. Registry source is an input to the design system, not the design system's authority.
+
+`bun run template:validate` checks that the two shadcn configurations remain compatible, Tailwind v4 keeps an empty config path, CSS variables stay enabled, package import aliases resolve, and shared package exports exist.
 
 ## Playgrounds
 
