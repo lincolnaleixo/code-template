@@ -24,9 +24,18 @@ apps/desktop/src-tauri/tauri.conf.json
 CHANGELOG.md
 ```
 
-`bun run template:validate` checks this contract when the desktop capability is enabled.
+Preview and apply a synchronized version update with:
 
-When changing the Rust package version, regenerate `Cargo.lock` from `apps/desktop/src-tauri` rather than editing generated dependency data by hand.
+```bash
+bun run version:set 0.4.0 --dry-run
+bun run version:set 0.4.0
+```
+
+The command updates the root package, Tauri configuration, Cargo package metadata, and only the root application package entry in `Cargo.lock`. It does not rewrite dependency versions or create a changelog section.
+
+After changing Rust dependencies, regenerate `Cargo.lock` with Cargo. After changing only the product version, review the focused lockfile diff produced by `version:set`.
+
+`bun run template:validate` checks the version contract when the desktop capability is enabled.
 
 ## Prepare the changelog
 
@@ -34,7 +43,7 @@ When changing the Rust package version, regenerate `Cargo.lock` from `apps/deskt
 2. Group entries under Added, Changed, Deprecated, Removed, Fixed, or Security.
 3. Remove implementation trivia that does not help a template consumer.
 4. Add migration instructions for incompatible changes.
-5. Move the entries into a dated version section.
+5. Move the entries into a dated version section matching the new version.
 6. Restore an empty `Unreleased` section for future work.
 
 ## Repository checks
