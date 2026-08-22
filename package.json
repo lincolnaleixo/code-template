@@ -90,6 +90,7 @@
     "security:audit": "bun audit --audit-level=high",
     "template:validate": "bun run scripts/validate-template.ts",
     "version:set": "bun run scripts/set-version.ts",
+    "repo:metadata": "bun run scripts/apply-repository-metadata.ts",
     "repo:protect": "bun run scripts/apply-branch-protection.ts",
     "ui:add": "bunx shadcn@4.18.0 add -c apps/web",
     "ui:info": "bunx shadcn@4.18.0 info -c apps/web",
