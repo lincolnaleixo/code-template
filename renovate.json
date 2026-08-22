@@ -1,0 +1,57 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "rangeStrategy": "pin",
+  "minimumReleaseAge": "3 days",
+  "dependencyDashboard": true,
+  "labels": ["dependencies"],
+  "schedule": ["before 6am on monday"],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on monday"]
+  },
+  "packageRules": [
+    {
+      "description": "Group non-major JavaScript and TypeScript updates",
+      "matchManagers": ["bun", "npm"],
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "groupName": "Bun workspace dependencies"
+    },
+    {
+      "description": "Group container digest and patch updates",
+      "matchManagers": ["dockerfile", "docker-compose"],
+      "matchUpdateTypes": ["patch", "digest"],
+      "groupName": "Container images"
+    },
+    {
+      "description": "Keep GitHub Actions immutable and current",
+      "matchManagers": ["github-actions"],
+      "pinDigests": true,
+      "groupName": "GitHub Actions"
+    },
+    {
+      "description": "Require explicit review for major framework updates",
+      "matchPackageNames": [
+        "react",
+        "react-dom",
+        "typescript",
+        "@tanstack/react-start",
+        "better-auth",
+        "elysia",
+        "drizzle-orm",
+        "@capacitor/core",
+        "@tauri-apps/cli"
+      ],
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    }
+  ],
+  "ignorePaths": [
+    "apps/mobile/android/**",
+    "apps/mobile/ios/**",
+    "apps/desktop/src-tauri/target/**"
+  ]
+}
