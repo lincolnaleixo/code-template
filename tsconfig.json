@@ -4,6 +4,7 @@
     "module": "Preserve",
     "moduleDetection": "force",
     "moduleResolution": "Bundler",
+    "resolvePackageJsonImports": true,
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx",
     "allowJs": true,
