@@ -2,7 +2,7 @@
 
 A TypeScript-first, self-hostable product template for web, API, iOS, Android, macOS, Windows, and Linux with one shared product codebase and minimal vendor lock-in.
 
-The repository is deliberately modular. Keep only the capabilities justified by the target product. Operational customization is documented in `README.md` and `docs/`; engineering style is defined in `RULES.md`.
+This repository is configured as a GitHub template. It is deliberately modular: keep only the capabilities justified by the target product. Operational customization is documented in `README.md` and `docs/`; engineering style is defined in `RULES.md`.
 
 ## Included stack
 
@@ -46,9 +46,25 @@ docs/
   architecture.md
   deployment.md
   native.md
+  project-bootstrap.md
+  release.md
   template-customization.md
   ui.md
 ```
+
+## Create a project
+
+Use the GitHub **Use this template** action to create a new repository without carrying this repository's pull-request history.
+
+Before feature development, follow [docs/project-bootstrap.md](docs/project-bootstrap.md) to:
+
+- select and prune capabilities
+- replace application identities and sample domain concepts
+- establish product versioning
+- configure branding, environments, authentication, and deployment
+- validate every platform the product intends to support
+
+Do not begin by blindly renaming every occurrence of `matrix`. Some values are product identity, while others are private workspace implementation names that may remain unchanged.
 
 ## Quick start
 
@@ -118,6 +134,15 @@ apps/web/src/brand.css
 
 Change `--brand-hue`, `--brand-chroma`, `--brand-lightness`, radius, typography, sidebar colors, or chart colors without changing reusable components. Components use semantic roles such as `primary`, `muted`, `border`, `success`, and `destructive` rather than hardcoded brand colors.
 
+The monorepo includes compatible `components.json` files and package aliases for the shadcn CLI. Generated components remain repository-owned source:
+
+```bash
+bun run ui:info
+bun run ui:add button
+```
+
+Review generated code before keeping it, align it with the existing semantic tokens and accessibility contracts, and add a representative example to a playground route.
+
 The lightweight `DataTable` pattern covers common lists. TanStack Table remains part of the web stack for advanced sorting, grouping, column control, and virtualization.
 
 See [docs/ui.md](docs/ui.md).
@@ -136,6 +161,8 @@ A clean removal updates all connected surfaces:
 - CI, security, preview, release, and native workflows
 - tests and documentation
 
+The validator checks capability dependencies and reports both missing files for enabled features and leftover files for disabled features.
+
 Follow [docs/template-customization.md](docs/template-customization.md), update `CHANGELOG.md`, and run:
 
 ```bash
@@ -148,13 +175,16 @@ bun run build
 
 ```bash
 bun dev                 # API and web with fast reloads
-bun run check           # manifest, lint, generated files, types and unit tests
+bun run check           # capabilities, docs, lint, generated files, types and unit tests
+bun run docs:check      # local Markdown links
 bun run build           # API and SSR web builds
 bun run build:native    # SPA bundle for Capacitor and Tauri
 bun run test:integration
 bun run test:e2e
 bun run db:migrate
 bun run db:studio
+bun run ui:info         # inspect shadcn workspace configuration
+bun run ui:add button   # add source to packages/ui for review
 ```
 
 ## Docker Compose
@@ -242,7 +272,7 @@ See [docs/architecture.md](docs/architecture.md).
 
 The main pipeline validates:
 
-1. capability manifest, Biome, generated schema and migration drift, TypeScript, and coverage
+1. capability dependencies, versions, documentation links, Biome, schema and migration drift, TypeScript, and coverage
 2. API, SSR web, native SPA, and UI builds
 3. PostgreSQL authentication and authorization integration tests
 4. hardened Docker Compose and Playwright end-to-end behavior
@@ -260,14 +290,23 @@ bun run build:native
 
 See [docs/native.md](docs/native.md).
 
+## Releases
+
+Template versions follow semantic versioning. Version values, the changelog, migrations, web/API builds, Compose behavior, security checks, and retained native platforms must agree before publishing a tag.
+
+See [docs/release.md](docs/release.md).
+
 ## Documentation index
 
 - [Engineering and coding style](RULES.md)
+- [Contribution guide](CONTRIBUTING.md)
+- [Project bootstrap](docs/project-bootstrap.md)
 - [Architecture](docs/architecture.md)
 - [UI foundation and branding](docs/ui.md)
 - [Template customization](docs/template-customization.md)
 - [Deployment](docs/deployment.md)
 - [Native delivery](docs/native.md)
+- [Release process](docs/release.md)
 - [Security policy](SECURITY.md)
 - [Change history](CHANGELOG.md)
 

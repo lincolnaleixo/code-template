@@ -2,9 +2,18 @@
   "name": "@matrix/ui",
   "private": true,
   "type": "module",
+  "imports": {
+    "#components/*": "./src/components/*.tsx",
+    "#hooks/*": "./src/hooks/*.ts",
+    "#lib/*": "./src/*.ts"
+  },
   "exports": {
     ".": "./src/index.ts",
-    "./styles.css": "./src/styles.css"
+    "./styles.css": "./src/styles.css",
+    "./components/*": "./src/components/*.tsx",
+    "./hooks/*": "./src/hooks/*.ts",
+    "./lib/*": "./src/*.ts",
+    "./patterns/*": "./src/patterns/*.tsx"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"
