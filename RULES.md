@@ -150,4 +150,4 @@ Before considering work complete, verify that:
 - tests match the risk of the change
 - generated files and migrations are current
 - documentation and changelog entries are updated when behavior or architecture changed
-- `bun run check` and relevant builds pass
+- relevant automated checks and retained-platform builds pass
