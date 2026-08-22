@@ -4,6 +4,8 @@ The repository is a capability library. A project should keep only the modules j
 
 Humans and coding agents may disable, remove, or replace optional capabilities when the target project does not require them. This authority is operational rather than stylistic: the change must follow the cleanup and validation process in this document, and it must not remove an explicit product requirement.
 
+For the complete first-use sequence, start with [project-bootstrap.md](project-bootstrap.md).
+
 `template.config.ts` is the source of truth for enabled capabilities.
 
 ## Decision standard
@@ -30,6 +32,17 @@ When the answer is no, remove it cleanly.
 9. Run `bun run template:validate`, `bun run check`, and all builds that remain supported.
 
 A capability is not disabled when its code is merely unreachable. No dead implementation, dependency, service, or workflow should remain.
+
+`bun run template:validate` reports:
+
+- enabled capabilities with missing required files
+- disabled capabilities with known implementation files still present
+- enabled capabilities whose required dependencies are disabled
+- inconsistent package, Tauri, Cargo, or changelog versions
+- invalid dependency version ranges
+- incompatible shared UI and shadcn workspace configuration
+
+The validator intentionally does not force optional process files such as issue forms or contribution guidance to remain in every generated product. When removing them, update README links and run `bun run docs:check`.
 
 ## Enabling or replacing a capability
 
@@ -86,6 +99,7 @@ The minimum adaptation check is:
 
 ```bash
 bun run template:validate
+bun run docs:check
 bun run check
 bun run build
 ```
