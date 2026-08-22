@@ -16,7 +16,14 @@ The format follows Keep a Changelog and the project uses semantic versioning for
 - App shell, confirmation dialog, typed data table, empty state, error state, form field, loading state, page container, page header, pagination, search input, settings section, and stat card patterns.
 - `/ui` core playground and `/ui-advanced` product-pattern playground.
 - `typeset` rich-content styling for markdown, documentation, and AI output.
-- Dedicated architecture, deployment, native, UI, and template customization documentation.
+- Compatible shadcn CLI configurations and package aliases for the web and shared UI workspaces.
+- Exact-version `ui:info` and `ui:add` commands for reviewing and adding repository-owned component source.
+- Local Markdown link validation as part of `bun run check`.
+- Capability dependency, disabled-artifact, version-sync, and UI-configuration validation.
+- Project bootstrap, contribution, and release process documentation.
+- Structured bug report and feature request forms plus an expanded pull-request checklist.
+- Cross-platform editor defaults through `.editorconfig`.
+- Dedicated architecture, deployment, native, UI, release, project bootstrap, and template customization documentation.
 
 ### Changed
 
@@ -28,6 +35,8 @@ The format follows Keep a Changelog and the project uses semantic versioning for
 - Replaced the custom mobile navigation overlay with a focus-managed native sheet.
 - Added arrow, Home, and End keyboard navigation to tabs.
 - Replaced the inline appearance script with a same-origin external script compatible with the Tauri CSP.
+- Expanded the README with GitHub template usage, project initialization, UI CLI, and release guidance.
+- Extended template validation to reject incomplete capability removal and mismatched release versions.
 
 ## [0.3.0] - 2026-08-22
 
