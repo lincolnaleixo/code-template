@@ -2,6 +2,11 @@
   "name": "@matrix/web",
   "private": true,
   "type": "module",
+  "imports": {
+    "#components/*": "./src/components/*.tsx",
+    "#hooks/*": "./src/hooks/*.ts",
+    "#lib/*": "./src/lib/*.ts"
+  },
   "scripts": {
     "dev": "bun --bun vite --port 3000",
     "build": "bun --bun vite build",
