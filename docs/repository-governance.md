@@ -47,7 +47,7 @@ The safe baseline for a repository with one maintainer is:
 - branch deletion is disabled
 - zero approvals are required until an independent reviewer exists
 - code-owner review is not enforced until a different code owner can review the author
-- required status checks are added only after their final names and execution infrastructure are stable
+- current required status checks are preserved unless the command explicitly replaces or clears them
 
 A pull request requirement still prevents direct pushes while allowing a solo maintainer to merge through the reviewed PR interface. Requiring an approval or code-owner review when the only owner is also the author can make every change unmergeable.
 
@@ -61,11 +61,13 @@ Requiring broken or ambiguous checks can also block all merges. Add required che
 
 ## Applying protection
 
-Preview the exact API payload without changing GitHub:
+Preview the exact baseline without changing GitHub:
 
 ```bash
 bun run repo:protect
 ```
+
+When no check option is supplied, dry-run output states that existing required checks will be preserved during apply. The JSON preview shows the new baseline fields, while the apply path reads the current protection first and carries its check names and strictness forward.
 
 Apply the solo-maintainer baseline with a token that can administer repository branch protection:
 
@@ -95,9 +97,9 @@ GITHUB_ADMIN_TOKEN=... \
 
 Do not enable that policy until another eligible reviewer is available.
 
-## Adding required checks
+## Managing required checks
 
-After the runner configuration and final check names are stable, preview:
+After the runner configuration and final check names are stable, preview replacement of the required-check list:
 
 ```bash
 bun run repo:protect \
@@ -112,7 +114,17 @@ GITHUB_ADMIN_TOKEN=... \
   --checks="Quality, schema drift and unit tests|Build web, API and native web bundle|Fresh template consumer smoke|PostgreSQL authentication and authorization integration|Hardened Docker Compose E2E"
 ```
 
-Check names are separated with `|` because valid job names may contain commas. The `--checks` value replaces the current required-check list. Review it before every apply.
+Check names are separated with `|` because valid job names may contain commas. Supplying `--checks` replaces the current required-check list.
+
+To remove all required checks deliberately:
+
+```bash
+GITHUB_ADMIN_TOKEN=... \
+  bun run repo:protect --apply \
+  --clear-checks=true
+```
+
+`--clear-checks=true` cannot be combined with `--checks`. Omitting both preserves the existing required-check configuration.
 
 ## Verification
 
