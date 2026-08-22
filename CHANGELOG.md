@@ -8,8 +8,29 @@ The format follows Keep a Changelog and the project uses semantic versioning for
 
 ### Added
 
+- Repository-owned UI foundation inspired by shadcn with semantic OKLCH tokens.
+- Project-level `brand.css` for hue, chroma, lightness, chart, and dark-theme customization.
+- Light, dark, and system appearance modes with flash-free bootstrap.
+- Compact and comfortable density modes.
+- Shared button, badge, card, input, textarea, label, select, switch, separator, skeleton, alert, avatar, dialog, and tabs primitives.
+- App shell, sidebar, page header, form field, empty state, and stat card patterns.
+- `/ui` development playground for branding and component review.
+- `typeset` rich-content styling for markdown, documentation, and AI output.
+- Dedicated architecture, deployment, native, UI, and template customization documentation.
+
+### Changed
+
+- Refactored the starter product flow to use semantic UI primitives rather than hardcoded Zinc and red utilities.
+- Reworked `RULES.md` to contain engineering and coding standards only.
+- Moved template operation and module removal instructions to `README.md` and `docs/template-customization.md`.
+- Reduced `AGENTS.md` to repository navigation, validation, and documentation responsibilities.
+- Added UI as an explicit capability in `template.config.ts`.
+
+## [0.3.0] - 2026-08-22
+
+### Added
+
 - Root feature manifest and validation command for optional template capabilities.
-- Agent rules that explicitly allow clean removal of unnecessary template modules.
 - Bun dependency catalogs, isolated workspace installs, and a supply-chain release-age gate.
 - Biome formatting and linting.
 - Typed server, client, native, and test environment validation.
