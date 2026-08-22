@@ -20,6 +20,7 @@ This repository is configured as a GitHub template. It is deliberately modular: 
 | Desktop | Tauri 2 for macOS, Windows and Linux |
 | Infrastructure | Docker Compose and Caddy |
 | Observability | JSON logs, request IDs, Prometheus metrics and optional OpenTelemetry |
+| Accessibility | Semantic controls, keyboard contracts, reduced motion and axe audits |
 | Delivery | GitHub Actions, Playwright, GHCR releases, SBOM and provenance |
 | Security | Bun audit, Gitleaks, Trivy, optional CodeQL and Dependency Review |
 
@@ -45,9 +46,11 @@ tests/
 docs/
   architecture.md
   deployment.md
+  licensing.md
   native.md
   project-bootstrap.md
   release.md
+  repository-governance.md
   template-customization.md
   ui.md
 ```
@@ -62,6 +65,7 @@ Before feature development, follow [docs/project-bootstrap.md](docs/project-boot
 - replace application identities and sample domain concepts
 - establish product versioning
 - configure branding, environments, authentication, and deployment
+- choose licensing, ownership, and branch governance
 - validate every platform the product intends to support
 
 Do not begin by blindly renaming every occurrence of `matrix`. Some values are product identity, while others are private workspace implementation names that may remain unchanged.
@@ -174,17 +178,20 @@ bun run build
 ## Development commands
 
 ```bash
-bun dev                 # API and web with fast reloads
-bun run check           # capabilities, docs, lint, generated files, types and unit tests
-bun run docs:check      # local Markdown links
-bun run build           # API and SSR web builds
-bun run build:native    # SPA bundle for Capacitor and Tauri
+bun dev                        # API and web with fast reloads
+bun run check                  # capabilities, docs, lint, generated files, types and unit tests
+bun run docs:check             # local Markdown links
+bun run build                  # API and SSR web builds
+bun run build:native           # SPA bundle for Capacitor and Tauri
 bun run test:integration
 bun run test:e2e
+bun run test:a11y              # axe audit against a running full stack
+bun run test:template-consumer # isolated fresh-repository install, checks and builds
 bun run db:migrate
 bun run db:studio
-bun run ui:info         # inspect shadcn workspace configuration
-bun run ui:add button   # add source to packages/ui for review
+bun run repo:protect           # dry-run the main-branch protection payload
+bun run ui:info                # inspect shadcn workspace configuration
+bun run ui:add button          # add source to packages/ui for review
 ```
 
 ## Docker Compose
@@ -272,10 +279,11 @@ See [docs/architecture.md](docs/architecture.md).
 
 The main pipeline validates:
 
-1. capability dependencies, versions, documentation links, Biome, schema and migration drift, TypeScript, and coverage
+1. capability dependencies, license policy, versions, documentation links, Biome, schema drift, TypeScript, and coverage
 2. API, SSR web, native SPA, and UI builds
-3. PostgreSQL authentication and authorization integration tests
-4. hardened Docker Compose and Playwright end-to-end behavior
+3. an isolated fresh-template consumer installation, check, SSR build, and native web build
+4. PostgreSQL authentication and authorization integration tests
+5. hardened Docker Compose, authenticated Playwright behavior, and axe accessibility audits in light and dark themes
 
 Security workflows add dependency audit, secret scanning, filesystem and image scanning, SBOM, and provenance. Native workflows compile the retained desktop and mobile targets.
 
@@ -292,9 +300,23 @@ See [docs/native.md](docs/native.md).
 
 ## Releases
 
-Template versions follow semantic versioning. Version values, the changelog, migrations, web/API builds, Compose behavior, security checks, and retained native platforms must agree before publishing a tag.
+Template versions follow semantic versioning. Version values, the changelog, migrations, web/API builds, Compose behavior, security checks, consumer smoke test, accessibility audit, and retained native platforms must agree before publishing a tag.
 
 See [docs/release.md](docs/release.md).
+
+## Licensing and repository governance
+
+The private template is explicitly `UNLICENSED` and intentionally does not impose an open-source license on generated products. Every product must choose its own distribution policy, replace the template code owners, and review third-party obligations.
+
+Branch protection is an administrative repository setting and is not copied into generated repositories. Preview the intended policy with:
+
+```bash
+bun run repo:protect
+```
+
+Apply it only with an administrative token after reviewing the payload. Required status checks should be added after their final names and execution infrastructure are stable.
+
+See [docs/licensing.md](docs/licensing.md) and [docs/repository-governance.md](docs/repository-governance.md).
 
 ## Documentation index
 
@@ -306,6 +328,8 @@ See [docs/release.md](docs/release.md).
 - [Template customization](docs/template-customization.md)
 - [Deployment](docs/deployment.md)
 - [Native delivery](docs/native.md)
+- [Licensing and ownership](docs/licensing.md)
+- [Repository governance](docs/repository-governance.md)
 - [Release process](docs/release.md)
 - [Security policy](SECURITY.md)
 - [Change history](CHANGELOG.md)
