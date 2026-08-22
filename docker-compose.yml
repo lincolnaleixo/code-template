@@ -2,13 +2,13 @@ name: matrix-code-template
 
 services:
   postgres:
-    image: postgres:17-alpine
+    image: postgres:17.11-alpine
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-matrix}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-matrix}
       POSTGRES_DB: ${POSTGRES_DB:-matrix}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -16,17 +16,21 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - data
     restart: unless-stopped
 
   minio:
-    image: minio/minio:latest
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${S3_ACCESS_KEY:-minio}
       MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-miniosecret}
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     volumes:
       - minio-data:/data
     healthcheck:
@@ -34,10 +38,14 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - data
     restart: unless-stopped
 
   minio-init:
-    image: minio/mc:latest
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
     depends_on:
       minio:
         condition: service_healthy
@@ -51,6 +59,12 @@ services:
       - |
         mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD"
         mc mb --ignore-existing "local/$$S3_BUCKET"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - data
     restart: "no"
 
   migrate:
@@ -64,6 +78,15 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - data
     restart: "no"
 
   api:
@@ -87,8 +110,13 @@ services:
       S3_BUCKET: ${S3_BUCKET:-matrix}
       S3_ACCESS_KEY: ${S3_ACCESS_KEY:-minio}
       S3_SECRET_KEY: ${S3_SECRET_KEY:-miniosecret}
-    ports:
-      - "3001:3001"
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      METRICS_TOKEN: ${METRICS_TOKEN:-}
+      OTEL_ENABLED: ${OTEL_ENABLED:-false}
+      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-matrix-api}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318/v1/traces}
+    expose:
+      - "3001"
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -100,6 +128,18 @@ services:
       timeout: 5s
       retries: 20
       start_period: 10s
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - edge
+      - data
+      - observability
     restart: unless-stopped
 
   web:
@@ -110,13 +150,14 @@ services:
       target: runtime
       args:
         VITE_API_URL: ${VITE_API_URL:-}
+        VITE_APP_NAME: ${VITE_APP_NAME:-Matrix Template}
     environment:
       NODE_ENV: production
       HOST: 0.0.0.0
       PORT: 3000
       API_URL: http://api:3001
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     depends_on:
       api:
         condition: service_healthy
@@ -126,11 +167,21 @@ services:
       timeout: 5s
       retries: 20
       start_period: 10s
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - edge
     restart: unless-stopped
 
   caddy:
     profiles: ["full"]
-    image: caddy:2-alpine
+    image: caddy:2.11.4-alpine
     ports:
       - "8080:80"
     volumes:
@@ -140,8 +191,69 @@ services:
         condition: service_healthy
       web:
         condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /config:rw,noexec,nosuid,size=16m
+      - /data:rw,noexec,nosuid,size=16m
+      - /tmp:rw,noexec,nosuid,size=16m
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - edge
     restart: unless-stopped
+
+  otel-collector:
+    profiles: ["observability"]
+    image: otel/opentelemetry-collector-contrib:0.157.0
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./infra/otel-collector.yaml:/etc/otelcol-contrib/config.yaml:ro
+    expose:
+      - "4317"
+      - "4318"
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - observability
+    restart: unless-stopped
+
+  prometheus:
+    profiles: ["observability"]
+    image: prom/prometheus:v3.12.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./infra/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - observability
+    restart: unless-stopped
+
+networks:
+  edge:
+  data:
+    internal: true
+  observability:
+    internal: true
 
 volumes:
   postgres-data:
   minio-data:
+  prometheus-data:
