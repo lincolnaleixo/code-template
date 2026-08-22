@@ -1,0 +1,87 @@
+name: Finalize template v2 rescue
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: github.head_ref == 'chore/finalize-template-v2'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - run: bun ci
+      - name: Ensure changelog and modularity policy
+        run: |
+          python <<'PY'
+          from pathlib import Path
+
+          changelog = Path('CHANGELOG.md')
+          text = changelog.read_text() if changelog.exists() else '# Changelog\n\n'
+          marker = '## [0.3.0] - 2026-08-22'
+          if marker not in text:
+              entry = '''## [0.3.0] - 2026-08-22
+
+          ### Added
+
+          - Reproducible Bun dependencies, immutable migrations, complete self-hosted authentication and authorization, typed configuration, domain boundaries, observability, hardened containers, security automation, container previews and releases, and native build workflows.
+          - `RULES.md`, `AGENTS.md`, `template.config.ts`, and automated validation for removing optional modules cleanly.
+
+          ### Changed
+
+          - Replaced public sample CRUD with an authenticated organization and project flow.
+          - Deployment now applies committed SQL only and native authentication requires platform secure storage.
+
+          ### Security
+
+          - Added least-privilege workflows, secret and vulnerability scanning, SBOMs, provenance, secure token-store contracts, and production configuration checks.
+
+          '''
+              position = text.find('## [')
+              text = text.rstrip() + '\n\n' + entry if position == -1 else text[:position] + entry + text[position:]
+              changelog.write_text(text)
+
+          rules = Path('RULES.md')
+          rules_text = rules.read_text() if rules.exists() else '# Template rules\n\n'
+          marker = '## Agent authority to disable template modules'
+          if marker not in rules_text:
+              rules_text = rules_text.rstrip() + '''
+
+          ## Agent authority to disable template modules
+
+          A coding agent may disable, replace, or remove any optional module when the project requirements do not justify it. This template is a superset of capabilities, not a requirement to keep every technology.
+
+          A module is disabled correctly only when the agent also removes its implementation, imports, workspace references, dependencies, environment variables, generated artifacts, Docker services, volumes, ports, healthchecks, CI and release jobs, tests, and documentation. The agent must update `template.config.ts`, record the project reason, preserve only contracts still used by enabled features, update `CHANGELOG.md` when appropriate, and run `bun run check` plus the builds and tests for every remaining target.
+
+          The agent must not leave a feature partially wired, silently skip failing checks, or retain dead dependencies for hypothetical future use.
+          '''
+              rules.write_text(rules_text)
+
+          Path('.github/workflows/bootstrap-generated-assets.yml').unlink(missing_ok=True)
+          Path('scripts/pin-catalog.ts').unlink(missing_ok=True)
+          PY
+      - name: Apply safe automatic formatting
+        run: bun run format || true
+      - name: Remove one-time workflows
+        run: |
+          rm -f .github/workflows/finalize-template-v2.yml
+          rm -f .github/workflows/finalize-template-v2-rescue.yml
+      - name: Commit finalized branch
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name matrix-template-agent
+          git config user.email actions@users.noreply.github.com
+          git add -A
+          git commit -m "docs: finalize changelog and modular agent rules"
+          git push origin HEAD:${{ github.head_ref }}
