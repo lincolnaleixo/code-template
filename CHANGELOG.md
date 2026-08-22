@@ -16,13 +16,14 @@ The format follows Keep a Changelog and the project uses semantic versioning for
 - App shell, confirmation dialog, typed data table, empty state, error state, form field, loading state, page container, page header, pagination, search input, settings section, and stat card patterns.
 - `/ui` core playground and `/ui-advanced` product-pattern playground.
 - `typeset` rich-content styling for markdown, documentation, and AI output.
-- Compatible shadcn CLI configurations and package aliases for the web and shared UI workspaces.
+- Compatible Radix Nova shadcn CLI configurations and package aliases for the web and shared UI workspaces.
 - Exact-version `ui:info` and `ui:add` commands for reviewing and adding repository-owned component source.
 - Local Markdown link validation as part of `bun run check`.
 - Capability dependency, disabled-artifact, version-sync, and UI-configuration validation.
+- Synchronized `version:set` command with dry-run support for package, Tauri, and Cargo metadata.
 - Project bootstrap, contribution, and release process documentation.
 - Structured bug report and feature request forms plus an expanded pull-request checklist.
-- Cross-platform editor defaults through `.editorconfig`.
+- Cross-platform editor and source normalization through `.editorconfig` and `.gitattributes`.
 - Dedicated architecture, deployment, native, UI, release, project bootstrap, and template customization documentation.
 
 ### Changed
