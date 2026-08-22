@@ -1,8 +1,17 @@
+import { getServerEnv } from '@matrix/env/server'
 import { app } from './app'
+import { getRootLogger } from './http/request-context'
 
-const port = Number(process.env.PORT ?? 3001)
-const hostname = process.env.HOST ?? '0.0.0.0'
+const environment = getServerEnv()
+const logger = getRootLogger()
 
-app.listen({ port, hostname })
+app.listen({
+  port: environment.PORT,
+  hostname: environment.HOST,
+})
 
-console.log(`API listening at http://${hostname}:${String(port)}`)
+logger.info('api.started', {
+  hostname: environment.HOST,
+  port: environment.PORT,
+  environment: environment.NODE_ENV,
+})
