@@ -8,6 +8,34 @@ This document defines repository-level controls for maintaining the template. It
 
 A generated product must replace the template owners with the real product team. Review routing is not product ownership by itself. See [licensing.md](licensing.md).
 
+## Repository metadata
+
+The template should have a clear description and focused topics so its purpose and technology boundary are visible in GitHub.
+
+Preview the metadata payload:
+
+```bash
+bun run repo:metadata
+```
+
+Apply it with a token that can administer repository settings:
+
+```bash
+GITHUB_ADMIN_TOKEN=... bun run repo:metadata --apply
+```
+
+Override values when adapting a generated product:
+
+```bash
+GITHUB_ADMIN_TOKEN=... \
+  bun run repo:metadata --apply \
+  --repository=owner/product \
+  --description="Product description" \
+  --topics="typescript,bun,react,product-category"
+```
+
+The command normalizes topics to lowercase, removes duplicates, enforces GitHub topic syntax, limits the payload to 20 topics, and never prints the token.
+
 ## Main branch baseline
 
 The intended `main` branch policy is:
@@ -55,7 +83,7 @@ After the runner configuration and final check names are stable, preview:
 
 ```bash
 bun run repo:protect \
-  --checks="Quality, schema drift and unit tests|Build web, API and native web bundle|PostgreSQL authentication and authorization integration|Hardened Docker Compose E2E"
+  --checks="Quality, schema drift and unit tests|Build web, API and native web bundle|Fresh template consumer smoke|PostgreSQL authentication and authorization integration|Hardened Docker Compose E2E"
 ```
 
 Then apply the reviewed payload:
@@ -63,7 +91,7 @@ Then apply the reviewed payload:
 ```bash
 GITHUB_ADMIN_TOKEN=... \
   bun run repo:protect --apply \
-  --checks="Quality, schema drift and unit tests|Build web, API and native web bundle|PostgreSQL authentication and authorization integration|Hardened Docker Compose E2E"
+  --checks="Quality, schema drift and unit tests|Build web, API and native web bundle|Fresh template consumer smoke|PostgreSQL authentication and authorization integration|Hardened Docker Compose E2E"
 ```
 
 Check names are separated with `|` because valid job names may contain commas. The `--checks` value replaces the current required-check list. Review it before every apply.
@@ -94,12 +122,13 @@ Never print the token or the complete shell environment.
 
 ## Generated repositories
 
-Branch protection settings are not copied by GitHub's template operation. Every generated repository must:
+Repository metadata and branch protection settings are not assumed to match a generated product. Every generated repository must:
 
 1. replace `CODEOWNERS`
-2. decide its review count and bypass policy
-3. establish stable status-check names
-4. run the protection command against its own repository
-5. verify protection with a rejected direct push or equivalent administrative test
+2. set its real description and topics
+3. decide its review count and bypass policy
+4. establish stable status-check names
+5. apply the metadata and protection commands against its own repository
+6. verify protection with a rejected direct push or equivalent administrative test
 
-The product bootstrap is incomplete until ownership and branch policy match the real team and risk level.
+The product bootstrap is incomplete until ownership, metadata, and branch policy match the real team and risk level.
