@@ -39,6 +39,9 @@ function applyTheme(theme: Theme) {
 
   document.documentElement.classList.toggle('dark', dark)
   document.documentElement.dataset.theme = theme
+
+  const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+  themeColor?.setAttribute('content', dark ? '#17181c' : '#ffffff')
 }
 
 function applyDensity(density: Density) {
