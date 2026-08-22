@@ -2,6 +2,7 @@ import { dirname, join } from 'node:path'
 
 interface PackageManifest {
   name?: string
+  version?: string
   dependencies?: Record<string, string>
   devDependencies?: Record<string, string>
   peerDependencies?: Record<string, string>
@@ -20,7 +21,6 @@ for (const pattern of ['apps/*/package.json', 'packages/*/package.json']) {
 
 const manifests = await Promise.all(
   manifestPaths.map(async (path) => ({
-    path,
     directory: dirname(path),
     manifest: (await Bun.file(path).json()) as PackageManifest,
   })),
@@ -32,24 +32,21 @@ function usesCatalog(manifest: PackageManifest, dependency: string): boolean {
   )
 }
 
+async function readInstalledManifest(directory: string, dependency: string): Promise<PackageManifest | null> {
+  const packagePath = join(directory, 'node_modules', dependency, 'package.json')
+  if (!(await Bun.file(packagePath).exists())) return null
+  return (await Bun.file(packagePath).json()) as PackageManifest
+}
+
 async function findResolvedVersion(dependency: string): Promise<string> {
-  const candidates = manifests.filter(({ manifest }) => usesCatalog(manifest, dependency))
+  const candidateDirectories = [
+    ...manifests.filter(({ manifest }) => usesCatalog(manifest, dependency)).map(({ directory }) => directory),
+    process.cwd(),
+  ]
 
-  for (const { directory } of candidates) {
-    try {
-      let current = dirname(Bun.resolveSync(dependency, directory))
-
-      while (current !== dirname(current)) {
-        const packagePath = join(current, 'package.json')
-        if (await Bun.file(packagePath).exists()) {
-          const manifest = (await Bun.file(packagePath).json()) as PackageManifest & { version?: string }
-          if (manifest.name === dependency && manifest.version) return manifest.version
-        }
-        current = dirname(current)
-      }
-    } catch {
-      // Try the next workspace that references this catalog dependency.
-    }
+  for (const directory of new Set(candidateDirectories)) {
+    const manifest = await readInstalledManifest(directory, dependency)
+    if (manifest?.name === dependency && manifest.version) return manifest.version
   }
 
   throw new Error(`Unable to resolve installed version for catalog dependency "${dependency}".`)
