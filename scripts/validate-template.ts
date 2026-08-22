@@ -12,11 +12,9 @@ interface PackageManifest {
 
 const requiredPaths: Partial<Record<TemplateFeature, string[]>> = {
   web: ['apps/web/package.json'],
+  ui: ['packages/ui/package.json', 'packages/ui/src/styles.css', 'apps/web/src/brand.css'],
   api: ['apps/api/package.json'],
-  database: [
-    'packages/db/package.json',
-    'packages/db/drizzle/meta/_journal.json',
-  ],
+  database: ['packages/db/package.json', 'packages/db/drizzle/meta/_journal.json'],
   authentication: ['packages/auth/package.json', 'packages/db/src/auth-schema.ts'],
   organizations: ['packages/auth/src/permissions.ts', 'packages/db/src/project-schema.ts'],
   objectStorage: ['packages/storage/package.json'],
@@ -44,6 +42,11 @@ const alwaysRequired = [
   'RULES.md',
   'SECURITY.md',
   'bun.lock',
+  'docs/architecture.md',
+  'docs/deployment.md',
+  'docs/native.md',
+  'docs/template-customization.md',
+  'docs/ui.md',
   'package.json',
   'template.config.ts',
 ]

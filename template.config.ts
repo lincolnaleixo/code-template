@@ -1,5 +1,6 @@
 export const templateFeatures = {
   web: true,
+  ui: true,
   api: true,
   database: true,
   authentication: true,
