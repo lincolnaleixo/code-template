@@ -5,6 +5,7 @@ interface PackageManifest {
   devDependencies?: Record<string, string>
   exports?: Record<string, unknown>
   imports?: Record<string, string>
+  license?: string
   packageManager?: string
   peerDependencies?: Record<string, string>
   version?: string
@@ -59,7 +60,11 @@ const requiredPaths: Partial<Record<TemplateFeature, string[]>> = {
     'infra/prometheus.yml',
   ],
   docker: ['docker-compose.yml', 'apps/api/Dockerfile', 'apps/web/Dockerfile'],
-  endToEndTests: ['playwright.config.ts', 'tests/e2e/smoke.spec.ts'],
+  endToEndTests: [
+    'playwright.config.ts',
+    'scripts/check-accessibility.ts',
+    'tests/e2e/smoke.spec.ts',
+  ],
   containerReleases: ['.github/workflows/release-containers.yml'],
   nativeReleases: ['.github/workflows/release-native.yml'],
 }
@@ -135,6 +140,10 @@ const rootVersion = rootManifest.version ?? ''
 
 if (!exactVersion.test(rootVersion)) {
   errors.push(`Root package version must be exact semantic versioning, received "${rootVersion}".`)
+}
+
+if (!rootManifest.license?.trim()) {
+  errors.push('Root package license policy must be explicit.')
 }
 
 if (!/^bun@\d+\.\d+\.\d+$/.test(rootManifest.packageManager ?? '')) {
