@@ -9,6 +9,7 @@ async function run(command: string[]): Promise<void> {
 
 await run(['bun', 'run', 'auth:generate'])
 await run(['bun', 'run', 'db:generate'])
+await run(['bunx', 'biome', 'format', '--write', 'packages/db/src/auth-schema.ts'])
 
 const statusProcess = Bun.spawn(
   [
