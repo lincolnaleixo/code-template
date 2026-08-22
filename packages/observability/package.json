@@ -1,0 +1,23 @@
+{
+  "name": "@matrix/observability",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@elysia/opentelemetry": "catalog:",
+    "@matrix/env": "workspace:*",
+    "@opentelemetry/exporter-trace-otlp-http": "catalog:",
+    "@opentelemetry/sdk-trace-node": "catalog:",
+    "elysia": "catalog:",
+    "prom-client": "catalog:"
+  },
+  "devDependencies": {
+    "@types/bun": "catalog:",
+    "typescript": "catalog:"
+  }
+}
