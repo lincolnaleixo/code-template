@@ -23,7 +23,7 @@ const repository = option('repository') ?? process.env.GITHUB_REPOSITORY ?? 'mat
 const branch = option('branch') ?? process.env.BRANCH_NAME ?? 'main'
 const approvals = integerOption('approvals', 1)
 const requiredChecks = (option('checks') ?? process.env.BRANCH_REQUIRED_CHECKS ?? '')
-  .split(',')
+  .split('|')
   .map((check) => check.trim())
   .filter(Boolean)
 const token = process.env.GITHUB_ADMIN_TOKEN ?? process.env.GH_TOKEN
