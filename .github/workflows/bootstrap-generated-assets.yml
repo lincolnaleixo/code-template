@@ -23,20 +23,19 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.14
-      - run: bun install
-      - run: bun run scripts/pin-catalog.ts
-      - run: bun install --lockfile-only
+      - run: bun ci
       - run: bun run auth:generate
-      - run: bunx biome format --write package.json packages/db/src/auth-schema.ts
+      - run: bun run db:generate
+      - run: bunx biome format --write packages/db/src/auth-schema.ts
       - name: Commit generated assets
         shell: bash
         run: |
-          if git diff --quiet -- package.json bun.lock packages/db/src/auth-schema.ts; then
-            echo "Generated assets are already current."
+          if git diff --quiet -- packages/db/src/auth-schema.ts packages/db/drizzle; then
+            echo "Generated database assets are already current."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package.json bun.lock packages/db/src/auth-schema.ts
-          git commit -m "chore: pin dependencies and generate auth schema"
+          git add packages/db/src/auth-schema.ts packages/db/drizzle
+          git commit -m "chore: generate immutable database migrations"
           git push origin HEAD:${{ github.event.pull_request.head.ref || github.ref_name }}
