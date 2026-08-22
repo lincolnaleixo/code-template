@@ -1,11 +1,24 @@
+import { loadClientEnv, resolveApiBaseUrl } from '@matrix/env/client'
 import { createAuthClient } from 'better-auth/react'
+import { organizationClient } from 'better-auth/client/plugins'
+import { accessControl, organizationRoles } from './permissions'
 
-const serverBaseUrl = process.env.API_URL ?? 'http://localhost:3001'
-const configuredBrowserBaseUrl = import.meta.env?.VITE_API_URL?.trim()
-const browserBaseUrl = configuredBrowserBaseUrl || (typeof window === 'undefined' ? serverBaseUrl : window.location.origin)
-
-export const authClient = createAuthClient({
-  baseURL: typeof window === 'undefined' ? serverBaseUrl : browserBaseUrl,
+const environment = loadClientEnv({
+  VITE_API_URL: import.meta.env?.VITE_API_URL,
+  VITE_APP_NAME: import.meta.env?.VITE_APP_NAME,
 })
 
-export const { signIn, signOut, signUp, useSession } = authClient
+export const authClient = createAuthClient({
+  baseURL: resolveApiBaseUrl(environment),
+  fetchOptions: {
+    credentials: 'include',
+  },
+  plugins: [
+    organizationClient({
+      ac: accessControl,
+      roles: organizationRoles,
+    }),
+  ],
+})
+
+export const { signIn, signOut, signUp, useSession, organization } = authClient
