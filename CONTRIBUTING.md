@@ -1,0 +1,110 @@
+# Contributing
+
+This repository is a product template. Changes should improve the default without making every generated project carry unnecessary complexity.
+
+## Before changing code
+
+1. Read [RULES.md](RULES.md).
+2. Read the relevant architecture or operational document under [`docs/`](docs/architecture.md).
+3. Check `template.config.ts` when the change adds, removes, or couples capabilities.
+4. Prefer a small, reversible change over a speculative framework or abstraction.
+
+## Change workflow
+
+1. Create a focused branch from `main`.
+2. Keep the change scoped to one problem.
+3. Add or update tests at the level where the behavior can fail.
+4. Update documentation when commands, architecture, configuration, or supported behavior changes.
+5. Add an entry under `Unreleased` in [CHANGELOG.md](CHANGELOG.md) for a material change.
+6. Open a pull request using the repository template and explain any validation marked not applicable.
+
+Commit messages should describe intent and use a conventional prefix when practical, for example:
+
+```text
+feat(ui): add a reusable command palette
+fix(auth): preserve native bearer sessions
+chore(deps): update the TanStack group
+docs: clarify project initialization
+```
+
+## Architecture boundaries
+
+- Product-independent rules belong in `packages/domain`.
+- HTTP validation, cookies, status codes, and request context belong in `apps/api`.
+- Database, storage, telemetry, and provider details belong in infrastructure adapters.
+- Shared UI primitives and patterns belong in `packages/ui`.
+- Product-specific compositions belong in `apps/web` or a product feature package.
+- Native wrappers should remain thin and expose narrow adapters to shared TypeScript code.
+
+Do not introduce imports that reverse the dependency direction documented in [docs/architecture.md](docs/architecture.md).
+
+## Dependencies
+
+Before adding a package, confirm that the platform or an existing dependency cannot satisfy the requirement cleanly.
+
+When a dependency is justified:
+
+1. pin an exact version in the root Bun catalog
+2. reference it with `catalog:` from the consuming workspace
+3. update `bun.lock`
+4. review maintenance, security, runtime, and bundle cost
+5. update Renovate grouping when the package belongs to an existing dependency family
+
+Do not add an unbounded version or a second tool that duplicates an existing responsibility.
+
+## Database and authentication
+
+Schema changes require committed migrations:
+
+```bash
+bun run auth:generate   # when Better Auth configuration changed
+bun run db:generate
+bun run db:migrate
+bun run test:integration
+```
+
+Review generated SQL before committing it. Deployment applies committed migrations and never generates schema changes.
+
+Authentication changes should test identity, session transport, authorization, and denied access separately.
+
+## UI changes
+
+Use semantic tokens and preserve keyboard, focus, reduced-motion, light-theme, and dark-theme behavior.
+
+The shadcn CLI is configured for the monorepo and writes source into `packages/ui`:
+
+```bash
+bun run ui:info
+bun run ui:add button
+```
+
+Generated source is a starting point, not an opaque dependency. Review the diff, align it with repository conventions, export the component deliberately, and add a representative example to `/ui` or `/ui-advanced`.
+
+See [docs/ui.md](docs/ui.md).
+
+## Validation
+
+Use the smallest validation set that fully covers the change, then expand it when risk crosses a boundary.
+
+| Change | Minimum validation |
+| --- | --- |
+| Documentation only | `bun run docs:check`, `bun run lint:ci` |
+| TypeScript or shared package | `bun run check` |
+| API or database | `bun run check`, `bun run test:integration` |
+| Web behavior | `bun run check`, `bun run build`, relevant Playwright tests |
+| Docker or deployment | Compose configuration, image builds, readiness, E2E |
+| Mobile or desktop | `bun run build:native` and the retained platform build |
+| Release mechanics | Follow [docs/release.md](docs/release.md) |
+
+A checkbox may be marked not applicable only with a short reason. Do not claim a command passed when it did not run.
+
+## Security
+
+- Never commit secrets, tokens, certificates, production connection strings, or private customer data.
+- Do not weaken authentication, authorization, CSP, container isolation, or workflow permissions merely to make a test pass.
+- Redact sensitive fields from logs and examples.
+- Report security issues using [SECURITY.md](SECURITY.md), not a public issue.
+
+## Generated projects
+
+When adapting this repository into a product, follow [docs/project-bootstrap.md](docs/project-bootstrap.md). Remove unused capabilities completely rather than leaving dormant code, services, dependencies, or workflows.
