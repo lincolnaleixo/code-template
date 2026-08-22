@@ -12,23 +12,24 @@
   },
   "dependencies": {
     "@matrix/api-client": "workspace:*",
+    "@matrix/auth": "workspace:*",
+    "@matrix/env": "workspace:*",
     "@matrix/ui": "workspace:*",
-    "@tanstack/react-query": "latest",
-    "@tanstack/react-router": "latest",
-    "@tanstack/react-start": "latest",
-    "@tanstack/react-table": "latest",
-    "react": "latest",
-    "react-dom": "latest"
+    "@tanstack/react-query": "catalog:",
+    "@tanstack/react-router": "catalog:",
+    "@tanstack/react-start": "catalog:",
+    "@tanstack/react-table": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "latest",
-    "@tanstack/router-cli": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
-    "@vitejs/plugin-react": "latest",
-    "nitro": "latest",
-    "tailwindcss": "latest",
-    "typescript": "latest",
-    "vite": "latest"
+    "@tailwindcss/vite": "catalog:",
+    "@tanstack/router-cli": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
   }
 }
