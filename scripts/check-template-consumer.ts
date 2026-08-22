@@ -7,7 +7,7 @@ const temporaryRoot = await mkdtemp(join(tmpdir(), 'matrix-template-consumer-'))
 const consumerRoot = join(temporaryRoot, 'product')
 const keepWorkspace = process.env.KEEP_TEMPLATE_CONSUMER === '1'
 const nativeApiUrl = process.env.TEMPLATE_SMOKE_API_URL ?? 'https://api.example.com'
-const ignoredRootEntries = new Set([
+const ignoredSegments = new Set([
   '.git',
   '.output',
   'coverage',
@@ -22,8 +22,7 @@ function shouldCopy(source: string): boolean {
   const path = relative(repositoryRoot, source)
   if (!path) return true
 
-  const [rootEntry] = path.split(sep)
-  if (rootEntry && ignoredRootEntries.has(rootEntry)) return false
+  if (path.split(sep).some((segment) => ignoredSegments.has(segment))) return false
 
   const fileName = basename(path)
   if (fileName === '.env.example') return true
