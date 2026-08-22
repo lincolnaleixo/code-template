@@ -2,6 +2,8 @@
 
 The repository is a capability library. A project should keep only the modules justified by its product, deployment model, team, and near-term roadmap.
 
+Humans and coding agents may disable, remove, or replace optional capabilities when the target project does not require them. This authority is operational rather than stylistic: the change must follow the cleanup and validation process in this document, and it must not remove an explicit product requirement.
+
 `template.config.ts` is the source of truth for enabled capabilities.
 
 ## Decision standard
