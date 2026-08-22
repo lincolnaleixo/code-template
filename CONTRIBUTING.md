@@ -71,14 +71,14 @@ Authentication changes should test identity, session transport, authorization, a
 
 Use semantic tokens and preserve keyboard, focus, reduced-motion, light-theme, and dark-theme behavior.
 
-The shadcn CLI is configured for the monorepo and writes source into `packages/ui`:
+The shadcn CLI is configured for the monorepo. Run it from the app workspace so UI primitives are routed into `packages/ui` and app-level blocks or compositions are routed into `apps/web`:
 
 ```bash
 bun run ui:info
 bun run ui:add button
 ```
 
-Generated source is a starting point, not an opaque dependency. Review the diff, align it with repository conventions, export the component deliberately, and add a representative example to `/ui` or `/ui-advanced`.
+Generated source is a starting point, not an opaque dependency. Review the diff, align it with repository conventions, export shared components deliberately, and add a representative example to `/ui` or `/ui-advanced`.
 
 See [docs/ui.md](docs/ui.md).
 
