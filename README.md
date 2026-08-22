@@ -73,11 +73,12 @@ bun dev
 Open:
 
 ```text
-Web and auth proxy   http://localhost:3000
-API                  http://localhost:3001
-OpenAPI              http://localhost:3001/openapi
-UI playground        http://localhost:3000/ui
-MinIO console        http://localhost:9001
+Web and auth proxy       http://localhost:3000
+API                      http://localhost:3001
+OpenAPI                  http://localhost:3001/openapi
+Core UI playground       http://localhost:3000/ui
+Advanced UI playground   http://localhost:3000/ui-advanced
+MinIO console            http://localhost:9001
 ```
 
 Vite and the Bun API run on the host for fast reloads. Docker runs PostgreSQL and MinIO.
@@ -103,10 +104,11 @@ This proves the path from React and TanStack Query through Eden, Elysia, Better 
 - semantic OKLCH tokens
 - light, dark, and system themes
 - compact and comfortable density
-- buttons, badges, cards, forms, switch, tabs, dialog, alerts, avatar, and loading states
-- app shell, sidebar, page header, empty state, form field, and stat card patterns
-- a `/ui` playground for visual review
+- accessible controls, surfaces, feedback, overlays, tables, and typography
+- app shell, page headers, states, settings, typed data table, search, and pagination patterns
+- core and advanced playground routes for visual review
 - a prose `typeset` class for markdown and rich content
+- a CSP-safe external appearance bootstrap for Tauri and web
 
 Project identity lives in:
 
@@ -114,7 +116,9 @@ Project identity lives in:
 apps/web/src/brand.css
 ```
 
-Change `--brand-hue`, `--brand-chroma`, `--brand-lightness`, radius, or typography without changing reusable components. Components use semantic roles such as `primary`, `muted`, `border`, `success`, and `destructive` rather than hardcoded brand colors.
+Change `--brand-hue`, `--brand-chroma`, `--brand-lightness`, radius, typography, sidebar colors, or chart colors without changing reusable components. Components use semantic roles such as `primary`, `muted`, `border`, `success`, and `destructive` rather than hardcoded brand colors.
+
+The lightweight `DataTable` pattern covers common lists. TanStack Table remains part of the web stack for advanced sorting, grouping, column control, and virtualization.
 
 See [docs/ui.md](docs/ui.md).
 
