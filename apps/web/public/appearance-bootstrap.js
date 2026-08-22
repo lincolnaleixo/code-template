@@ -9,6 +9,9 @@
     document.documentElement.classList.toggle('dark', dark)
     document.documentElement.dataset.theme = theme
     document.documentElement.dataset.density = density
+
+    const themeColor = document.querySelector('meta[name="theme-color"]')
+    if (themeColor) themeColor.setAttribute('content', dark ? '#17181c' : '#ffffff')
   } catch {
     document.documentElement.dataset.theme = 'system'
     document.documentElement.dataset.density = 'comfortable'
