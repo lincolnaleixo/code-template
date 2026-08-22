@@ -1,6 +1,6 @@
 # UI Foundation
 
-The UI system is owned by the repository and follows the shadcn model: accessible primitives are copied into `packages/ui`, composed into patterns, and customized with semantic CSS variables.
+The UI system is owned by the repository and follows the shadcn model: accessible primitives live in `packages/ui`, patterns compose those primitives, and project identity is expressed through semantic CSS variables.
 
 ## Principles
 
@@ -11,28 +11,32 @@ The UI system is owned by the repository and follows the shadcn model: accessibl
 - responsive web, mobile WebView, and desktop WebView behavior
 - minimal animation with reduced-motion support
 - no product-specific business logic in UI primitives
+- native browser controls where they provide the right accessibility behavior
 
 ## File layout
 
 ```text
 packages/ui/src/
-  components/       buttons, forms, cards, feedback, dialog, tabs
-  patterns/         app shell, page header, empty state, stat card
+  components/       controls, surfaces, feedback, overlays, tables
+  patterns/         app shell, page states, settings, data composition
   styles.css        semantic tokens, Tailwind mappings, base styles
-  theme-provider.tsx appearance state and bootstrap script
-apps/web/src/
-  brand.css         project-specific primary color and chart palette
-  routes/ui.tsx     development playground
+  theme-provider.tsx appearance state after hydration
+apps/web/
+  public/appearance-bootstrap.js  CSP-safe pre-hydration appearance setup
+  src/brand.css                   project-specific identity
+  src/routes/ui.tsx               core foundation playground
+  src/routes/ui-advanced.tsx      product pattern playground
 ```
 
-## Branding
+## Semantic tokens
 
-Reusable components use tokens such as:
+Reusable components use roles rather than literal colors:
 
 ```text
 background
 foreground
 card
+popover
 primary
 secondary
 muted
@@ -45,11 +49,26 @@ border
 input
 ring
 sidebar
+chart-1 through chart-5
 ```
+
+Do this:
+
+```tsx
+<Button className="bg-primary text-primary-foreground">Save</Button>
+```
+
+Do not do this in a reusable component:
+
+```tsx
+<Button className="bg-blue-600 text-white">Save</Button>
+```
+
+## Branding
 
 Project identity belongs in `apps/web/src/brand.css`.
 
-The default palette exposes three simple controls:
+The starter palette exposes three primary controls:
 
 ```css
 :root {
@@ -59,7 +78,7 @@ The default palette exposes three simple controls:
 }
 ```
 
-Example hue starting points:
+Useful hue starting points:
 
 ```text
 blue        255
@@ -70,7 +89,7 @@ orange       55
 rose         15
 ```
 
-Review contrast after every brand change. The `primary-foreground` token must remain readable against `primary` in both themes.
+You can also override typography, radius, density defaults, sidebar colors, and chart colors in the same file. Review contrast after every brand change. `primary-foreground` must remain readable against `primary` in light and dark themes.
 
 ## Radius and density
 
@@ -84,25 +103,86 @@ Change global shape with:
 
 The appearance provider sets `data-density` on the root element. Supported modes are `compact` and `comfortable`.
 
-## Themes
+Density changes control height and section rhythm. It should not hide content or reduce touch targets below an accessible size.
 
-Wrap the application with `AppearanceProvider` and include `APPEARANCE_BOOTSTRAP_SCRIPT` in the document head. This prevents a visible theme flash and supports light, dark, and system modes.
+## Themes and CSP
+
+`AppearanceProvider` manages light, dark, and system preferences after hydration. The document loads `/appearance-bootstrap.js` before application scripts so the stored appearance is applied without a visible flash.
+
+The bootstrap is an external same-origin script rather than inline JavaScript. This keeps it compatible with the strict Tauri Content Security Policy.
+
+When changing the storage keys, update both:
+
+```text
+packages/ui/src/theme-provider.tsx
+apps/web/public/appearance-bootstrap.js
+```
+
+## Included primitives
+
+```text
+Alert
+Avatar
+Badge
+Button
+Card
+Checkbox
+Dialog
+Input
+Label
+Select
+Separator
+Sheet
+Skeleton
+Switch
+Table
+Tabs
+Textarea
+Tooltip
+```
+
+The dialog and sheet use the native `dialog` element for focus management, Escape behavior, and modal semantics. Tabs implement arrow, Home, and End keyboard navigation.
+
+## Included patterns
+
+```text
+AppShell
+ConfirmDialog
+DataTable
+EmptyState
+ErrorState
+FormField
+LoadingState
+PageContainer
+PageHeader
+Pagination
+SearchInput
+SettingsSection
+StatCard
+```
+
+`DataTable` intentionally covers the common case: typed columns, semantic table markup, empty state, search composition, and pagination composition. Use TanStack Table when a project requires server sorting, column visibility, grouping, resizing, virtualization, or complex selection.
 
 ## Component ownership
 
-Components are source code, not an opaque dependency. Modify them when the project needs a different interaction or visual language, while preserving accessibility and semantic tokens.
+Components are source code, not an opaque dependency. Modify them when a product needs a different interaction or visual language, while preserving accessibility and semantic tokens.
 
-Primitives should remain generic. Product-specific combinations belong in product features or reusable patterns.
+Primitives remain generic. Product-specific combinations belong in a product feature or in a reusable pattern whose purpose is clear.
 
-## UI playground
+## Playgrounds
 
 Run the web application and open:
 
 ```text
 http://localhost:3000/ui
+http://localhost:3000/ui-advanced
 ```
 
-The playground displays colors, typography, controls, cards, feedback, loading states, dialog behavior, themes, and density. Use it when adapting a project brand.
+The core playground displays tokens, typography, controls, cards, feedback, loading, dialog behavior, themes, and density.
+
+The advanced playground displays tables, search, pagination, settings sections, checkbox, tooltip, sheet, confirmation, loading, and error states.
+
+Use both routes when adapting a project brand or changing a shared component.
 
 ## Adding components
 
@@ -112,5 +192,6 @@ Before adding a component:
 2. Define keyboard and screen-reader behavior.
 3. Use semantic tokens.
 4. Support disabled, focus, error, loading, light, and dark states where applicable.
-5. Add it to the UI playground.
+5. Add a representative example to a playground route.
 6. Keep the public API small and composable.
+7. Add a dependency only when the interaction is too complex to maintain safely in the repository.
