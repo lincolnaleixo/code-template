@@ -78,27 +78,15 @@ const featureDependencies: Partial<Record<TemplateFeature, TemplateFeature[]>> =
 }
 
 const alwaysRequired = [
-  '.editorconfig',
-  '.github/ISSUE_TEMPLATE/bug_report.yml',
-  '.github/ISSUE_TEMPLATE/config.yml',
-  '.github/ISSUE_TEMPLATE/feature_request.yml',
-  '.github/pull_request_template.md',
   'AGENTS.md',
   'CHANGELOG.md',
-  'CONTRIBUTING.md',
   'README.md',
   'RULES.md',
   'SECURITY.md',
   'bun.lock',
   'docs/architecture.md',
-  'docs/deployment.md',
-  'docs/native.md',
-  'docs/project-bootstrap.md',
-  'docs/release.md',
   'docs/template-customization.md',
-  'docs/ui.md',
   'package.json',
-  'scripts/check-doc-links.ts',
   'template.config.ts',
 ]
 
