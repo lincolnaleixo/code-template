@@ -1,0 +1,61 @@
+name: Feature request
+description: Propose a reusable capability or improvement for generated projects
+title: "[Feature]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The template follows KISS and YAGNI. A proposal should solve a repeated, current product need without forcing unnecessary complexity on every generated repository.
+  - type: textarea
+    id: requirement
+    attributes:
+      label: Product requirement
+      description: Describe the user or operational problem, not only the desired technology.
+    validations:
+      required: true
+  - type: textarea
+    id: consumers
+    attributes:
+      label: Expected consumers
+      description: Which project shapes would retain this capability, and which should remove it?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Smallest useful solution
+      description: Describe the simplest implementation and its boundaries.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Include platform capabilities, existing dependencies, documentation-only options, and project-specific implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Template impact
+      description: List packages, capabilities, environment variables, migrations, workflows, tests, security, and documentation affected.
+    validations:
+      required: true
+  - type: textarea
+    id: removal
+    attributes:
+      label: Removal or disable path
+      description: Explain how a generated project that does not need this capability removes it cleanly.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Proposal checks
+      options:
+        - label: This solves a current repeated requirement rather than a speculative future need.
+          required: true
+        - label: I checked whether the platform or existing stack already provides the capability.
+          required: true
+        - label: I considered maintenance, security, bundle, and operational cost.
+          required: true
