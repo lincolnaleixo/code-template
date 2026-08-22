@@ -55,7 +55,7 @@ After the runner configuration and final check names are stable, preview:
 
 ```bash
 bun run repo:protect \
-  --checks="Quality, schema drift and unit tests,Build web, API and native web bundle,PostgreSQL authentication and authorization integration,Hardened Docker Compose E2E"
+  --checks="Quality, schema drift and unit tests|Build web, API and native web bundle|PostgreSQL authentication and authorization integration|Hardened Docker Compose E2E"
 ```
 
 Then apply the reviewed payload:
@@ -63,10 +63,10 @@ Then apply the reviewed payload:
 ```bash
 GITHUB_ADMIN_TOKEN=... \
   bun run repo:protect --apply \
-  --checks="Quality, schema drift and unit tests,Build web, API and native web bundle,PostgreSQL authentication and authorization integration,Hardened Docker Compose E2E"
+  --checks="Quality, schema drift and unit tests|Build web, API and native web bundle|PostgreSQL authentication and authorization integration|Hardened Docker Compose E2E"
 ```
 
-The `--checks` value replaces the current required-check list. Review it before every apply.
+Check names are separated with `|` because valid job names may contain commas. The `--checks` value replaces the current required-check list. Review it before every apply.
 
 ## Verification
 
