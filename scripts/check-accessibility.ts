@@ -2,6 +2,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 
+const axeCoreVersion = '4.11.4'
 const axePlaywrightVersion = '4.11.3'
 const playwrightVersion = '1.62.1'
 const baseUrl = (process.env.E2E_BASE_URL ?? 'http://localhost:8080').replace(/\/+$/, '')
@@ -126,6 +127,7 @@ try {
         type: 'module',
         dependencies: {
           '@axe-core/playwright': axePlaywrightVersion,
+          'axe-core': axeCoreVersion,
           playwright: playwrightVersion,
         },
       },
@@ -140,7 +142,7 @@ try {
   await writeFile(join(workspace, 'scan.ts'), scannerSource)
 
   console.log(
-    `Installing isolated accessibility tools: @axe-core/playwright@${axePlaywrightVersion} and playwright@${playwrightVersion}`,
+    `Installing isolated accessibility tools: axe-core@${axeCoreVersion}, @axe-core/playwright@${axePlaywrightVersion}, playwright@${playwrightVersion}`,
   )
   await run(['bun', 'install', '--ignore-scripts'], workspace, {})
   await run(['bun', 'run', 'scan.ts'], workspace, {
