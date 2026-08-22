@@ -3,9 +3,13 @@ import { createAuthClient } from 'better-auth/react'
 import { organizationClient } from 'better-auth/client/plugins'
 import { accessControl, organizationRoles } from './permissions'
 
+const viteEnvironment = (import.meta as ImportMeta & {
+  env?: Record<string, string | boolean | undefined>
+}).env
+
 const environment = loadClientEnv({
-  VITE_API_URL: import.meta.env?.VITE_API_URL,
-  VITE_APP_NAME: import.meta.env?.VITE_APP_NAME,
+  VITE_API_URL: viteEnvironment?.VITE_API_URL,
+  VITE_APP_NAME: viteEnvironment?.VITE_APP_NAME,
 })
 
 export const authClient = createAuthClient({
