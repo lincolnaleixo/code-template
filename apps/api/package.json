@@ -12,13 +12,17 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@elysiajs/cors": "latest",
+    "@elysia/openapi": "catalog:",
+    "@elysiajs/cors": "catalog:",
     "@matrix/auth": "workspace:*",
     "@matrix/db": "workspace:*",
-    "elysia": "latest"
+    "@matrix/domain": "workspace:*",
+    "@matrix/env": "workspace:*",
+    "@matrix/observability": "workspace:*",
+    "elysia": "catalog:"
   },
   "devDependencies": {
-    "bun-types": "latest",
-    "typescript": "latest"
+    "@types/bun": "catalog:",
+    "typescript": "catalog:"
   }
 }

@@ -1,14 +1,39 @@
 import { drizzleAdapter } from '@better-auth/drizzle-adapter'
 import { db } from '@matrix/db'
-import { betterAuth } from 'better-auth/minimal'
+import * as schema from '@matrix/db/schema'
+import { getServerEnv } from '@matrix/env/server'
+import { betterAuth } from 'better-auth'
+import { bearer, organization } from 'better-auth/plugins'
+import { accessControl, organizationRoles } from './permissions'
 
-const trustedOrigins = (process.env.AUTH_TRUSTED_ORIGINS ?? process.env.WEB_URL ?? 'http://localhost:3000')
-  .split(',')
-  .map((origin) => origin.trim())
-  .filter(Boolean)
+const environment = getServerEnv()
 
 export const auth = betterAuth({
-  database: drizzleAdapter(db, { provider: 'pg' }),
-  emailAndPassword: { enabled: true },
-  trustedOrigins,
+  appName: 'Matrix Template',
+  baseURL: environment.BETTER_AUTH_URL,
+  secret: environment.BETTER_AUTH_SECRET,
+  database: drizzleAdapter(db, {
+    provider: 'pg',
+    schema,
+  }),
+  emailAndPassword: {
+    enabled: true,
+    minPasswordLength: 12,
+    maxPasswordLength: 128,
+  },
+  trustedOrigins: environment.AUTH_TRUSTED_ORIGINS,
+  advanced: {
+    useSecureCookies: environment.NODE_ENV === 'production',
+    database: {
+      joins: true,
+    },
+  },
+  plugins: [
+    organization({
+      ac: accessControl,
+      roles: organizationRoles,
+      allowUserToCreateOrganization: true,
+    }),
+    bearer({ requireSignature: true }),
+  ],
 })

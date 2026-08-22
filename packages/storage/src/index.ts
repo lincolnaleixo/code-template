@@ -1,15 +1,48 @@
-import { S3Client } from '@aws-sdk/client-s3'
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { getServerEnv } from '@matrix/env/server'
+
+const environment = getServerEnv()
 
 export const storage = new S3Client({
-  region: process.env.S3_REGION ?? 'us-east-1',
-  endpoint: process.env.S3_ENDPOINT,
-  forcePathStyle: Boolean(process.env.S3_ENDPOINT),
-  credentials: process.env.S3_ACCESS_KEY
+  region: environment.S3_REGION,
+  endpoint: environment.S3_ENDPOINT,
+  forcePathStyle: Boolean(environment.S3_ENDPOINT),
+  credentials: environment.S3_ACCESS_KEY
     ? {
-        accessKeyId: process.env.S3_ACCESS_KEY,
-        secretAccessKey: process.env.S3_SECRET_KEY ?? '',
+        accessKeyId: environment.S3_ACCESS_KEY,
+        secretAccessKey: environment.S3_SECRET_KEY ?? '',
       }
     : undefined,
 })
 
-export const bucket = process.env.S3_BUCKET ?? 'matrix'
+export const bucket = environment.S3_BUCKET
+
+export async function createUploadUrl(input: {
+  key: string
+  contentType: string
+  expiresIn?: number
+}): Promise<string> {
+  return getSignedUrl(
+    storage,
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: input.key,
+      ContentType: input.contentType,
+    }),
+    { expiresIn: input.expiresIn ?? 300 },
+  )
+}
+
+export async function createDownloadUrl(key: string, expiresIn = 300): Promise<string> {
+  return getSignedUrl(storage, new GetObjectCommand({ Bucket: bucket, Key: key }), { expiresIn })
+}
+
+export async function deleteObject(key: string): Promise<void> {
+  await storage.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }))
+}

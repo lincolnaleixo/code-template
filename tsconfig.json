@@ -1,17 +1,23 @@
 {
   "compilerOptions": {
-    "target": "ES2023",
-    "module": "ESNext",
+    "target": "ESNext",
+    "module": "Preserve",
+    "moduleDetection": "force",
     "moduleResolution": "Bundler",
-    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx",
+    "allowJs": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
     "strict": true,
     "skipLibCheck": true,
-    "allowImportingTsExtensions": false,
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
-    "types": ["bun-types"]
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "types": ["bun"]
   }
 }

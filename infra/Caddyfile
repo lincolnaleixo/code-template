@@ -1,15 +1,15 @@
 :80 {
   encode zstd gzip
 
-  handle /api/* {
-    reverse_proxy api:3001
+  header {
+    -Server
+    X-Content-Type-Options nosniff
+    Referrer-Policy no-referrer
+    Permissions-Policy "camera=(), microphone=(), geolocation=()"
   }
 
-  handle /health {
-    reverse_proxy api:3001
-  }
-
-  handle /ready {
+  @api path /api/* /health /ready /metrics /openapi*
+  handle @api {
     reverse_proxy api:3001
   }
 

@@ -8,7 +8,8 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "latest",
-    "typescript": "latest"
+    "@tauri-apps/cli": "catalog:",
+    "@types/bun": "catalog:",
+    "typescript": "catalog:"
   }
 }

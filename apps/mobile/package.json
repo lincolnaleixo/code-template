@@ -10,12 +10,13 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@capacitor/core": "latest"
+    "@capacitor/core": "catalog:"
   },
   "devDependencies": {
-    "@capacitor/android": "latest",
-    "@capacitor/cli": "latest",
-    "@capacitor/ios": "latest",
-    "typescript": "latest"
+    "@capacitor/android": "catalog:",
+    "@capacitor/cli": "catalog:",
+    "@capacitor/ios": "catalog:",
+    "@types/bun": "catalog:",
+    "typescript": "catalog:"
   }
 }
