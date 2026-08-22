@@ -13,12 +13,13 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "drizzle-orm": "latest",
-    "postgres": "latest"
+    "@matrix/env": "workspace:*",
+    "drizzle-orm": "catalog:",
+    "postgres": "catalog:"
   },
   "devDependencies": {
-    "drizzle-kit": "latest",
-    "typescript": "latest",
-    "bun-types": "latest"
+    "@types/bun": "catalog:",
+    "drizzle-kit": "catalog:",
+    "typescript": "catalog:"
   }
 }
