@@ -24,7 +24,7 @@ The format follows Keep a Changelog and the project uses semantic versioning for
 - Project bootstrap, contribution, release, licensing, and repository-governance documentation.
 - Structured bug report and feature request forms plus an expanded pull-request checklist.
 - Cross-platform editor and source normalization through `.editorconfig` and `.gitattributes`.
-- Repository `CODEOWNERS` and a dry-run-first branch-protection applicator.
+- Repository `CODEOWNERS` and dry-run-first repository metadata and branch-protection applicators.
 - Isolated fresh-template consumer smoke test covering install, checks, SSR build, and native web build.
 - Exact-version axe accessibility audit for public product and UI routes in light and dark themes.
 - Accessibility JSON reports retained with browser test artifacts.
@@ -49,7 +49,8 @@ The format follows Keep a Changelog and the project uses semantic versioning for
 ### Fixed
 
 - Structured log redaction now returns a type-safe object before spreading into log entries.
-- Circular arrays and repeated object references no longer recurse indefinitely during log redaction.
+- Circular arrays no longer recurse indefinitely, and repeated references are represented as `[Circular]`.
+- Branch-protection configuration preserves existing required checks unless replacement or clearing is explicit.
 
 ## [0.3.0] - 2026-08-22
 
