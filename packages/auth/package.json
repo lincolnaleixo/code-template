@@ -5,6 +5,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./client": "./src/client.ts",
+    "./native": "./src/native.ts",
     "./permissions": "./src/permissions.ts"
   },
   "scripts": {
