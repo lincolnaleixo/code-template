@@ -1,8 +1,8 @@
 name: Bootstrap generated assets
 
 on:
-  push:
-    branches: [feat/production-template-v2]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
