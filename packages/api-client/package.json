@@ -6,11 +6,12 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@elysiajs/eden": "latest",
-    "@matrix/api": "workspace:*"
+    "@elysiajs/eden": "catalog:",
+    "@matrix/api": "workspace:*",
+    "@matrix/env": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "latest",
-    "bun-types": "latest"
+    "@types/bun": "catalog:",
+    "typescript": "catalog:"
   }
 }
