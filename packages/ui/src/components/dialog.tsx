@@ -34,7 +34,11 @@ export function Dialog({
 
   return (
     <dialog
-      className="m-auto max-h-[90dvh] w-[calc(100%_-_2rem)] max-w-lg overflow-visible bg-transparent p-0 text-foreground backdrop:bg-foreground/35 backdrop:backdrop-blur-[2px]"
+      className={cn(
+        'm-auto max-h-[90dvh] w-[calc(100%_-_2rem)] max-w-lg overflow-visible',
+        'bg-transparent p-0 text-foreground backdrop:bg-foreground/35',
+        'backdrop:backdrop-blur-[2px]',
+      )}
       onCancel={(event) => {
         event.preventDefault()
         onOpenChange(false)
@@ -48,9 +52,17 @@ export function Dialog({
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1.5">
             <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
-            {description && <div className="text-sm leading-6 text-muted-foreground">{description}</div>}
+            {description && (
+              <div className="text-sm leading-6 text-muted-foreground">{description}</div>
+            )}
           </div>
-          <Button aria-label="Close dialog" onClick={() => onOpenChange(false)} size="icon" type="button" variant="ghost">
+          <Button
+            aria-label="Close dialog"
+            onClick={() => onOpenChange(false)}
+            size="icon"
+            type="button"
+            variant="ghost"
+          >
             <CloseIcon className="size-4" />
           </Button>
         </div>
