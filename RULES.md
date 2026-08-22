@@ -112,3 +112,21 @@ Before retaining an optional module, ask:
 4. Is it covered by tests, documentation, and ownership?
 
 If the answer is no, disable or remove it cleanly.
+
+## Agent authority to disable template modules
+
+A coding agent may disable, replace, or remove any optional module from this template when the project requirements do not justify it. The template is a superset of capabilities, not a requirement to keep every technology. The agent does not need to preserve a module only because it exists in the starter.
+
+Before disabling a module, the agent must record the project reason and identify dependent modules. The change is complete only after all of the following are handled together:
+
+1. Set the corresponding feature to `false` in `template.config.ts`, or remove the feature entry when the project has permanently replaced the capability.
+2. Remove implementation code, routes, adapters, generated artifacts, workspace packages, native wrappers, and imports owned only by that feature.
+3. Remove package dependencies, environment variables, Docker services, volumes, ports, healthchecks, release jobs, security jobs, and CI steps that no longer apply.
+4. Remove or rewrite tests and documentation so they describe the resulting project rather than the original superset.
+5. Preserve shared contracts only when another enabled feature still uses them.
+6. Run `bun run check` and the relevant builds and tests for every remaining target.
+7. Update `CHANGELOG.md` when the change affects the reusable template or an established project capability.
+
+Examples include removing Capacitor and Tauri from a web-only product, removing PostgreSQL and Better Auth from an offline desktop utility, disabling OpenTelemetry export while retaining structured logs and metrics, or replacing MinIO with another S3-compatible implementation.
+
+An agent must not leave a disabled feature partially wired, silently skip failing checks, or keep dead dependencies for hypothetical future use.

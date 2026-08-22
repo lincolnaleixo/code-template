@@ -4,10 +4,7 @@ import { requireAuthPlugin } from '../../plugins/auth'
 import { DrizzleProjectAuthorizer } from './drizzle-project-authorizer'
 import { DrizzleProjectRepository } from './drizzle-project-repository'
 
-const projectService = createProjectService(
-  new DrizzleProjectRepository(),
-  new DrizzleProjectAuthorizer(),
-)
+const projectService = createProjectService(new DrizzleProjectRepository(), new DrizzleProjectAuthorizer())
 
 function serializeProject(project: Project) {
   return {

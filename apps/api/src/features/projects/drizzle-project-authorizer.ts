@@ -16,16 +16,9 @@ export class DrizzleProjectAuthorizer implements ProjectAuthorizer {
     const [membership] = await db
       .select({ role: member.role })
       .from(member)
-      .where(
-        and(
-          eq(member.userId, input.userId),
-          eq(member.organizationId, input.organizationId),
-        ),
-      )
+      .where(and(eq(member.userId, input.userId), eq(member.organizationId, input.organizationId)))
       .limit(1)
 
-    return membership
-      ? roleCanManageProject(membership.role, actionFromPermission(input.permission))
-      : false
+    return membership ? roleCanManageProject(membership.role, actionFromPermission(input.permission)) : false
   }
 }

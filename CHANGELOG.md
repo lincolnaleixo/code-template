@@ -4,6 +4,31 @@ All notable changes to this template are documented in this file.
 
 The format follows Keep a Changelog and the project uses semantic versioning for template releases.
 
+## [0.3.0] - 2026-08-22
+
+### Added
+
+- Exact Bun dependency catalog, committed lockfile, isolated installs, and Renovate automation.
+- Immutable Drizzle migrations with generated auth schema and migration drift checks.
+- Better Auth sessions, bearer support, organizations, roles, and organization-scoped project authorization.
+- Typed environment validation, framework-independent domain services, structured API errors, and secure native token-store contracts.
+- Structured JSON logs, request IDs, Prometheus metrics, OpenAPI, and optional OpenTelemetry services.
+- Hardened multi-stage containers, dependency-aware Docker Compose profiles, and optional observability infrastructure.
+- Unit, PostgreSQL integration, Playwright E2E, security scanning, container release, preview-image, and native build workflows.
+- Modular feature manifest, agent adaptation rules, comprehensive README, and this changelog.
+
+### Changed
+
+- Replaced public sample user CRUD with an authenticated organization and project flow.
+- Changed deployment migrations to apply committed SQL only.
+- Changed browser API and authentication clients to same-origin by default while requiring explicit native API origins.
+- Pinned runtime, dependency, container, and workflow versions for reproducible builds.
+
+### Security
+
+- Added least-privilege workflows, secret scanning, dependency audit, filesystem and image scanning, SBOM generation, and build provenance.
+- Removed insecure native token persistence fallbacks and added platform secure-storage injection points.
+
 ## [Unreleased]
 
 ### Added

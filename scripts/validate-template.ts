@@ -13,10 +13,7 @@ interface PackageManifest {
 const requiredPaths: Partial<Record<TemplateFeature, string[]>> = {
   web: ['apps/web/package.json'],
   api: ['apps/api/package.json'],
-  database: [
-    'packages/db/package.json',
-    'packages/db/drizzle/meta/_journal.json',
-  ],
+  database: ['packages/db/package.json', 'packages/db/drizzle/meta/_journal.json'],
   authentication: ['packages/auth/package.json', 'packages/db/src/auth-schema.ts'],
   organizations: ['packages/auth/src/permissions.ts', 'packages/db/src/project-schema.ts'],
   objectStorage: ['packages/storage/package.json'],
@@ -26,11 +23,7 @@ const requiredPaths: Partial<Record<TemplateFeature, string[]>> = {
     'apps/desktop/src-tauri/Cargo.toml',
     'apps/desktop/src-tauri/Cargo.lock',
   ],
-  observability: [
-    'packages/observability/package.json',
-    'infra/otel-collector.yaml',
-    'infra/prometheus.yml',
-  ],
+  observability: ['packages/observability/package.json', 'infra/otel-collector.yaml', 'infra/prometheus.yml'],
   docker: ['docker-compose.yml', 'apps/api/Dockerfile', 'apps/web/Dockerfile'],
   endToEndTests: ['playwright.config.ts', 'tests/e2e/smoke.spec.ts'],
   containerReleases: ['.github/workflows/release-containers.yml'],

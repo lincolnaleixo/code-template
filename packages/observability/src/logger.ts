@@ -40,9 +40,7 @@ function redact(value: unknown, seen = new WeakSet<object>()): unknown {
   return output
 }
 
-export function createLogger(
-  options: { level?: LogLevel; base?: LogContext } = {},
-): Logger {
+export function createLogger(options: { level?: LogLevel; base?: LogContext } = {}): Logger {
   const minimumLevel = options.level ?? 'info'
   const base = options.base ?? {}
 

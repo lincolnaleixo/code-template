@@ -84,14 +84,22 @@ function AuthPanel() {
           One TypeScript product across web, API, mobile and desktop.
         </h1>
         <p className="max-w-xl text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-          Create an account to exercise Better Auth, organizations, permission checks, Eden, Elysia,
-          Drizzle and PostgreSQL through one tested flow.
+          Create an account to exercise Better Auth, organizations, permission checks, Eden, Elysia, Drizzle
+          and PostgreSQL through one tested flow.
         </p>
         <div className="grid gap-3 text-sm text-zinc-600 dark:text-zinc-400 sm:grid-cols-2">
-          <p className="rounded-2xl bg-zinc-100 p-4 dark:bg-zinc-900">Self-hosted PostgreSQL and S3-compatible storage</p>
-          <p className="rounded-2xl bg-zinc-100 p-4 dark:bg-zinc-900">Cookie sessions for web and signed bearer sessions for native clients</p>
-          <p className="rounded-2xl bg-zinc-100 p-4 dark:bg-zinc-900">Organization roles enforced by the API</p>
-          <p className="rounded-2xl bg-zinc-100 p-4 dark:bg-zinc-900">Docker, E2E, observability and release automation included</p>
+          <p className="rounded-2xl bg-zinc-100 p-4 dark:bg-zinc-900">
+            Self-hosted PostgreSQL and S3-compatible storage
+          </p>
+          <p className="rounded-2xl bg-zinc-100 p-4 dark:bg-zinc-900">
+            Cookie sessions for web and signed bearer sessions for native clients
+          </p>
+          <p className="rounded-2xl bg-zinc-100 p-4 dark:bg-zinc-900">
+            Organization roles enforced by the API
+          </p>
+          <p className="rounded-2xl bg-zinc-100 p-4 dark:bg-zinc-900">
+            Docker, E2E, observability and release automation included
+          </p>
         </div>
       </div>
 
@@ -150,7 +158,11 @@ function AuthPanel() {
           />
         </label>
 
-        {errorMessage && <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-200">{errorMessage}</p>}
+        {errorMessage && (
+          <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-200">
+            {errorMessage}
+          </p>
+        )}
 
         <Button className="w-full" disabled={authenticate.isPending} type="submit">
           {authenticate.isPending ? 'Working...' : mode === 'sign-up' ? 'Create account' : 'Sign in'}
@@ -246,10 +258,16 @@ function Workspace() {
           <h1 className="text-2xl font-semibold">{session.data?.user.name}</h1>
           <p className="text-sm text-zinc-500">{session.data?.user.email}</p>
         </div>
-        <Button onClick={logOut} variant="outline">Sign out</Button>
+        <Button onClick={logOut} variant="outline">
+          Sign out
+        </Button>
       </header>
 
-      {errorMessage && <p className="rounded-xl bg-red-50 p-4 text-sm text-red-700 dark:bg-red-950 dark:text-red-200">{errorMessage}</p>}
+      {errorMessage && (
+        <p className="rounded-xl bg-red-50 p-4 text-sm text-red-700 dark:bg-red-950 dark:text-red-200">
+          {errorMessage}
+        </p>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
         <aside className="space-y-5 rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
@@ -295,7 +313,12 @@ function Workspace() {
                 value={organizationName}
               />
             </label>
-            <Button className="w-full" disabled={createOrganization.isPending} type="submit" variant="secondary">
+            <Button
+              className="w-full"
+              disabled={createOrganization.isPending}
+              type="submit"
+              variant="secondary"
+            >
               {createOrganization.isPending ? 'Creating...' : 'Create organization'}
             </Button>
           </form>
@@ -306,7 +329,9 @@ function Workspace() {
             <div className="grid min-h-80 place-items-center text-center">
               <div>
                 <h2 className="text-2xl font-semibold">Create your first organization</h2>
-                <p className="mt-2 text-zinc-500">It becomes the security boundary for projects and members.</p>
+                <p className="mt-2 text-zinc-500">
+                  It becomes the security boundary for projects and members.
+                </p>
               </div>
             </div>
           ) : (
@@ -346,9 +371,14 @@ function Workspace() {
                   </div>
                 )}
                 {projects.data?.map((item) => (
-                  <article className="rounded-2xl border border-zinc-200 p-5 dark:border-zinc-800" key={item.id}>
+                  <article
+                    className="rounded-2xl border border-zinc-200 p-5 dark:border-zinc-800"
+                    key={item.id}
+                  >
                     <h3 className="font-semibold">{item.name}</h3>
-                    <p className="mt-2 text-xs text-zinc-500">Created {new Date(item.createdAt).toLocaleString()}</p>
+                    <p className="mt-2 text-xs text-zinc-500">
+                      Created {new Date(item.createdAt).toLocaleString()}
+                    </p>
                   </article>
                 ))}
               </div>
