@@ -15,7 +15,8 @@ const alertVariants = cva('relative grid gap-1 rounded-lg border p-4 text-sm', {
   defaultVariants: { variant: 'default' },
 })
 
-export interface AlertProps extends HTMLAttributes<HTMLDivElement>, VariantProps<typeof alertVariants> {}
+export type AlertProps = HTMLAttributes<HTMLDivElement> &
+  VariantProps<typeof alertVariants>
 
 export function Alert({ className, variant, ...props }: AlertProps) {
   return <div className={cn(alertVariants({ className, variant }))} role="alert" {...props} />
