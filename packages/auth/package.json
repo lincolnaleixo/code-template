@@ -4,14 +4,22 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./client": "./src/client.ts"
+    "./client": "./src/client.ts",
+    "./permissions": "./src/permissions.ts"
   },
   "scripts": {
-    "generate": "bunx @better-auth/cli@latest generate --config src/index.ts"
+    "generate": "auth generate --config src/index.ts --output ../db/src/auth-schema.ts --yes",
+    "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@better-auth/drizzle-adapter": "latest",
+    "@better-auth/drizzle-adapter": "catalog:",
     "@matrix/db": "workspace:*",
-    "better-auth": "latest"
+    "@matrix/env": "workspace:*",
+    "better-auth": "catalog:"
+  },
+  "devDependencies": {
+    "@types/bun": "catalog:",
+    "auth": "catalog:",
+    "typescript": "catalog:"
   }
 }
