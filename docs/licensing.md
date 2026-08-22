@@ -60,7 +60,9 @@ Automated license reports are useful evidence, but they do not replace review of
 
 ## Ownership files
 
-The template contains `.github/CODEOWNERS` for maintenance of this repository. A generated product must replace those owners with the real product team, or remove the file until ownership is known.
+The template contains `.github/CODEOWNERS` for maintenance of this repository. A generated product must replace those owners with the real product team before feature development.
+
+When ownership is not yet known, product initialization is incomplete. Do not leave the template owner in place and do not activate code-owner review until an eligible reviewer exists.
 
 `CODEOWNERS` is a review-routing mechanism. Product ownership, copyright ownership, employment agreements, contractor assignments, and commercial distribution rights must be handled by the appropriate business records and agreements.
 
