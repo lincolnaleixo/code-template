@@ -3,13 +3,15 @@ name: Diagnose UI foundation
 on:
   push:
     branches: [feat/ui-foundation-and-docs]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: diagnose-ui-foundation-${{ github.ref }}
+  group: diagnose-ui-foundation-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
