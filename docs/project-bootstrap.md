@@ -69,17 +69,25 @@ Changing the internal `@matrix/*` workspace scope is optional. It is private imp
 
 ## 4. Establish product versioning
 
-A generated product commonly starts at `0.1.0`. Keep these values synchronized:
+A generated product commonly starts at `0.1.0`. Preview and apply the synchronized version change:
+
+```bash
+bun run version:set 0.1.0 --dry-run
+bun run version:set 0.1.0
+```
+
+The command updates:
 
 ```text
 package.json
 apps/desktop/src-tauri/Cargo.toml
 apps/desktop/src-tauri/Cargo.lock
 apps/desktop/src-tauri/tauri.conf.json
-CHANGELOG.md
 ```
 
-After changing the Rust package version, regenerate the lockfile from `apps/desktop/src-tauri` with Cargo. `bun run template:validate` verifies the synchronized values.
+Add the matching product section to `CHANGELOG.md`. `bun run template:validate` verifies the synchronized values and the dated changelog section.
+
+After changing Rust dependencies, regenerate the lockfile with Cargo. A version-only change should leave dependency entries untouched.
 
 Decide whether to preserve the template's historical changelog or replace it with a product changelog that records the template baseline and begins at `0.1.0`.
 
@@ -208,6 +216,7 @@ Before feature development:
 - remove placeholder copy and sample data that no longer describe the product
 - remove unused dependencies, services, environment variables, and workflows
 - update `README.md`, `SECURITY.md`, and the changelog
+- choose the product's license and ownership policy rather than inheriting an unstated default
 - verify no template secret or example credential was promoted to production
 - create the initial product release plan
 - record the source template commit or release for future comparison
