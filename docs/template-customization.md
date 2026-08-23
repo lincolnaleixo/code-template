@@ -33,16 +33,30 @@ When the answer is no, remove it cleanly.
 
 A capability is not disabled when its code is merely unreachable. No dead implementation, dependency, service, or workflow should remain.
 
+For example, disabling `endToEndTests` also removes or adapts:
+
+```text
+playwright.config.ts
+tests/e2e/
+scripts/check-accessibility.ts
+test:e2e and test:a11y scripts
+browser and accessibility workflow steps
+browser report artifacts
+```
+
 `bun run template:validate` reports:
 
 - enabled capabilities with missing required files
 - disabled capabilities with known implementation files still present
 - enabled capabilities whose required dependencies are disabled
 - inconsistent package, Tauri, Cargo, or changelog versions
+- missing root license policy
 - invalid dependency version ranges
 - incompatible shared UI and shadcn workspace configuration
 
 The validator intentionally does not force optional process files such as issue forms or contribution guidance to remain in every generated product. When removing them, update README links and run `bun run docs:check`.
+
+Ownership and licensing are not optional capabilities. Replace the template policy with the real product policy instead of silently inheriting or deleting it. See [licensing.md](licensing.md) and [repository-governance.md](repository-governance.md).
 
 ## Enabling or replacing a capability
 
@@ -102,6 +116,7 @@ bun run template:validate
 bun run docs:check
 bun run check
 bun run build
+bun run test:template-consumer
 ```
 
 Also run the relevant commands for retained capabilities:
@@ -109,6 +124,7 @@ Also run the relevant commands for retained capabilities:
 ```bash
 bun run test:integration
 bun run test:e2e
+bun run test:a11y
 bun run build:native
 bun run build:desktop
 bun run build:mobile

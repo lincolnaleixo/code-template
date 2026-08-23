@@ -25,19 +25,33 @@ const levels: Record<LogLevel, number> = {
 
 const sensitiveKeys = /authorization|cookie|password|secret|token|api[-_]?key|private[-_]?key/i
 
-function redact(value: unknown, seen = new WeakSet<object>()): unknown {
-  if (Array.isArray(value)) return value.map((item) => redact(item, seen))
+function redactValue(value: unknown, seen: WeakSet<object>): unknown {
   if (!value || typeof value !== 'object') return value
   if (seen.has(value)) return '[Circular]'
 
   seen.add(value)
+
+  if (Array.isArray(value)) {
+    return value.map((item) => redactValue(item, seen))
+  }
+
   const output: Record<string, unknown> = {}
 
   for (const [key, nestedValue] of Object.entries(value)) {
-    output[key] = sensitiveKeys.test(key) ? '[REDACTED]' : redact(nestedValue, seen)
+    output[key] = sensitiveKeys.test(key) ? '[REDACTED]' : redactValue(nestedValue, seen)
   }
 
   return output
+}
+
+function redactContext(context: LogContext): Record<string, unknown> {
+  const redacted = redactValue(context, new WeakSet<object>())
+
+  if (!redacted || typeof redacted !== 'object' || Array.isArray(redacted)) {
+    return {}
+  }
+
+  return redacted as Record<string, unknown>
 }
 
 export function createLogger(
@@ -53,7 +67,7 @@ export function createLogger(
       timestamp: new Date().toISOString(),
       level,
       message,
-      ...redact({ ...base, ...context }),
+      ...redactContext({ ...base, ...context }),
     }
 
     const serialized = JSON.stringify(entry)

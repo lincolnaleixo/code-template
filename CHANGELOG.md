@@ -19,12 +19,18 @@ The format follows Keep a Changelog and the project uses semantic versioning for
 - Compatible Radix Nova shadcn CLI configurations and package aliases for the web and shared UI workspaces.
 - Exact-version `ui:info` and `ui:add` commands for reviewing and adding repository-owned component source.
 - Local Markdown link validation as part of `bun run check`.
-- Capability dependency, disabled-artifact, version-sync, and UI-configuration validation.
+- Capability dependency, disabled-artifact, version-sync, license-policy, and UI-configuration validation.
 - Synchronized `version:set` command with dry-run support for package, Tauri, and Cargo metadata.
-- Project bootstrap, contribution, and release process documentation.
+- Project bootstrap, contribution, release, licensing, and repository-governance documentation.
 - Structured bug report and feature request forms plus an expanded pull-request checklist.
 - Cross-platform editor and source normalization through `.editorconfig` and `.gitattributes`.
-- Dedicated architecture, deployment, native, UI, release, project bootstrap, and template customization documentation.
+- Repository `CODEOWNERS` and dry-run-first repository metadata and branch-protection applicators.
+- Isolated fresh-template consumer smoke test covering install, checks, SSR build, and native web build.
+- Exact-version axe accessibility audit for public product and UI routes in light and dark themes.
+- Accessibility JSON reports retained with browser test artifacts.
+- Explicit private `UNLICENSED` policy without imposing an open-source license on generated products.
+- Regression coverage for inherited log context, nested secrets, arrays, and circular references.
+- Dedicated architecture, deployment, native, UI, release, project bootstrap, licensing, governance, and template customization documentation.
 
 ### Changed
 
@@ -36,8 +42,15 @@ The format follows Keep a Changelog and the project uses semantic versioning for
 - Replaced the custom mobile navigation overlay with a focus-managed native sheet.
 - Added arrow, Home, and End keyboard navigation to tabs.
 - Replaced the inline appearance script with a same-origin external script compatible with the Tauri CSP.
-- Expanded the README with GitHub template usage, project initialization, UI CLI, and release guidance.
-- Extended template validation to reject incomplete capability removal and mismatched release versions.
+- Expanded the README with GitHub template usage, project initialization, UI CLI, governance, and release guidance.
+- Extended template validation to reject incomplete capability removal, missing license policy, and mismatched release versions.
+- Expanded CI with documentation, fresh-consumer, and accessibility gates without changing runner targets.
+
+### Fixed
+
+- Structured log redaction now returns a type-safe object before spreading into log entries.
+- Circular arrays no longer recurse indefinitely, and repeated references are represented as `[Circular]`.
+- Branch-protection configuration preserves existing required checks unless replacement or clearing is explicit.
 
 ## [0.3.0] - 2026-08-22
 

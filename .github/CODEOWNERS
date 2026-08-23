@@ -1,0 +1,9 @@
+# Default ownership for every path in the template.
+* @lincolnaleixo
+
+# Keep high-risk surfaces explicit for review and future team delegation.
+/.github/ @lincolnaleixo
+/apps/ @lincolnaleixo
+/packages/ @lincolnaleixo
+/scripts/ @lincolnaleixo
+/docs/ @lincolnaleixo

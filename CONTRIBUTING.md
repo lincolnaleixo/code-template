@@ -7,7 +7,8 @@ This repository is a product template. Changes should improve the default withou
 1. Read [RULES.md](RULES.md).
 2. Read the relevant architecture or operational document under [`docs/`](docs/architecture.md).
 3. Check `template.config.ts` when the change adds, removes, or couples capabilities.
-4. Prefer a small, reversible change over a speculative framework or abstraction.
+4. Review [docs/repository-governance.md](docs/repository-governance.md) for ownership or repository-policy changes.
+5. Prefer a small, reversible change over a speculative framework or abstraction.
 
 ## Change workflow
 
@@ -52,6 +53,8 @@ When a dependency is justified:
 
 Do not add an unbounded version or a second tool that duplicates an existing responsibility.
 
+Test-only tools that install into an isolated temporary workspace must still pin exact versions, document why they are isolated, preserve the repository lockfile, and fail clearly when installation or execution fails.
+
 ## Database and authentication
 
 Schema changes require committed migrations:
@@ -80,6 +83,15 @@ bun run ui:add button
 
 Generated source is a starting point, not an opaque dependency. Review the diff, align it with repository conventions, export shared components deliberately, and add a representative example to `/ui` or `/ui-advanced`.
 
+When shared UI or product layout changes, run the applicable Playwright flow and the axe audit against the full stack:
+
+```bash
+bun run test:e2e
+bun run test:a11y
+```
+
+Automation supports, but does not replace, manual keyboard, screen-reader, zoom, and native-WebView review.
+
 See [docs/ui.md](docs/ui.md).
 
 ## Validation
@@ -91,9 +103,11 @@ Use the smallest validation set that fully covers the change, then expand it whe
 | Documentation only | `bun run docs:check`, `bun run lint:ci` |
 | TypeScript or shared package | `bun run check` |
 | API or database | `bun run check`, `bun run test:integration` |
-| Web behavior | `bun run check`, `bun run build`, relevant Playwright tests |
+| Web or shared UI | `bun run check`, `bun run build`, Playwright and accessibility checks |
 | Docker or deployment | Compose configuration, image builds, readiness, E2E |
+| Bootstrap, layout, package metadata | `bun run test:template-consumer` |
 | Mobile or desktop | `bun run build:native` and the retained platform build |
+| Governance or ownership | dry-run `bun run repo:protect`, review CODEOWNERS and licensing docs |
 | Release mechanics | Follow [docs/release.md](docs/release.md) |
 
 A checkbox may be marked not applicable only with a short reason. Do not claim a command passed when it did not run.
@@ -103,8 +117,15 @@ A checkbox may be marked not applicable only with a short reason. Do not claim a
 - Never commit secrets, tokens, certificates, production connection strings, or private customer data.
 - Do not weaken authentication, authorization, CSP, container isolation, or workflow permissions merely to make a test pass.
 - Redact sensitive fields from logs and examples.
+- Add regression coverage when changing redaction, credential handling, or security boundaries.
 - Report security issues using [SECURITY.md](SECURITY.md), not a public issue.
+
+## Licensing and ownership
+
+The template is private and explicitly `UNLICENSED`. Changes that introduce copied source, assets, fonts, icons, generated SDKs, or distributable binaries must consider their license and attribution obligations.
+
+Do not add a public license or change ownership policy without an explicit repository-owner decision. See [docs/licensing.md](docs/licensing.md).
 
 ## Generated projects
 
-When adapting this repository into a product, follow [docs/project-bootstrap.md](docs/project-bootstrap.md). Remove unused capabilities completely rather than leaving dormant code, services, dependencies, or workflows.
+When adapting this repository into a product, follow [docs/project-bootstrap.md](docs/project-bootstrap.md). Remove unused capabilities completely rather than leaving dormant code, services, dependencies, or workflows. Replace template code owners and choose the product's real license before feature development or external distribution.

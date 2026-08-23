@@ -12,6 +12,8 @@ Write down the current requirements before changing code:
 - authentication and organization model
 - persistence, uploads, realtime, jobs, and external integrations
 - deployment environment and compliance constraints
+- intended distribution, ownership, and licensing model
+- team responsible for reviews, releases, and operations
 
 Do not keep a capability only because it may be useful someday.
 
@@ -57,6 +59,7 @@ Update the product identity deliberately rather than applying a blind global rep
 | Rust package and library names | `apps/desktop/src-tauri/Cargo.toml` |
 | Product copy and example entities | `apps/web/src/routes/` |
 | Brand tokens | `apps/web/src/brand.css` |
+| Code owners | `.github/CODEOWNERS` |
 | Repository documentation | `README.md`, `SECURITY.md`, and `docs/` |
 
 Use a reverse-domain identifier controlled by the product owner, for example:
@@ -194,7 +197,31 @@ Before production, document:
 
 See [deployment.md](deployment.md).
 
-## 11. Validate the product baseline
+## 11. Establish ownership, licensing, and repository policy
+
+Choose the product's distribution policy and update:
+
+```text
+package.json license field
+LICENSE or approved proprietary notice, when applicable
+.github/CODEOWNERS
+README.md
+SECURITY.md
+```
+
+The template starts as private and `UNLICENSED`. Do not publish or distribute a generated product until its real policy and third-party obligations are reviewed.
+
+Preview branch protection:
+
+```bash
+bun run repo:protect
+```
+
+Apply it with an administrative token only after reviewing owners, approval count, bypass policy, and stable check names.
+
+See [licensing.md](licensing.md) and [repository-governance.md](repository-governance.md).
+
+## 12. Validate the product baseline
 
 Run the checks relevant to retained capabilities:
 
@@ -204,21 +231,31 @@ bun run check
 bun run build
 bun run test:integration
 VITE_API_URL=https://api.example.com bun run build:native
+bun run test:template-consumer
+```
+
+With the full stack running and Chromium installed:
+
+```bash
+bun run infra:full
 bun run test:e2e
+bun run test:a11y
 ```
 
 Also compile every retained native target before claiming support for it.
 
-## 12. Finish initialization
+## 13. Finish initialization
 
 Before feature development:
 
 - remove placeholder copy and sample data that no longer describe the product
 - remove unused dependencies, services, environment variables, and workflows
 - update `README.md`, `SECURITY.md`, and the changelog
-- choose the product's license and ownership policy rather than inheriting an unstated default
+- replace the template code owners with the real team
+- choose and document the product license and ownership policy
+- apply and verify the repository branch policy
 - verify no template secret or example credential was promoted to production
 - create the initial product release plan
 - record the source template commit or release for future comparison
 
-A project is initialized when the repository describes the real product, every enabled capability has an owner and requirement, and every disabled capability has been removed cleanly.
+A project is initialized when the repository describes the real product, every enabled capability has an owner and requirement, every disabled capability has been removed cleanly, and repository governance reflects the real team.

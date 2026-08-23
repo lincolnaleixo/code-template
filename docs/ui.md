@@ -219,6 +219,44 @@ The advanced playground displays tables, search, pagination, settings sections, 
 
 Use both routes when adapting a project brand or changing a shared component.
 
+## Automated accessibility
+
+The full-stack browser lane includes an axe audit for:
+
+```text
+/
+/ui
+/ui-advanced
+```
+
+Each route is tested in light and dark system color schemes with reduced motion. The audit evaluates the configured WCAG A and AA rule tags and writes complete JSON reports under:
+
+```text
+test-results/accessibility/
+```
+
+Run it against a ready stack:
+
+```bash
+bun run infra:full
+bunx playwright install --with-deps chromium
+bun run test:a11y
+```
+
+Configuration is available through environment variables:
+
+```text
+E2E_BASE_URL            default http://localhost:8080
+A11Y_ROUTES             comma-separated routes
+A11Y_COLOR_SCHEMES      light, dark, or both
+A11Y_RESULTS_DIR        report output directory
+KEEP_A11Y_WORKSPACE     set to 1 to retain the temporary tool workspace
+```
+
+The audit installs exact versions of `@axe-core/playwright` and Playwright in an isolated temporary workspace. These tools do not become production dependencies and do not modify the repository lockfile.
+
+Automation does not replace manual keyboard, screen-reader, zoom, touch-target, cognitive-load, or native-WebView review. Add authenticated and feature-specific accessibility checks when those experiences become critical product paths.
+
 ## Adding components
 
 Before adding a component:
