@@ -44,19 +44,24 @@ If a specific next version is genuinely required for recovery, Release Please su
 
 ## Release-managed files
 
-Release Please uses `version.txt` as the simple-strategy version source and keeps these values synchronized in the release pull request:
+Release Please uses `version.txt` as the simple-strategy version source and keeps these core values synchronized in the release pull request:
 
 ```text
 version.txt
 .release-please-manifest.json
 package.json
-apps/desktop/src-tauri/tauri.conf.json
-apps/desktop/src-tauri/Cargo.toml
-apps/desktop/src-tauri/Cargo.lock
 CHANGELOG.md
 ```
 
-`bun run template:validate` verifies the synchronization contract. It also verifies that the configured `Cargo.lock` array index still points to the root `matrix-template` package, so dependency changes cannot silently make Release Please update the wrong package.
+When the desktop capability is enabled, it also synchronizes:
+
+```text
+apps/desktop/src-tauri/tauri.conf.json
+apps/desktop/src-tauri/Cargo.toml
+apps/desktop/src-tauri/Cargo.lock
+```
+
+`bun run template:validate` verifies the synchronization contract. With desktop enabled, it also verifies that the configured `Cargo.lock` array index still points to the root `matrix-template` package, so dependency changes cannot silently make Release Please update the wrong package.
 
 Do not edit release versions, `.release-please-manifest.json`, or `CHANGELOG.md` during ordinary feature work. Commit messages are the input to the next release pull request.
 
@@ -102,11 +107,23 @@ Container and native workflows do not create GitHub Releases. They fail closed i
 
 ## Release Please token
 
-The release workflow prefers a repository secret named `RELEASE_PLEASE_TOKEN` when one is configured and otherwise falls back to `GITHUB_TOKEN`.
+The repository secret `RELEASE_PLEASE_TOKEN` is required. Use a repository-scoped GitHub App token or an appropriately scoped automation token that can create and update the release pull request, create the tag and GitHub Release, and trigger the pull-request checks for the automated branch.
 
-A dedicated GitHub App or appropriately scoped token is useful when the organization wants workflows on Release Please-created pull requests to start without the approval behavior associated with pull requests opened by `GITHUB_TOKEN`. Keep the token least-privileged and repository-scoped.
+The workflow fails before invoking Release Please when this secret is absent. It does not fall back to `GITHUB_TOKEN`, because pull requests created by that token do not trigger the normal pull-request workflows and would bypass the documented evidence gate.
 
-The release flow does not require a separate token merely to create the release pull request, tag, or GitHub Release when repository Actions permissions allow those operations.
+Keep the token least-privileged, repository-scoped, and unavailable to pull-request jobs. Rotate it if it may have entered source, logs, artifacts, screenshots, comments, or caches.
+
+## GitHub-hosted runner policy
+
+The public source repository uses explicit standard GitHub-hosted images:
+
+```text
+Linux       ubuntu-24.04
+macOS       macos-15
+Windows     windows-2025
+```
+
+Linux CI, container, release, and security jobs use Ubuntu 24.04. Native verification uses all three platforms plus Android on Ubuntu and iOS on macOS. Generated projects may adopt self-hosted runners, but they must update the documentation, access model, cost assumptions, and retained-platform evidence together.
 
 ## Repository checks
 
@@ -196,9 +213,10 @@ When both publishers are disabled, Release Please can still own source versionin
 Review:
 
 - dependency audit
-- secret scan
+- full-history secret scan
 - filesystem and image vulnerabilities
 - workflow token permissions
+- public fork behavior
 - generated SBOMs and provenance
 - authentication and authorization regressions
 - CSP and native permission changes
