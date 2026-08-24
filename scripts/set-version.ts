@@ -29,6 +29,17 @@ function replaceRequired(
 
 const updates: Update[] = []
 
+const versionPath = 'version.txt'
+const versionPrevious = await readFile(versionPath, 'utf8')
+updates.push({ next: `${version}\n`, path: versionPath, previous: versionPrevious })
+
+const manifestPath = '.release-please-manifest.json'
+const manifestPrevious = await readFile(manifestPath, 'utf8')
+const releaseManifest = JSON.parse(manifestPrevious) as Record<string, string>
+releaseManifest['.'] = version
+const manifestNext = `${JSON.stringify(releaseManifest, null, 2)}\n`
+updates.push({ next: manifestNext, path: manifestPath, previous: manifestPrevious })
+
 const rootPath = 'package.json'
 const rootPrevious = await readFile(rootPath, 'utf8')
 const rootManifest = JSON.parse(rootPrevious) as Record<string, unknown>
@@ -80,6 +91,6 @@ for (const update of changed) {
 if (changed.length === 0) console.log(`Version is already ${version}.`)
 
 console.log('\nNext steps:')
-console.log(`1. Add a dated [${version}] section to CHANGELOG.md.`)
+console.log('1. Use version:set only for release bootstrap or recovery, not for normal feature work.')
 console.log('2. Run bun run template:validate and the release checks in docs/release.md.')
-console.log(`3. Create tag v${version} only after the retained builds pass.`)
+console.log('3. Normal publication happens only by merging the Release Please pull request; do not tag manually.')
