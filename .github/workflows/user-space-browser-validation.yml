@@ -116,6 +116,81 @@ jobs:
             chmod +x caddy
           )
           echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+      - name: Extract Chromium runtime dependencies into user space
+        shell: bash
+        run: |
+          set -euo pipefail
+          package_dir="$RUNNER_TEMP/chromium-runtime-packages"
+          browser_root="$RUNNER_TEMP/chromium-runtime-root"
+          rm -rf "$package_dir" "$browser_root"
+          mkdir -p "$package_dir" "$browser_root"
+          direct_packages=(
+            libasound2
+            libatk-bridge2.0-0
+            libatk1.0-0
+            libatspi2.0-0
+            libcairo2
+            libcups2
+            libdbus-1-3
+            libdrm2
+            libgbm1
+            libgdk-pixbuf-2.0-0
+            libglib2.0-0
+            libgtk-3-0
+            libnspr4
+            libnss3
+            libpango-1.0-0
+            libpangocairo-1.0-0
+            libwayland-client0
+            libx11-6
+            libx11-xcb1
+            libxcb1
+            libxcomposite1
+            libxdamage1
+            libxext6
+            libxfixes3
+            libxi6
+            libxkbcommon0
+            libxrandr2
+            libxrender1
+            libxshmfence1
+            libxtst6
+            libfontconfig1
+            libfreetype6
+            fonts-liberation
+            fonts-noto-color-emoji
+          )
+          mapfile -t dependency_packages < <(
+            apt-cache depends --recurse \
+              --no-recommends --no-suggests --no-conflicts --no-breaks \
+              --no-replaces --no-enhances \
+              "${direct_packages[@]}" 2>/dev/null |
+              awk 'NF == 1 && $1 !~ /^</ && $1 !~ /^\|/ { print $1 }' |
+              sort -u
+          )
+          downloadable=()
+          for package in "${dependency_packages[@]}"; do
+            if apt-cache show "$package" >/dev/null 2>&1; then
+              downloadable+=("$package")
+            fi
+          done
+          cd "$package_dir"
+          apt-get download "${downloadable[@]}"
+          for package in ./*.deb; do
+            dpkg-deb --extract "$package" "$browser_root"
+          done
+          current_ld="${LD_LIBRARY_PATH:-}"
+          browser_ld="$browser_root/usr/lib/x86_64-linux-gnu:$browser_root/lib/x86_64-linux-gnu"
+          if [ -n "$current_ld" ]; then
+            browser_ld="$browser_ld:$current_ld"
+          fi
+          {
+            echo "BROWSER_ROOT=$browser_root"
+            echo "LD_LIBRARY_PATH=$browser_ld"
+            echo "FONTCONFIG_PATH=$browser_root/etc/fonts"
+            echo "FONTCONFIG_FILE=$browser_root/etc/fonts/fonts.conf"
+            echo "XDG_DATA_DIRS=$browser_root/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+          } >> "$GITHUB_ENV"
       - name: Build API and SSR web application
         run: bun run build
       - name: Start API, web, and public Caddy boundary
@@ -152,6 +227,17 @@ jobs:
           exit 1
       - name: Install Playwright Chromium
         run: bunx playwright install chromium
+      - name: Verify Chromium runtime linkage
+        shell: bash
+        run: |
+          set -euo pipefail
+          browser="$(find "$HOME/.cache/ms-playwright" -type f -name chrome-headless-shell -print -quit)"
+          test -n "$browser"
+          ldd "$browser" | tee "$RUNNER_TEMP/chromium-ldd.txt"
+          if grep -q 'not found' "$RUNNER_TEMP/chromium-ldd.txt"; then
+            echo "Chromium still has unresolved runtime libraries." >&2
+            exit 1
+          fi
       - name: Run authenticated browser lifecycle
         run: bun run test:e2e
       - name: Run axe accessibility audit
@@ -164,6 +250,7 @@ jobs:
           cat "$RUNNER_TEMP/web.log" || true
           cat "$RUNNER_TEMP/caddy.log" || true
           cat "$RUNNER_TEMP/browser-postgresql.log" || true
+          cat "$RUNNER_TEMP/chromium-ldd.txt" || true
       - name: Stop user-space services
         if: always()
         shell: bash
