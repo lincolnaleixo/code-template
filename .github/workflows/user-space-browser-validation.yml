@@ -192,14 +192,17 @@ jobs:
             echo "XDG_DATA_DIRS=$browser_root/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
           } >> "$GITHUB_ENV"
       - name: Build API and SSR web application
+        env:
+          NODE_ENV: production
         run: bun run build
       - name: Start API, web, and public Caddy boundary
         shell: bash
         run: |
           set -euo pipefail
-          API_PORT=3001 HOST=127.0.0.1 bun run --cwd apps/api start > "$RUNNER_TEMP/api.log" 2>&1 &
+          NODE_ENV=test API_PORT=3001 HOST=127.0.0.1 \
+            bun run --cwd apps/api start > "$RUNNER_TEMP/api.log" 2>&1 &
           api_pid=$!
-          PORT=3000 HOST=127.0.0.1 API_URL=http://127.0.0.1:3001 \
+          NODE_ENV=production PORT=3000 HOST=127.0.0.1 API_URL=http://127.0.0.1:3001 \
             bun run --cwd apps/web start > "$RUNNER_TEMP/web.log" 2>&1 &
           web_pid=$!
           sed \
