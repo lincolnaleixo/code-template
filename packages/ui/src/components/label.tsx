@@ -4,6 +4,7 @@ import { cn } from '../utils'
 export type LabelProps = LabelHTMLAttributes<HTMLLabelElement>
 
 export const Label = forwardRef<HTMLLabelElement, LabelProps>(({ className, ...props }, ref) => (
+  // biome-ignore lint/a11y/noLabelWithoutControl: This generic primitive forwards htmlFor and accessible children to callers.
   <label
     className={cn(
       'text-sm font-medium leading-none peer-disabled:cursor-not-allowed',
