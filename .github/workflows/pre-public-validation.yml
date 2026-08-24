@@ -35,8 +35,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: code-template-pre-public-validation-${{ github.sha }}
-  cancel-in-progress: false
+  group: code-template-pre-public-validation-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   BUN_VERSION: 1.3.14
