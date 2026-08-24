@@ -78,40 +78,75 @@ jobs:
     name: Tauri Linux
     needs: repository
     runs-on: [self-hosted, linux, x64, matrix]
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
           bun-version: ${{ env.BUN_VERSION }}
       - uses: dtolnay/rust-toolchain@stable
-      - name: Install Tauri prerequisites
+      - name: Extract Tauri prerequisites into user space
         shell: bash
         run: |
           set -euo pipefail
-          if pkg-config --exists webkit2gtk-4.1 ayatana-appindicator3-0.1; then
-            echo "Tauri system dependencies are already available."
-            exit 0
-          fi
-          if command -v sudo >/dev/null 2>&1; then
-            elevated=(sudo)
-          elif [ "$(id -u)" -eq 0 ]; then
-            elevated=()
-          else
-            echo "The self-hosted runner needs Tauri system packages installed by its administrator." >&2
+          package_dir="$RUNNER_TEMP/tauri-linux-packages"
+          tauri_root="$RUNNER_TEMP/tauri-linux-root"
+          rm -rf "$package_dir" "$tauri_root"
+          mkdir -p "$package_dir" "$tauri_root"
+          direct_packages=(
+            build-essential
+            pkg-config
+            libwebkit2gtk-4.1-dev
+            libxdo-dev
+            libssl-dev
+            libayatana-appindicator3-dev
+            librsvg2-dev
+          )
+          mapfile -t dependency_packages < <(
+            apt-cache depends --recurse \
+              --no-recommends --no-suggests --no-conflicts --no-breaks \
+              --no-replaces --no-enhances \
+              "${direct_packages[@]}" 2>/dev/null |
+              awk 'NF == 1 && $1 !~ /^</ && $1 !~ /^\|/ { print $1 }' |
+              sort -u
+          )
+          downloadable=()
+          for package in "${dependency_packages[@]}"; do
+            if apt-cache show "$package" >/dev/null 2>&1; then
+              downloadable+=("$package")
+            fi
+          done
+          cd "$package_dir"
+          apt-get download "${downloadable[@]}"
+          for package in ./*.deb; do
+            dpkg-deb --extract "$package" "$tauri_root"
+          done
+          mapfile -t pkgconfig_dirs < <(find "$tauri_root" -type d -path '*/pkgconfig' -print | sort -u)
+          if [ "${#pkgconfig_dirs[@]}" -eq 0 ]; then
+            echo "No pkg-config metadata was extracted for Tauri." >&2
             exit 1
           fi
-          "${elevated[@]}" apt-get update
-          "${elevated[@]}" apt-get install -y \
-            libwebkit2gtk-4.1-dev \
-            build-essential \
-            curl \
-            wget \
-            file \
-            libxdo-dev \
-            libssl-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev
+          pkgconfig_path="$(IFS=:; echo "${pkgconfig_dirs[*]}")"
+          tauri_ld="$tauri_root/usr/lib/x86_64-linux-gnu:$tauri_root/lib/x86_64-linux-gnu"
+          {
+            echo "TAURI_SYSROOT=$tauri_root"
+            echo "PKG_CONFIG_PATH=$pkgconfig_path"
+            echo "PKG_CONFIG_LIBDIR=$pkgconfig_path"
+            echo "PKG_CONFIG_SYSROOT_DIR=$tauri_root"
+            echo "PKG_CONFIG_ALLOW_SYSTEM_CFLAGS=1"
+            echo "PKG_CONFIG_ALLOW_SYSTEM_LIBS=1"
+            echo "LD_LIBRARY_PATH=$tauri_ld:${LD_LIBRARY_PATH:-}"
+            echo "LIBRARY_PATH=$tauri_ld:${LIBRARY_PATH:-}"
+            echo "CPATH=$tauri_root/usr/include:${CPATH:-}"
+            echo "XDG_DATA_DIRS=$tauri_root/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+          } >> "$GITHUB_ENV"
+          echo "$tauri_root/usr/bin" >> "$GITHUB_PATH"
+      - name: Verify Tauri pkg-config contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          pkg-config --exists webkit2gtk-4.1 ayatana-appindicator3-0.1 openssl librsvg-2.0
+          pkg-config --cflags --libs webkit2gtk-4.1 ayatana-appindicator3-0.1 openssl librsvg-2.0
       - run: bun ci
       - run: bun run build:desktop
 
