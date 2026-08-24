@@ -19,6 +19,10 @@ on:
         description: Semantic-version tag created by Release Please
         required: true
         type: string
+      publish:
+        description: Internal publication authorization from Release Please
+        required: true
+        type: boolean
       api_url:
         description: Public API URL embedded into native builds
         required: false
@@ -158,7 +162,7 @@ jobs:
 
   attach-to-release:
     name: Attach native artifacts to GitHub release
-    if: github.event_name == 'workflow_call'
+    if: inputs.publish == true
     needs: [desktop, android, ios]
     runs-on: ubuntu-latest
     permissions:
