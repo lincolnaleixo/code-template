@@ -36,6 +36,7 @@ interface ReleasePleasePackage {
 }
 
 interface ReleasePleaseConfig {
+  'bootstrap-sha'?: string
   'bump-minor-pre-major'?: boolean
   'bump-patch-for-minor-pre-major'?: boolean
   'include-component-in-tag'?: boolean
@@ -122,6 +123,7 @@ const alwaysRequired = [
   'SECURITY.md',
   'bun.lock',
   'docs/architecture.md',
+  'docs/project-bootstrap.md',
   'docs/release.md',
   'docs/template-customization.md',
   'package.json',
@@ -196,6 +198,10 @@ if (releaseManifest['.'] !== rootVersion) {
   )
 }
 
+if (releaseConfig['bootstrap-sha'] && !/^[0-9a-f]{40}$/i.test(releaseConfig['bootstrap-sha'])) {
+  errors.push('Release Please bootstrap-sha must be a full 40-character commit SHA when present.')
+}
+
 if (!rootReleaseConfig) {
   errors.push('release-please-config.json must configure the repository root package.')
 } else {
@@ -212,19 +218,42 @@ if (!rootReleaseConfig) {
     errors.push('Release Please must create the canonical GitHub Release.')
   }
 
-  const requiredExtraFiles = [
-    ['json', 'package.json', '$.version'],
+  const baseExtraFiles = [['json', 'package.json', '$.version']] as const
+  const desktopExtraFiles = [
     ['json', 'apps/desktop/src-tauri/tauri.conf.json', '$.version'],
     ['toml', 'apps/desktop/src-tauri/Cargo.toml', '$.package.version'],
   ] as const
 
-  for (const [type, path, jsonpath] of requiredExtraFiles) {
+  for (const [type, path, jsonpath] of baseExtraFiles) {
     const configured = rootReleaseConfig['extra-files']?.some(
       (extra) => extra.type === type && extra.path === path && extra.jsonpath === jsonpath,
     )
     if (!configured) {
       errors.push(`Release Please is missing the ${path} version update at ${jsonpath}.`)
     }
+  }
+
+  for (const [type, path, jsonpath] of desktopExtraFiles) {
+    const configured = rootReleaseConfig['extra-files']?.some(
+      (extra) => extra.type === type && extra.path === path && extra.jsonpath === jsonpath,
+    )
+    if (templateFeatures.desktop && !configured) {
+      errors.push(`Release Please is missing the ${path} version update at ${jsonpath}.`)
+    }
+    if (!templateFeatures.desktop && configured) {
+      errors.push(`Release Please still references desktop version file ${path} while desktop is disabled.`)
+    }
+  }
+
+  const cargoLockExtras =
+    rootReleaseConfig['extra-files']?.filter(
+      (extra) => extra.type === 'toml' && extra.path === 'apps/desktop/src-tauri/Cargo.lock',
+    ) ?? []
+  if (templateFeatures.desktop && cargoLockExtras.length !== 1) {
+    errors.push('Release Please must configure exactly one Cargo.lock version update while desktop is enabled.')
+  }
+  if (!templateFeatures.desktop && cargoLockExtras.length > 0) {
+    errors.push('Release Please still references Cargo.lock while desktop is disabled.')
   }
 
   const visibleTypes = ['feat', 'fix', 'perf', 'deps', 'security']
@@ -264,12 +293,20 @@ const publisherReferences = [
 ] as const
 
 for (const [feature, workflow] of publisherReferences) {
-  const referenced = releaseWorkflow.includes(`uses: ${workflow}`)
+  const reference = `uses: ${workflow}`
+  const referenceIndex = releaseWorkflow.indexOf(reference)
+  const referenced = referenceIndex >= 0
   if (templateFeatures[feature] && !referenced) {
     errors.push(`Release Please must invoke ${workflow} while ${feature} is enabled.`)
   }
   if (!templateFeatures[feature] && referenced) {
     errors.push(`Release Please must stop invoking ${workflow} when ${feature} is disabled.`)
+  }
+  if (templateFeatures[feature] && referenced) {
+    const callBlock = releaseWorkflow.slice(referenceIndex, referenceIndex + 500)
+    if (!callBlock.includes('publish: true')) {
+      errors.push(`Release Please must pass internal publish authorization to ${workflow}.`)
+    }
   }
 }
 
