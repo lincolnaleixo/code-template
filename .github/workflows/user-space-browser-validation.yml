@@ -6,10 +6,26 @@ on:
       - ci/release-please-gate
     paths:
       - .github/workflows/user-space-browser-validation.yml
+      - playwright.config.ts
+      - scripts/check-accessibility.ts
+      - tests/e2e/**
+      - apps/api/**
+      - apps/web/**
+      - packages/**
+      - package.json
+      - bun.lock
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
       - .github/workflows/user-space-browser-validation.yml
+      - playwright.config.ts
+      - scripts/check-accessibility.ts
+      - tests/e2e/**
+      - apps/api/**
+      - apps/web/**
+      - packages/**
+      - package.json
+      - bun.lock
 
 permissions:
   contents: read
