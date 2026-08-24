@@ -1,54 +1,116 @@
 # Release Process
 
-Template releases establish a reproducible baseline for repositories created afterward. Do not publish a release merely because implementation is merged. Publish when the version, changelog, generated artifacts, tests, builds, governance, and delivery paths agree.
+Template releases establish a reproducible baseline for repositories created afterward. Normal development lands on `main`, but publication is a separate decision: a version is published only when a maintainer merges the Release Please pull request.
 
-## Versioning
+## Normal release flow
 
-Use semantic versioning for the template:
+1. Merge tested Conventional Commits into `main`.
+2. Release Please opens or updates one release pull request with the next semantic version, synchronized version files, and generated changelog.
+3. Leave that pull request open while more changes should accumulate. Nothing is published while it remains open.
+4. Review the proposed version, changelog, version sources, and required checks.
+5. Merge the release pull request only when that exact version is ready to publish.
+6. Release Please creates the `vX.Y.Z` tag and canonical GitHub Release.
+7. The same trusted workflow calls the enabled container and native publishers with that tag.
+8. Publishers verify that the tag points at the checked-out source and that the GitHub Release already exists before writing artifacts.
 
-- patch: compatible fixes and documentation corrections
-- minor: new optional capabilities, components, patterns, or compatible architecture improvements
-- major: incompatible repository structure, configuration, or generated-project migration requirements
+Merging the release pull request is the publication approval. Do not merge it as routine repository housekeeping.
 
-Keep an `Unreleased` section at the top of `CHANGELOG.md`.
+## Version policy
 
-## Version sources
+The repository uses strict Semantic Versioning, including before `1.0.0`.
 
-A release version must match in:
+| Change | Commit example | Result from `0.3.0` |
+| --- | --- | --- |
+| Backward-compatible bug fix | `fix(auth): preserve native sessions` | `0.3.1` |
+| Backward-compatible feature | `feat(ui): add command palette` | `0.4.0` |
+| Incompatible change | `feat!: replace repository layout` | `1.0.0` |
+
+Release notes expose the categories that matter to consumers: features, bug fixes, performance, dependencies, and security.
+
+The following commit types are hidden from user-facing release notes and do not create a release by themselves:
 
 ```text
+docs
+refactor
+test
+build
+ci
+chore
+```
+
+Use a breaking change only when a generated project, repository contract, configuration, migration path, or supported integration becomes incompatible.
+
+If a specific next version is genuinely required for recovery, Release Please supports a `Release-As: X.Y.Z` trailer on an appropriate commit. Do not use it to replace or reuse an already published version.
+
+## Release-managed files
+
+Release Please uses `version.txt` as the simple-strategy version source and keeps these values synchronized in the release pull request:
+
+```text
+version.txt
+.release-please-manifest.json
 package.json
+apps/desktop/src-tauri/tauri.conf.json
 apps/desktop/src-tauri/Cargo.toml
 apps/desktop/src-tauri/Cargo.lock
-apps/desktop/src-tauri/tauri.conf.json
 CHANGELOG.md
 ```
 
-Preview and apply a synchronized version update with:
+`bun run template:validate` verifies the synchronization contract. It also verifies that the configured `Cargo.lock` array index still points to the root `matrix-template` package, so dependency changes cannot silently make Release Please update the wrong package.
 
-```bash
-bun run version:set 0.4.0 --dry-run
-bun run version:set 0.4.0
-```
+Do not edit release versions, `.release-please-manifest.json`, or `CHANGELOG.md` during ordinary feature work. Commit messages are the input to the next release pull request.
 
-The command updates the root package, Tauri configuration, Cargo package metadata, and only the root application package entry in `Cargo.lock`. It does not rewrite dependency versions or create a changelog section.
+`bun run version:set X.Y.Z` remains available only for bootstrap or documented recovery. It synchronizes the local version sources and manifest, but it is not the normal publication path and it must not be followed by a manually created tag.
 
-After changing Rust dependencies, regenerate `Cargo.lock` with Cargo. After changing only the product version, review the focused lockfile diff produced by `version:set`.
+## Release pull request review
 
-`bun run template:validate` checks the version contract when the desktop capability is enabled.
+Before merging the automated release pull request, confirm:
 
-## Prepare the changelog
+- the proposed SemVer bump matches the commits on `main`
+- the changelog contains consumer-relevant changes and excludes implementation noise
+- all synchronized version sources contain the same version
+- repository checks and retained-platform evidence are green
+- capability changes are reflected in release publishers and documentation
+- no secret, signing material, private path, or environment-specific value is present
 
-1. Review every entry under `Unreleased`.
-2. Group entries under Added, Changed, Deprecated, Removed, Fixed, or Security.
-3. Remove implementation trivia that does not help a template consumer.
-4. Add migration instructions for incompatible changes.
-5. Move the entries into a dated version section matching the new version.
-6. Restore an empty `Unreleased` section for future work.
+There is no release calendar enforced by automation. Merge the release pull request when the accumulated changes are worth shipping and the evidence is sufficient.
+
+## Verify without publishing
+
+Manual runs of release publisher workflows are always verify-only.
+
+For containers, run `Release containers` from GitHub Actions. An optional existing tag can be supplied to verify that exact source. The manual path has read-only repository permissions, never logs into GHCR, and uses `push: false`.
+
+For native builds, run `Native builds` from GitHub Actions. An optional existing tag can be supplied to verify that exact source. The build artifacts are retained as workflow artifacts, but the job that writes to the GitHub Release is unreachable from `workflow_dispatch`.
+
+Manual inputs do not include a publish switch. There is no supported manual path that creates a tag, GitHub Release, registry image, or release asset.
+
+## Publication gate and permissions
+
+Official publication is reachable only through `.github/workflows/release-please.yml` after Release Please reports that a release was created from a merged release pull request.
+
+The workflow uses repository-level concurrency group `code-template-release` with cancellation disabled, so a second official release cannot run concurrently with the first one.
+
+Publisher permissions are split by mode:
+
+- manual container verification receives `contents: read` only
+- official container publication receives package, OIDC, and attestation write permissions only in its publish job
+- native compile jobs receive `contents: read`
+- the native asset upload job receives `contents: write` only when invoked through the official reusable workflow path
+
+Container and native workflows do not create GitHub Releases. They fail closed if the requested release does not already exist or if the tag does not resolve to the checked-out source.
+
+## Release Please token
+
+The release workflow prefers a repository secret named `RELEASE_PLEASE_TOKEN` when one is configured and otherwise falls back to `GITHUB_TOKEN`.
+
+A dedicated GitHub App or appropriately scoped token is useful when the organization wants workflows on Release Please-created pull requests to start without the approval behavior associated with pull requests opened by `GITHUB_TOKEN`. Keep the token least-privileged and repository-scoped.
+
+The release flow does not require a separate token merely to create the release pull request, tag, or GitHub Release when repository Actions permissions allow those operations.
 
 ## Repository checks
 
-Run the repository-level checks:
+Run the repository-level checks before publication:
 
 ```bash
 bun ci
@@ -63,7 +125,8 @@ bun run test:template-consumer
 - capability dependencies and complete removals
 - explicit license policy
 - exact dependency versions and committed lockfiles
-- synchronized template versions
+- synchronized template and Release Please versions
+- Release Please publisher references for enabled release capabilities
 - shadcn monorepo configuration
 - semantic UI contracts
 - local documentation links
@@ -100,15 +163,9 @@ Confirm that:
 
 ## Container checks
 
-Build both runtime images and inspect their effective configuration:
-
-```bash
-docker build --target runtime --tag matrix-template-api:release --file apps/api/Dockerfile .
-docker build --target runtime --tag matrix-template-web:release --file apps/web/Dockerfile .
-docker compose --profile full --profile observability config --quiet
-```
-
 Before publishing, verify image architecture, non-root execution, read-only filesystem assumptions, health checks, SBOM generation, provenance, and registry permissions.
+
+A manual `Release containers` run builds both runtime images for `linux/amd64` and `linux/arm64` without pushing them. The official path publishes SemVer and source-SHA tags to GHCR, generates SBOM and provenance data, and records build provenance attestations.
 
 ## Native checks
 
@@ -122,9 +179,17 @@ Capacitor Android
 Capacitor iOS
 ```
 
-Unsigned simulator or debug artifacts prove compilation only. Production distribution additionally requires signing, notarization, provisioning, store metadata, and protected credentials.
+The current template builds unsigned desktop bundles, an Android debug APK, and an unsigned iOS simulator application. These artifacts prove compilation only. Production distribution additionally requires the product-specific signing, notarization, provisioning, store metadata, and protected credentials appropriate to that product.
 
 A platform that was not compiled must be documented as unverified for that release.
+
+## Optional release capabilities
+
+`containerReleases` and `nativeReleases` are explicit capabilities in `template.config.ts`.
+
+When disabling either capability, remove its workflow and remove the matching `publish-containers` or `publish-native` job from `.github/workflows/release-please.yml`. `bun run template:validate` enforces both sides of this contract so the release orchestrator cannot retain a reference to a removed publisher.
+
+When both publishers are disabled, Release Please can still own source versioning, changelog, tags, and GitHub Releases. Remove the root release automation only if the generated product deliberately adopts another documented release model and updates its validation policy accordingly.
 
 ## Security and governance checks
 
@@ -152,40 +217,28 @@ bun run repo:protect
 
 Do not require status checks until their final names have completed successfully. See [repository-governance.md](repository-governance.md) and [licensing.md](licensing.md).
 
-## Publish
-
-After all required checks pass:
-
-1. merge the release preparation pull request
-2. verify `main` protection and code ownership
-3. create an annotated semantic version tag such as `v0.4.0`
-4. push the tag
-5. verify container and native release workflows
-6. create or verify the GitHub release notes
-7. attach or link the expected artifacts and reports
-8. record any platform-specific limitation
-
-Do not move or reuse a published version tag.
-
 ## Post-release verification
 
 After publishing:
 
-- create a temporary repository using the GitHub **Use this template** action
+- verify the GitHub Release points to the expected immutable tag
+- verify expected container images and native assets exist
+- pull published images using the intended audience permissions
+- create a temporary repository using the GitHub **Use this template** action when bootstrap or repository layout changed
 - follow [project-bootstrap.md](project-bootstrap.md)
-- run `bun run test:template-consumer` from the release commit as automated supporting evidence
+- run `bun run test:template-consumer` from the release commit as supporting evidence
 - install the generated repository with its committed lockfile
 - run the minimal web/API flow
 - confirm documentation links and commands are correct for a fresh clone
-- replace ownership and licensing placeholders
-- verify published images can be pulled by the intended audience
-- confirm release artifacts match the tag and expected architectures
+- replace ownership and licensing placeholders in the generated consumer
 
-The automated consumer smoke test does not replace the real GitHub template operation. Both are required for a release that changes bootstrap, file layout, generated configuration, or repository metadata.
+The automated consumer smoke test does not replace the real GitHub template operation for a release that changes bootstrap, file layout, generated configuration, or repository metadata.
 
-## Rollback and correction
+## Failed releases and correction
 
-Application artifacts can be rolled back to a previous image or binary, but a bad template release also affects newly generated repositories.
+If a publisher fails after Release Please created the tag and GitHub Release, fix the underlying operational cause and rerun the failed job when rerunning does not change source. Do not move the tag or reuse the version for different source code.
+
+If a code change is required, merge a Conventional Commit and let Release Please propose the next version.
 
 For a defective release:
 
@@ -193,6 +246,6 @@ For a defective release:
 2. publish a corrective version instead of rewriting the tag
 3. provide migration or revert instructions for repositories already generated from the defective release
 4. keep database compatibility and destructive migration constraints explicit
-5. update the changelog with the correction
+5. let the corrective release update the changelog through normal automation
 
 The release is complete only when a fresh consumer can reproduce the documented baseline from the published tag.
