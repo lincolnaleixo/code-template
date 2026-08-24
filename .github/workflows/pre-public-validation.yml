@@ -86,17 +86,32 @@ jobs:
           bun-version: ${{ env.BUN_VERSION }}
       - uses: dtolnay/rust-toolchain@stable
       - name: Install Tauri prerequisites
-        run: >-
-          sudo apt-get update && sudo apt-get install -y
-          libwebkit2gtk-4.1-dev
-          build-essential
-          curl
-          wget
-          file
-          libxdo-dev
-          libssl-dev
-          libayatana-appindicator3-dev
-          librsvg2-dev
+        shell: bash
+        run: |
+          set -euo pipefail
+          if pkg-config --exists webkit2gtk-4.1 ayatana-appindicator3-0.1; then
+            echo "Tauri system dependencies are already available."
+            exit 0
+          fi
+          if command -v sudo >/dev/null 2>&1; then
+            elevated=(sudo)
+          elif [ "$(id -u)" -eq 0 ]; then
+            elevated=()
+          else
+            echo "The self-hosted runner needs Tauri system packages installed by its administrator." >&2
+            exit 1
+          fi
+          "${elevated[@]}" apt-get update
+          "${elevated[@]}" apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
       - run: bun ci
       - run: bun run build:desktop
 
