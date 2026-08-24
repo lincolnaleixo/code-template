@@ -32,7 +32,7 @@ jobs:
   verify:
     name: Verify ${{ matrix.component }} image
     if: github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     strategy:
@@ -74,7 +74,7 @@ jobs:
   publish:
     name: Publish ${{ matrix.component }} image
     if: inputs.publish == true
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       packages: write
