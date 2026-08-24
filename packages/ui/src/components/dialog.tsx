@@ -38,6 +38,9 @@ export function Dialog({ children, className, description, footer, onOpenChange,
       onClick={(event) => {
         if (event.target === event.currentTarget) onOpenChange(false)
       }}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') onOpenChange(false)
+      }}
       ref={ref}
     >
       <div className={cn('rounded-xl border bg-card p-6 shadow-2xl', className)}>
