@@ -4,17 +4,32 @@ on:
   pull_request:
     paths:
       - ".github/workflows/release-native.yml"
+      - ".github/workflows/release-please.yml"
+      - "release-please-config.json"
+      - "version.txt"
       - "apps/desktop/**"
       - "apps/mobile/**"
       - "apps/web/**"
       - "packages/**"
       - "package.json"
       - "bun.lock"
-  push:
-    tags:
-      - "v*"
+  workflow_call:
+    inputs:
+      tag:
+        description: Semantic-version tag created by Release Please
+        required: true
+        type: string
+      api_url:
+        description: Public API URL embedded into native builds
+        required: false
+        type: string
+        default: ""
   workflow_dispatch:
     inputs:
+      tag:
+        description: Existing semantic-version tag or blank for the selected ref (verify only)
+        required: false
+        default: ""
       api_url:
         description: Public API URL embedded into native builds
         required: false
@@ -24,7 +39,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: native-${{ github.workflow }}-${{ github.ref }}
+  group: native-${{ inputs.tag || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
@@ -42,6 +57,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ inputs.tag || github.ref }}
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
           bun-version: ${{ env.BUN_VERSION }}
@@ -73,6 +90,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ inputs.tag || github.ref }}
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
           bun-version: ${{ env.BUN_VERSION }}
@@ -103,6 +122,8 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ inputs.tag || github.ref }}
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
           bun-version: ${{ env.BUN_VERSION }}
@@ -113,7 +134,7 @@ jobs:
         run: |
           bunx cap add ios
           bunx cap sync ios
-      - name: Compile simulator application without signing
+      - name: Compile simulator application
         run: >-
           xcodebuild
           -workspace apps/mobile/ios/App/App.xcworkspace
@@ -137,22 +158,43 @@ jobs:
 
   attach-to-release:
     name: Attach native artifacts to GitHub release
-    if: startsWith(github.ref, 'refs/tags/')
+    if: github.event_name == 'workflow_call'
     needs: [desktop, android, ios]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ inputs.tag }}
+          fetch-depth: 0
+      - name: Verify Release Please publication gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          test -n "$RELEASE_TAG"
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null
+          test "$(git rev-list -n 1 "$RELEASE_TAG")" = "$(git rev-parse HEAD)"
       - uses: actions/download-artifact@v8
         with:
           path: native-artifacts
       - name: Package and upload native artifacts
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
         run: |
-          gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1 || gh release create "${GITHUB_REF_NAME}" --generate-notes
           for directory in native-artifacts/*; do
             archive="$(basename "$directory").tar.gz"
             tar -czf "$archive" -C "$directory" .
-            gh release upload "${GITHUB_REF_NAME}" "$archive" --clobber
+            gh release upload "$RELEASE_TAG" "$archive" --clobber
           done
+      - name: Record publication
+        run: |
+          {
+            echo "## Native release"
+            echo
+            echo "- Tag: ${{ inputs.tag }}"
+            echo "- Source: $(git rev-parse HEAD)"
+            echo "- Mode: publish after Release Please gate"
+          } >> "$GITHUB_STEP_SUMMARY"
