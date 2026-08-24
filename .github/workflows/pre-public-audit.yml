@@ -6,6 +6,10 @@ on:
       - ci/release-please-gate
     paths:
       - .github/workflows/pre-public-audit.yml
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/workflows/pre-public-audit.yml
   workflow_dispatch:
 
 permissions:
@@ -19,6 +23,7 @@ concurrency:
 jobs:
   audit:
     name: Scan history and remove identified reports
+    if: github.event_name != 'pull_request' || github.head_ref == 'ci/release-please-gate'
     runs-on: [self-hosted, linux, x64, matrix]
     timeout-minutes: 45
     steps:
