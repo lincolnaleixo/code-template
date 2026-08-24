@@ -21,7 +21,7 @@ This repository is configured as a GitHub template. It is deliberately modular: 
 | Infrastructure | Docker Compose and Caddy |
 | Observability | JSON logs, request IDs, Prometheus metrics and optional OpenTelemetry |
 | Accessibility | Semantic controls, keyboard contracts, reduced motion and axe audits |
-| Delivery | GitHub Actions, Playwright, GHCR releases, SBOM and provenance |
+| Delivery | GitHub Actions, Release Please, GHCR releases, SBOM and provenance |
 | Security | Bun audit, Gitleaks, Trivy, optional CodeQL and Dependency Review |
 
 ## Repository layout
@@ -165,9 +165,9 @@ A clean removal updates all connected surfaces:
 - CI, security, preview, release, and native workflows
 - tests and documentation
 
-The validator checks capability dependencies and reports both missing files for enabled features and leftover files for disabled features.
+The validator checks capability dependencies and reports both missing files for enabled features and leftover files for disabled features. It also verifies that Release Please invokes exactly the publishers enabled by `template.config.ts`.
 
-Follow [docs/template-customization.md](docs/template-customization.md), update `CHANGELOG.md`, and run:
+Follow [docs/template-customization.md](docs/template-customization.md) and run:
 
 ```bash
 bun run template:validate
@@ -175,11 +175,13 @@ bun run check
 bun run build
 ```
 
+Release Please owns the changelog during normal development. Capability changes should use a Conventional Commit and update the relevant documentation instead of adding a manual `Unreleased` entry.
+
 ## Development commands
 
 ```bash
 bun dev                        # API and web with fast reloads
-bun run check                  # capabilities, docs, lint, generated files, types and unit tests
+bun run check                  # capabilities, release contract, docs, lint, generated files, types and unit tests
 bun run docs:check             # local Markdown links
 bun run build                  # API and SSR web builds
 bun run build:native           # SPA bundle for Capacitor and Tauri
@@ -279,7 +281,7 @@ See [docs/architecture.md](docs/architecture.md).
 
 The main pipeline validates:
 
-1. capability dependencies, license policy, versions, documentation links, Biome, schema drift, TypeScript, and coverage
+1. capability dependencies, license policy, release automation, synchronized versions, documentation links, Biome, schema drift, TypeScript, and coverage
 2. API, SSR web, native SPA, and UI builds
 3. an isolated fresh-template consumer installation, check, SSR build, and native web build
 4. PostgreSQL authentication and authorization integration tests
@@ -300,7 +302,16 @@ See [docs/native.md](docs/native.md).
 
 ## Releases
 
-Template versions follow semantic versioning. Version values, the changelog, migrations, web/API builds, Compose behavior, security checks, consumer smoke test, accessibility audit, and retained native platforms must agree before publishing a tag.
+Changes merged into `main` use Conventional Commits. Release Please maintains one release pull request, derives the next strict SemVer version, synchronizes `version.txt`, package, Tauri, and Cargo versions, and generates focused release notes.
+
+An open release pull request publishes nothing. Merging it is the explicit publication gate: Release Please creates the `vX.Y.Z` tag and GitHub Release, then invokes the enabled container and native publishers. Manual publisher runs are verify-only and expose no publish switch.
+
+Version behavior is intentionally simple:
+
+- `fix` creates a patch
+- `feat` creates a minor
+- a breaking commit creates a major, even before `1.0.0`
+- `docs`, `refactor`, `test`, `build`, `ci`, and `chore` do not create a release by themselves
 
 See [docs/release.md](docs/release.md).
 
