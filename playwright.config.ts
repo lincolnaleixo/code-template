@@ -5,6 +5,10 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
+  captureGitInfo: {
+    commit: false,
+    diff: false,
+  },
   reporter: process.env.CI
     ? [
         ['github'],
