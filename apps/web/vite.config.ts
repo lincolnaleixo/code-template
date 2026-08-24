@@ -7,7 +7,7 @@ import { defineConfig, loadEnv } from 'vite'
 
 export default defineConfig(({ mode }) => {
   const loadedEnvironment = loadEnv(mode, process.cwd(), '')
-  const nativeBuild = mode === 'native'
+  const nativeBuild = mode === 'native' || process.env.MATRIX_NATIVE_BUILD === '1'
 
   if (nativeBuild) {
     loadClientEnv(
