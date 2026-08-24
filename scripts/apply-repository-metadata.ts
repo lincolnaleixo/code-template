@@ -50,9 +50,7 @@ if (requestedVisibility !== undefined) {
 }
 
 if (apply && visibility && confirmedVisibility !== visibility) {
-  throw new Error(
-    `Visibility changes require --confirm-visibility=${visibility} in the same command.`,
-  )
+  throw new Error(`Visibility changes require --confirm-visibility=${visibility} in the same command.`)
 }
 
 const repositoryPayload: { description: string; visibility?: RepositoryVisibility } = {

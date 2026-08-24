@@ -1,13 +1,6 @@
-import {
-  createContext,
-  type ReactNode,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react'
+import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react'
 import { Button } from './components/button'
-import { MoonIcon, MonitorIcon, SunIcon } from './icons'
+import { MonitorIcon, MoonIcon, SunIcon } from './icons'
 
 export type Theme = 'light' | 'dark' | 'system'
 export type Density = 'compact' | 'comfortable'
@@ -34,8 +27,7 @@ function isDensity(value: string | null): value is Density {
 
 function applyTheme(theme: Theme) {
   const dark =
-    theme === 'dark' ||
-    (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
 
   document.documentElement.classList.toggle('dark', dark)
   document.documentElement.dataset.theme = theme

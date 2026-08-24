@@ -1,4 +1,4 @@
-import { templateFeatures, type TemplateFeature } from '../template.config'
+import { type TemplateFeature, templateFeatures } from '../template.config'
 
 interface PackageManifest {
   dependencies?: Record<string, string>
@@ -84,17 +84,9 @@ const requiredPaths: Partial<Record<TemplateFeature, string[]>> = {
     'apps/desktop/src-tauri/Cargo.lock',
     'apps/desktop/src-tauri/tauri.conf.json',
   ],
-  observability: [
-    'packages/observability/package.json',
-    'infra/otel-collector.yaml',
-    'infra/prometheus.yml',
-  ],
+  observability: ['packages/observability/package.json', 'infra/otel-collector.yaml', 'infra/prometheus.yml'],
   docker: ['docker-compose.yml', 'apps/api/Dockerfile', 'apps/web/Dockerfile'],
-  endToEndTests: [
-    'playwright.config.ts',
-    'scripts/check-accessibility.ts',
-    'tests/e2e/smoke.spec.ts',
-  ],
+  endToEndTests: ['playwright.config.ts', 'scripts/check-accessibility.ts', 'tests/e2e/smoke.spec.ts'],
   containerReleases: ['.github/workflows/release-containers.yml'],
   nativeReleases: ['.github/workflows/release-native.yml'],
 }
@@ -175,10 +167,7 @@ const rootManifest = (await Bun.file('package.json').json()) as PackageManifest
 const catalog = rootManifest.workspaces?.catalog ?? {}
 const rootVersion = rootManifest.version ?? ''
 const releaseVersion = (await Bun.file('version.txt').text()).trim()
-const releaseManifest = (await Bun.file('.release-please-manifest.json').json()) as Record<
-  string,
-  string
->
+const releaseManifest = (await Bun.file('.release-please-manifest.json').json()) as Record<string, string>
 const releaseConfig = (await Bun.file('release-please-config.json').json()) as ReleasePleaseConfig
 const rootReleaseConfig = releaseConfig.packages?.['.']
 const releaseWorkflow = await Bun.file('.github/workflows/release-please.yml').text()
@@ -250,7 +239,9 @@ if (!rootReleaseConfig) {
       (extra) => extra.type === 'toml' && extra.path === 'apps/desktop/src-tauri/Cargo.lock',
     ) ?? []
   if (templateFeatures.desktop && cargoLockExtras.length !== 1) {
-    errors.push('Release Please must configure exactly one Cargo.lock version update while desktop is enabled.')
+    errors.push(
+      'Release Please must configure exactly one Cargo.lock version update while desktop is enabled.',
+    )
   }
   if (!templateFeatures.desktop && cargoLockExtras.length > 0) {
     errors.push('Release Please still references Cargo.lock while desktop is disabled.')
@@ -405,8 +396,10 @@ if (templateFeatures.ui) {
   const uiManifest = (await Bun.file('packages/ui/package.json').json()) as PackageManifest
 
   for (const alias of ['#components/*', '#hooks/*', '#lib/*']) {
-    if (!webManifest.imports?.[alias]) errors.push(`apps/web/package.json is missing import alias "${alias}".`)
-    if (!uiManifest.imports?.[alias]) errors.push(`packages/ui/package.json is missing import alias "${alias}".`)
+    if (!webManifest.imports?.[alias])
+      errors.push(`apps/web/package.json is missing import alias "${alias}".`)
+    if (!uiManifest.imports?.[alias])
+      errors.push(`packages/ui/package.json is missing import alias "${alias}".`)
   }
 
   for (const exportPath of ['.', './styles.css', './components/*', './lib/*', './patterns/*']) {
@@ -480,4 +473,6 @@ if (errors.length > 0) {
   process.exit(1)
 }
 
-console.log('Template capabilities, release automation, versions, UI contracts, and dependency policies are consistent.')
+console.log(
+  'Template capabilities, release automation, versions, UI contracts, and dependency policies are consistent.',
+)

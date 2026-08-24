@@ -3,19 +3,11 @@ import { cors } from '@elysiajs/cors'
 import { db, user } from '@matrix/db'
 import { DomainError } from '@matrix/domain'
 import { getServerEnv } from '@matrix/env/server'
-import {
-  createTelemetryPlugin,
-  getMetricsContentType,
-  renderMetrics,
-} from '@matrix/observability'
+import { createTelemetryPlugin, getMetricsContentType, renderMetrics } from '@matrix/observability'
 import { Elysia, t } from 'elysia'
 import { projectRoutes } from './features/projects/routes'
 import { createApiError, getDomainErrorStatus } from './http/errors'
-import {
-  beginRequest,
-  completeRequest,
-  getRequestContext,
-} from './http/request-context'
+import { beginRequest, completeRequest, getRequestContext } from './http/request-context'
 import { authHandlerPlugin, requireAuthPlugin } from './plugins/auth'
 
 const environment = getServerEnv()
@@ -71,11 +63,7 @@ export const app = new Elysia({ name: 'matrix-api' })
     })
     set.status = 500
     completeRequest(request, 500)
-    return createApiError(
-      context.requestId,
-      'INTERNAL_SERVER_ERROR',
-      'An unexpected server error occurred.',
-    )
+    return createApiError(context.requestId, 'INTERNAL_SERVER_ERROR', 'An unexpected server error occurred.')
   })
   .use(createTelemetryPlugin(environment))
   .use(
@@ -103,14 +91,10 @@ export const app = new Elysia({ name: 'matrix-api' })
     }),
   )
   .use(authHandlerPlugin)
-  .get(
-    '/health',
-    () => ({ ok: true, runtime: 'bun' as const }),
-    {
-      response: t.Object({ ok: t.Literal(true), runtime: t.Literal('bun') }),
-      detail: { tags: ['System'], summary: 'Process liveness' },
-    },
-  )
+  .get('/health', () => ({ ok: true, runtime: 'bun' as const }), {
+    response: t.Object({ ok: t.Literal(true), runtime: t.Literal('bun') }),
+    detail: { tags: ['System'], summary: 'Process liveness' },
+  })
   .get(
     '/ready',
     async ({ set }) => {
@@ -148,14 +132,10 @@ export const app = new Elysia({ name: 'matrix-api' })
     },
   )
   .use(requireAuthPlugin)
-  .get(
-    '/api/me',
-    ({ user, session }) => ({ user, session }),
-    {
-      auth: true,
-      detail: { tags: ['System'], summary: 'Current authenticated session' },
-    },
-  )
+  .get('/api/me', ({ user, session }) => ({ user, session }), {
+    auth: true,
+    detail: { tags: ['System'], summary: 'Current authenticated session' },
+  })
   .use(projectRoutes)
 
 export type App = typeof app

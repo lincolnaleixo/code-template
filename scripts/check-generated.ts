@@ -12,14 +12,7 @@ await run(['bun', 'run', 'db:generate'])
 await run(['bunx', 'biome', 'format', '--write', 'packages/db/src/auth-schema.ts'])
 
 const statusProcess = Bun.spawn(
-  [
-    'git',
-    'status',
-    '--porcelain',
-    '--',
-    'packages/db/src/auth-schema.ts',
-    'packages/db/drizzle',
-  ],
+  ['git', 'status', '--porcelain', '--', 'packages/db/src/auth-schema.ts', 'packages/db/drizzle'],
   { stdout: 'pipe', stderr: 'inherit' },
 )
 

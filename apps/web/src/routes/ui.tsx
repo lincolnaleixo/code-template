@@ -100,7 +100,9 @@ function UiPlayground() {
       <Separator />
       <SidebarSection>
         <SidebarLabel>Explore</SidebarLabel>
-        <SidebarItem active icon={<PaletteIcon className="size-4" />}>Foundation</SidebarItem>
+        <SidebarItem active icon={<PaletteIcon className="size-4" />}>
+          Foundation
+        </SidebarItem>
         <SidebarItem icon={<BuildingIcon className="size-4" />}>Patterns</SidebarItem>
         <SidebarItem icon={<FolderIcon className="size-4" />}>Components</SidebarItem>
       </SidebarSection>
@@ -118,7 +120,9 @@ function UiPlayground() {
         <>
           <div>
             <p className="text-sm font-medium">Matrix UI foundation</p>
-            <p className="hidden text-xs text-muted-foreground sm:block">Edit brand.css and inspect the entire system here.</p>
+            <p className="hidden text-xs text-muted-foreground sm:block">
+              Edit brand.css and inspect the entire system here.
+            </p>
           </div>
           <div className="flex items-center gap-1">
             <DensityToggle />
@@ -144,10 +148,14 @@ function UiPlayground() {
         <section className="space-y-4">
           <div>
             <h2 className="text-xl font-semibold tracking-tight">Color tokens</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Change the project hue and chroma in apps/web/src/brand.css.</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Change the project hue and chroma in apps/web/src/brand.css.
+            </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {colorTokens.map((token) => <TokenSwatch key={token} token={token} />)}
+            {colorTokens.map((token) => (
+              <TokenSwatch key={token} token={token} />
+            ))}
           </div>
         </section>
 
@@ -159,17 +167,28 @@ function UiPlayground() {
             </CardHeader>
             <CardContent className="space-y-5">
               <div>
-                <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Display</p>
-                <p className="mt-2 text-4xl font-semibold tracking-[-0.04em]">Build quietly premium products.</p>
+                <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                  Display
+                </p>
+                <p className="mt-2 text-4xl font-semibold tracking-[-0.04em]">
+                  Build quietly premium products.
+                </p>
               </div>
               <div>
                 <p className="text-xl font-semibold tracking-tight">Section heading</p>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">Readable body copy with a restrained measure and deliberate rhythm.</p>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  Readable body copy with a restrained measure and deliberate rhythm.
+                </p>
               </div>
               <div className="typeset rounded-xl bg-muted/60 p-5">
                 <h3>Rich content</h3>
-                <p>The optional <code>typeset</code> class styles prose, code, links, and lists without imposing product layout.</p>
-                <blockquote>Use it for documentation, markdown, AI responses, and editorial content.</blockquote>
+                <p>
+                  The optional <code>typeset</code> class styles prose, code, links, and lists without
+                  imposing product layout.
+                </p>
+                <blockquote>
+                  Use it for documentation, markdown, AI responses, and editorial content.
+                </blockquote>
               </div>
             </CardContent>
           </Card>
@@ -177,10 +196,16 @@ function UiPlayground() {
           <Card>
             <CardHeader>
               <CardTitle>Controls</CardTitle>
-              <CardDescription>Accessible defaults with semantic focus, error, and disabled states.</CardDescription>
+              <CardDescription>
+                Accessible defaults with semantic focus, error, and disabled states.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
-              <FormField description="A concise description belongs below the control." htmlFor="ui-name" label="Project name">
+              <FormField
+                description="A concise description belongs below the control."
+                htmlFor="ui-name"
+                label="Project name"
+              >
                 <Input id="ui-name" placeholder="New product" />
               </FormField>
               <FormField htmlFor="ui-type" label="Project type">
@@ -207,7 +232,9 @@ function UiPlayground() {
         <section className="space-y-4">
           <div>
             <h2 className="text-xl font-semibold tracking-tight">Actions and status</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Variants describe meaning, not brand-specific colors.</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Variants describe meaning, not brand-specific colors.
+            </p>
           </div>
           <Card>
             <CardContent className="space-y-6 p-6">
@@ -216,7 +243,10 @@ function UiPlayground() {
                 <Button variant="secondary">Secondary</Button>
                 <Button variant="outline">Outline</Button>
                 <Button variant="ghost">Ghost</Button>
-                <Button variant="success"><CheckIcon className="size-4" />Success</Button>
+                <Button variant="success">
+                  <CheckIcon className="size-4" />
+                  Success
+                </Button>
                 <Button variant="destructive">Delete</Button>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -241,12 +271,16 @@ function UiPlayground() {
             <Alert variant="info">
               <InfoIcon className="mb-1 size-4" />
               <AlertTitle>Information</AlertTitle>
-              <AlertDescription>Use this for neutral guidance that helps a user complete a task.</AlertDescription>
+              <AlertDescription>
+                Use this for neutral guidance that helps a user complete a task.
+              </AlertDescription>
             </Alert>
             <Alert variant="warning">
               <WarningIcon className="mb-1 size-4" />
               <AlertTitle>Review required</AlertTitle>
-              <AlertDescription>This action changes production configuration and needs approval.</AlertDescription>
+              <AlertDescription>
+                This action changes production configuration and needs approval.
+              </AlertDescription>
             </Alert>
             <Alert variant="success">
               <CheckIcon className="mb-1 size-4" />
@@ -267,12 +301,32 @@ function UiPlayground() {
             <p className="mt-1 text-sm text-muted-foreground">Composition primitives for product pages.</p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            <StatCard description="Compared with the previous period" icon={<SparklesIcon className="size-5" />} label="Activation" value="72%" />
-            <StatCard description="Across active organizations" icon={<BuildingIcon className="size-5" />} label="Workspaces" value="148" />
-            <StatCard description="Protected by organization roles" icon={<FolderIcon className="size-5" />} label="Projects" value="392" />
+            <StatCard
+              description="Compared with the previous period"
+              icon={<SparklesIcon className="size-5" />}
+              label="Activation"
+              value="72%"
+            />
+            <StatCard
+              description="Across active organizations"
+              icon={<BuildingIcon className="size-5" />}
+              label="Workspaces"
+              value="148"
+            />
+            <StatCard
+              description="Protected by organization roles"
+              icon={<FolderIcon className="size-5" />}
+              label="Projects"
+              value="392"
+            />
           </div>
           <EmptyState
-            action={<Button size="sm"><PlusIcon className="size-4" />Create project</Button>}
+            action={
+              <Button size="sm">
+                <PlusIcon className="size-4" />
+                Create project
+              </Button>
+            }
             description="Empty states should explain what belongs here and offer one clear next action."
             icon={<FolderIcon className="size-5" />}
             title="No archived projects"
@@ -298,7 +352,9 @@ function UiPlayground() {
                   </div>
                 </TabsContent>
                 <TabsContent value="activity">
-                  <p className="text-sm text-muted-foreground">Tab content remains a product composition concern.</p>
+                  <p className="text-sm text-muted-foreground">
+                    Tab content remains a product composition concern.
+                  </p>
                 </TabsContent>
               </Tabs>
             </CardContent>
@@ -307,26 +363,41 @@ function UiPlayground() {
 
         <Card>
           <CardHeader className="flex-row items-center gap-4">
-            <Avatar><AvatarFallback>MT</AvatarFallback></Avatar>
+            <Avatar>
+              <AvatarFallback>MT</AvatarFallback>
+            </Avatar>
             <div>
               <CardTitle>Owned component source</CardTitle>
-              <CardDescription>Adapt interactions when a project needs them, while preserving accessibility and tokens.</CardDescription>
+              <CardDescription>
+                Adapt interactions when a project needs them, while preserving accessibility and tokens.
+              </CardDescription>
             </div>
           </CardHeader>
           <CardFooter>
-            <Button asChild variant="outline"><a href="/">View product flow</a></Button>
+            <Button asChild variant="outline">
+              <a href="/">View product flow</a>
+            </Button>
           </CardFooter>
         </Card>
       </div>
 
       <Dialog
         description="This native dialog demonstrates focus management, backdrop dismissal, and semantic styling without another runtime dependency."
-        footer={<><Button onClick={() => setDialogOpen(false)} variant="outline">Cancel</Button><Button onClick={() => setDialogOpen(false)}>Confirm</Button></>}
+        footer={
+          <>
+            <Button onClick={() => setDialogOpen(false)} variant="outline">
+              Cancel
+            </Button>
+            <Button onClick={() => setDialogOpen(false)}>Confirm</Button>
+          </>
+        }
         onOpenChange={setDialogOpen}
         open={dialogOpen}
         title="Confirm project settings"
       >
-        <p className="text-sm leading-6 text-muted-foreground">Reusable dialogs should keep their public API small and let product code own the business action.</p>
+        <p className="text-sm leading-6 text-muted-foreground">
+          Reusable dialogs should keep their public API small and let product code own the business action.
+        </p>
       </Dialog>
     </AppShell>
   )

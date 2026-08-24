@@ -51,9 +51,7 @@ const tauriPath = 'apps/desktop/src-tauri/tauri.conf.json'
 const cargoTomlPath = 'apps/desktop/src-tauri/Cargo.toml'
 const cargoLockPath = 'apps/desktop/src-tauri/Cargo.lock'
 const desktopVersionPaths = [tauriPath, cargoTomlPath, cargoLockPath]
-const desktopVersionPathExists = await Promise.all(
-  desktopVersionPaths.map((path) => Bun.file(path).exists()),
-)
+const desktopVersionPathExists = await Promise.all(desktopVersionPaths.map((path) => Bun.file(path).exists()))
 const hasAnyDesktopVersionPath = desktopVersionPathExists.some(Boolean)
 const hasAllDesktopVersionPaths = desktopVersionPathExists.every(Boolean)
 
@@ -107,4 +105,6 @@ if (changed.length === 0) console.log(`Version is already ${version}.`)
 console.log('\nNext steps:')
 console.log('1. Use version:set only for release bootstrap or recovery, not for normal feature work.')
 console.log('2. Run bun run template:validate and the release checks in docs/release.md.')
-console.log('3. Normal publication happens only by merging the Release Please pull request; do not tag manually.')
+console.log(
+  '3. Normal publication happens only by merging the Release Please pull request; do not tag manually.',
+)

@@ -9,12 +9,7 @@ export default defineConfig({
     commit: false,
     diff: false,
   },
-  reporter: process.env.CI
-    ? [
-        ['github'],
-        ['html', { open: 'never' }],
-      ]
-    : 'list',
+  reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: process.env.E2E_BASE_URL ?? 'http://localhost:8080',
     trace: 'retain-on-failure',

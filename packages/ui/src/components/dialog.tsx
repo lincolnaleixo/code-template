@@ -13,15 +13,7 @@ export interface DialogProps {
   title: ReactNode
 }
 
-export function Dialog({
-  children,
-  className,
-  description,
-  footer,
-  onOpenChange,
-  open,
-  title,
-}: DialogProps) {
+export function Dialog({ children, className, description, footer, onOpenChange, open, title }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null)
 
   useEffect(() => {
@@ -52,9 +44,7 @@ export function Dialog({
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1.5">
             <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
-            {description && (
-              <div className="text-sm leading-6 text-muted-foreground">{description}</div>
-            )}
+            {description && <div className="text-sm leading-6 text-muted-foreground">{description}</div>}
           </div>
           <Button
             aria-label="Close dialog"

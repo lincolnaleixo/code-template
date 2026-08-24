@@ -2,9 +2,12 @@ import { z } from 'zod'
 
 const emptyToUndefined = (value: unknown) => (value === '' ? undefined : value)
 
-const csv = z
-  .string()
-  .transform((value) => value.split(',').map((item) => item.trim()).filter(Boolean))
+const csv = z.string().transform((value) =>
+  value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean),
+)
 
 const booleanFromEnvironment = z.preprocess((value) => {
   if (typeof value === 'boolean') return value
@@ -20,9 +23,12 @@ const serverSchema = z
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     HOST: z.string().min(1).default('0.0.0.0'),
     PORT: z.coerce.number().int().positive().max(65_535).default(3001),
-    DATABASE_URL: z.string().url().refine((value) => value.startsWith('postgres'), {
-      message: 'DATABASE_URL must use a PostgreSQL URL.',
-    }),
+    DATABASE_URL: z
+      .string()
+      .url()
+      .refine((value) => value.startsWith('postgres'), {
+        message: 'DATABASE_URL must use a PostgreSQL URL.',
+      }),
     WEB_URL: z.string().url(),
     CORS_ORIGINS: csv,
     AUTH_TRUSTED_ORIGINS: csv,

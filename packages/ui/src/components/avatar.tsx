@@ -19,7 +19,10 @@ export function AvatarImage({ className, ...props }: AvatarImageProps) {
 export function AvatarFallback({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn('flex size-full items-center justify-center text-xs font-medium text-muted-foreground', className)}
+      className={cn(
+        'flex size-full items-center justify-center text-xs font-medium text-muted-foreground',
+        className,
+      )}
       {...props}
     />
   )

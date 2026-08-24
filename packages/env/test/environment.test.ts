@@ -33,8 +33,8 @@ describe('environment validation', () => {
 
   test('requires an externally reachable API URL for native builds', () => {
     expect(() => loadClientEnv({}, 'native')).toThrow('VITE_API_URL is required')
-    expect(
-      loadClientEnv({ VITE_API_URL: 'https://api.example.com' }, 'native').VITE_API_URL,
-    ).toBe('https://api.example.com')
+    expect(loadClientEnv({ VITE_API_URL: 'https://api.example.com' }, 'native').VITE_API_URL).toBe(
+      'https://api.example.com',
+    )
   })
 })

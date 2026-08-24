@@ -11,10 +11,7 @@ export function Pagination({ onPageChange, page, pageCount }: PaginationProps) {
   const currentPage = Math.min(Math.max(1, page), safePageCount)
 
   return (
-    <nav
-      aria-label="Pagination"
-      className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center"
-    >
+    <nav aria-label="Pagination" className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
       <p className="text-sm text-muted-foreground">
         Page {currentPage} of {safePageCount}
       </p>

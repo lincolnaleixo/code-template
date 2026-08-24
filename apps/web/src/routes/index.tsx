@@ -152,13 +152,16 @@ function AuthPanel() {
             One TypeScript product across web, API, mobile and desktop.
           </h1>
           <p className="mt-6 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg sm:leading-8">
-            A clean product foundation with typed contracts, secure identity, replaceable infrastructure,
-            and a design system that adapts through semantic tokens.
+            A clean product foundation with typed contracts, secure identity, replaceable infrastructure, and
+            a design system that adapts through semantic tokens.
           </p>
 
           <div className="mt-8 grid gap-3 sm:grid-cols-2">
             {productCapabilities.map((capability) => (
-              <div className="flex items-start gap-3 rounded-xl border bg-card/70 p-4 shadow-xs backdrop-blur" key={capability}>
+              <div
+                className="flex items-start gap-3 rounded-xl border bg-card/70 p-4 shadow-xs backdrop-blur"
+                key={capability}
+              >
                 <div className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
                   <ArrowRightIcon className="size-3.5" />
                 </div>
@@ -369,7 +372,13 @@ function Workspace() {
             value={organizationName}
           />
         </FormField>
-        <Button className="w-full" disabled={createOrganization.isPending} size="sm" type="submit" variant="secondary">
+        <Button
+          className="w-full"
+          disabled={createOrganization.isPending}
+          size="sm"
+          type="submit"
+          variant="secondary"
+        >
           <PlusIcon className="size-3.5" />
           {createOrganization.isPending ? 'Creating...' : 'Create organization'}
         </Button>
@@ -475,7 +484,9 @@ function Workspace() {
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-semibold tracking-tight">Projects</h2>
-                  <p className="text-sm text-muted-foreground">A clean card grid ready for real product data.</p>
+                  <p className="text-sm text-muted-foreground">
+                    A clean card grid ready for real product data.
+                  </p>
                 </div>
                 <Badge variant="secondary">{projects.data?.length ?? 0} total</Badge>
               </div>
@@ -500,15 +511,16 @@ function Workspace() {
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {projects.data?.map((item) => (
-                    <Card className="group transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-md" key={item.id}>
+                    <Card
+                      className="group transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-md"
+                      key={item.id}
+                    >
                       <CardHeader>
                         <div className="mb-3 grid size-10 place-items-center rounded-lg bg-primary/10 text-primary">
                           <FolderIcon className="size-5" />
                         </div>
                         <CardTitle>{item.name}</CardTitle>
-                        <CardDescription>
-                          Created {new Date(item.createdAt).toLocaleString()}
-                        </CardDescription>
+                        <CardDescription>Created {new Date(item.createdAt).toLocaleString()}</CardDescription>
                       </CardHeader>
                     </Card>
                   ))}
