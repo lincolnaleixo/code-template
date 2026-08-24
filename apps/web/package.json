@@ -11,7 +11,7 @@
     "dev": "bun --bun vite --port 3000",
     "build": "bun --bun vite build",
     "start": "bun run .output/server/index.mjs",
-    "build:native": "bun --bun vite build --mode native",
+    "build:native": "MATRIX_NATIVE_BUILD=1 bun --bun vite build --mode native",
     "generate:routes": "tsr generate",
     "typecheck": "bun run generate:routes && tsc -p tsconfig.json"
   },
