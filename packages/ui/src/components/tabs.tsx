@@ -125,6 +125,7 @@ export function TabsContent({ children, className, value, ...props }: TabsConten
   if (context.value !== value) return null
 
   return (
+    // biome-ignore lint/a11y/noNoninteractiveTabindex: WAI-ARIA tabs recommend a focusable panel when content may begin with non-focusable text.
     <div
       aria-labelledby={tabId(context.baseId, value)}
       className={cn('mt-4 outline-none focus-visible:ring-2 focus-visible:ring-ring/40', className)}
