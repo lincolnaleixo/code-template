@@ -53,13 +53,30 @@ jobs:
               raise SystemExit('Health response marker missing.')
           api.write_text(content.replace(previous, next_value, 1))
           PY
-      - name: Verify minimal diff
+      - name: Verify exact source transformations
         shell: bash
         run: |
           set -euo pipefail
           git diff --check
-          test "$(git diff --numstat apps/web/src/routes/index.tsx | awk '{print $1":"$2}')" = "1:0"
-          test "$(git diff --numstat apps/api/src/app.ts | awk '{print $1":"$2}')" = "1:1"
+          git cat-file blob b7313a31cff398791305d7724128f01c33873e23 > /tmp/web-expected.tsx
+          git cat-file blob 53f839b7267720a13f462e094b3b9081a6d0e9c5 > /tmp/api-expected.ts
+          python3 - <<'PY'
+          from pathlib import Path
+
+          web = Path('/tmp/web-expected.tsx')
+          web.write_text(web.read_text().replace('  Card,\n', '  Card,\n  CardContent,\n', 1))
+
+          api = Path('/tmp/api-expected.ts')
+          api.write_text(
+              api.read_text().replace(
+                  ".get('/health', () => ({ ok: true, runtime: 'bun' as const }), {",
+                  ".get('/health', () => ({ ok: true as const, runtime: 'bun' as const }), {",
+                  1,
+              )
+          )
+          PY
+          cmp --silent /tmp/web-expected.tsx apps/web/src/routes/index.tsx
+          cmp --silent /tmp/api-expected.ts apps/api/src/app.ts
       - name: Commit corrected targeted changes
         shell: bash
         run: |
