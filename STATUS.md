@@ -1,6 +1,6 @@
 # Current Status
 
-Last reviewed: 2026-08-23
+Last reviewed: 2026-08-24
 
 This file is the persistent handoff point for continuing work on `matrix-hq/code-template`.
 
@@ -12,7 +12,7 @@ The latest completed repository-side baseline before this status document is:
 aa185b8bb8eb5fcec774f93c13e9fb413dc3ef6d
 ```
 
-PR #7 completed the final quality and governance package. The template remains at version `0.3.0`; the next release work is intentionally kept under `Unreleased` until executable validation is complete.
+PR #7 completed the final quality and governance package. The template remains at version `0.3.0`; the next release must not be published until executable validation is complete.
 
 The detailed continuation checklist lives in GitHub issue #8:
 
@@ -39,7 +39,7 @@ Do not redo these areas unless an executable failure proves a concrete defect:
 - shadcn monorepo configuration
 - KISS/YAGNI-focused engineering rules
 - README, contribution, bootstrap, customization, UI, licensing, governance, deployment, native, and release documentation
-- capability, dependency, UI, documentation-link, and synchronized-version validation
+- capability, dependency, UI, documentation-link, synchronized-version, and release-contract validation
 - logger secret-redaction fix and regression tests
 - axe accessibility audit command
 - isolated fresh-template consumer smoke command
@@ -47,6 +47,9 @@ Do not redo these areas unless an executable failure proves a concrete defect:
 - explicit private `UNLICENSED` policy for the template
 - dry-run-first repository metadata and branch-protection commands
 - GitHub Template Repository setting
+- Release Please release-PR gate with strict SemVer and focused changelog categories
+- manual container and native release workflows that are structurally verify-only
+- publisher fail-closed checks that require an existing Release Please tag and GitHub Release
 
 ## Intentionally pending
 
@@ -115,12 +118,14 @@ Do not publish `0.4.0` until retained platforms have executable evidence.
 
 When validation is complete:
 
-```bash
-bun run version:set 0.4.0 --dry-run
-bun run version:set 0.4.0
-```
+1. merge any remaining tested Conventional Commits into `main`
+2. review the Release Please pull request and confirm the proposed version, generated changelog, `version.txt`, manifest, package version, Tauri version, and Cargo versions agree
+3. keep the release pull request open until the exact candidate is ready for users
+4. merge the Release Please pull request as the explicit publication approval
+5. verify the `v0.4.0` GitHub Release, GHCR images, and retained native assets produced by the gated publishers
+6. repeat the fresh-template proof from the published tag
 
-Then move `Unreleased` entries into a dated `0.4.0` section, rerun release checks, create `v0.4.0`, verify artifacts, and repeat the fresh-template proof.
+Do not run `version:set`, create the tag manually, or publish artifacts from a manual workflow during the normal release path.
 
 ## Resume order
 
@@ -133,9 +138,10 @@ When continuing in another session, use this order:
 5. fix only defects proven by those checks
 6. run the real GitHub template consumer proof
 7. apply repository metadata and branch protection
-8. publish `0.4.0`
-9. close issue #8
+8. review and merge the Release Please pull request for `0.4.0`
+9. verify the gated publishers and fresh-template result
+10. close issue #8
 
 ## Definition of done
 
-The template is ready for `0.4.0` when runner routing is intentional, all retained platform claims have executable evidence, the generated-consumer path is proven, GitHub governance is applied, and the release can be reproduced from its tag without overstating unsupported platforms.
+The template is ready for `0.4.0` when runner routing is intentional, all retained platform claims have executable evidence, the generated-consumer path is proven, GitHub governance is applied, and the Release Please publication gate can reproduce the documented baseline from its immutable tag without overstating unsupported platforms.
