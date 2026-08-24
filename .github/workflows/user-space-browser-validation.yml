@@ -1,0 +1,179 @@
+name: User-space browser validation
+
+on:
+  push:
+    branches:
+      - ci/release-please-gate
+    paths:
+      - .github/workflows/user-space-browser-validation.yml
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/workflows/user-space-browser-validation.yml
+
+permissions:
+  contents: read
+
+env:
+  BUN_VERSION: 1.3.14
+  PGPORT: 55433
+  PGUSER: matrix
+  PGDATABASE: matrix_browser
+  DATABASE_URL: postgres://matrix@127.0.0.1:55433/matrix_browser
+  NODE_ENV: test
+  HOST: 127.0.0.1
+  BETTER_AUTH_SECRET: browser-secret-browser-secret-browser-secret-browser-secret
+  BETTER_AUTH_URL: http://127.0.0.1:8080
+  WEB_URL: http://127.0.0.1:8080
+  PUBLIC_WEB_URL: http://127.0.0.1:8080
+  CORS_ORIGINS: http://127.0.0.1:8080
+  AUTH_TRUSTED_ORIGINS: http://127.0.0.1:8080
+  S3_ENDPOINT: http://127.0.0.1:19000
+  S3_REGION: us-east-1
+  S3_BUCKET: matrix
+  S3_ACCESS_KEY: local-example
+  S3_SECRET_KEY: local-example-secret
+  LOG_LEVEL: error
+  OTEL_ENABLED: false
+  VITE_API_URL: ""
+  VITE_APP_NAME: Matrix Template Browser Validation
+  E2E_BASE_URL: http://127.0.0.1:8080
+
+jobs:
+  browser:
+    name: Auth lifecycle and axe through Caddy
+    if: github.event_name != 'pull_request' || github.head_ref == 'ci/release-please-gate'
+    runs-on: [self-hosted, linux, x64, matrix]
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - run: bun ci
+      - name: Extract PostgreSQL into user space
+        shell: bash
+        run: |
+          set -euo pipefail
+          package_dir="$RUNNER_TEMP/browser-postgresql-packages"
+          pgroot="$RUNNER_TEMP/browser-postgresql-root"
+          rm -rf "$package_dir" "$pgroot"
+          mkdir -p "$package_dir" "$pgroot"
+          cd "$package_dir"
+          apt-get download \
+            postgresql-15 postgresql-client-15 postgresql-common postgresql-client-common \
+            libpq5 libllvm14 libicu72 libxml2 libxslt1.1 liblz4-1 libzstd1 \
+            libssl3 libreadline8 libselinux1 libsystemd0
+          for package in ./*.deb; do
+            dpkg-deb --extract "$package" "$pgroot"
+          done
+          echo "$pgroot/usr/lib/postgresql/15/bin" >> "$GITHUB_PATH"
+          {
+            echo "PGROOT=$pgroot"
+            echo "LD_LIBRARY_PATH=$pgroot/usr/lib/x86_64-linux-gnu:$pgroot/lib/x86_64-linux-gnu"
+          } >> "$GITHUB_ENV"
+      - name: Start PostgreSQL and apply committed migrations
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="$PGROOT/usr/lib/postgresql/15/bin:$PATH"
+          export LD_LIBRARY_PATH="$PGROOT/usr/lib/x86_64-linux-gnu:$PGROOT/lib/x86_64-linux-gnu"
+          pgdata="$RUNNER_TEMP/browser-postgresql-data"
+          pgsocket="$RUNNER_TEMP/browser-postgresql-socket"
+          rm -rf "$pgdata" "$pgsocket"
+          mkdir -p "$pgsocket"
+          initdb \
+            --pgdata="$pgdata" \
+            --username="$PGUSER" \
+            --auth-local=trust \
+            --auth-host=trust \
+            --locale=C \
+            --encoding=UTF8
+          pg_ctl \
+            --pgdata="$pgdata" \
+            --log="$RUNNER_TEMP/browser-postgresql.log" \
+            --options="-h 127.0.0.1 -p $PGPORT -k $pgsocket" \
+            start
+          createdb --host=127.0.0.1 --port="$PGPORT" --username="$PGUSER" "$PGDATABASE"
+          echo "PGDATA=$pgdata" >> "$GITHUB_ENV"
+          bun run db:migrate
+      - name: Install verified Caddy binary
+        shell: bash
+        env:
+          CADDY_VERSION: 2.11.4
+        run: |
+          set -euo pipefail
+          archive="caddy_${CADDY_VERSION}_linux_amd64.tar.gz"
+          base="https://github.com/caddyserver/caddy/releases/download/v${CADDY_VERSION}"
+          curl --fail --silent --show-error --location --output "$RUNNER_TEMP/$archive" "$base/$archive"
+          curl --fail --silent --show-error --location \
+            --output "$RUNNER_TEMP/caddy-checksums.txt" \
+            "$base/caddy_${CADDY_VERSION}_checksums.txt"
+          (
+            cd "$RUNNER_TEMP"
+            grep " $archive$" caddy-checksums.txt | sha512sum --check --strict -
+            tar -xzf "$archive" caddy
+            chmod +x caddy
+          )
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+      - name: Build API and SSR web application
+        run: bun run build
+      - name: Start API, web, and public Caddy boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          API_PORT=3001 HOST=127.0.0.1 bun run --cwd apps/api start > "$RUNNER_TEMP/api.log" 2>&1 &
+          api_pid=$!
+          PORT=3000 HOST=127.0.0.1 API_URL=http://127.0.0.1:3001 \
+            bun run --cwd apps/web start > "$RUNNER_TEMP/web.log" 2>&1 &
+          web_pid=$!
+          sed \
+            -e 's/:80/:8080/' \
+            -e 's/api:3001/127.0.0.1:3001/' \
+            -e 's/web:3000/127.0.0.1:3000/' \
+            infra/Caddyfile > "$RUNNER_TEMP/Caddyfile"
+          caddy run --config "$RUNNER_TEMP/Caddyfile" --adapter caddyfile \
+            > "$RUNNER_TEMP/caddy.log" 2>&1 &
+          caddy_pid=$!
+          {
+            echo "API_PID=$api_pid"
+            echo "WEB_PID=$web_pid"
+            echo "CADDY_PID=$caddy_pid"
+          } >> "$GITHUB_ENV"
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:8080/ready > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/api.log" || true
+          cat "$RUNNER_TEMP/web.log" || true
+          cat "$RUNNER_TEMP/caddy.log" || true
+          exit 1
+      - name: Install Playwright Chromium
+        run: bunx playwright install chromium
+      - name: Run authenticated browser lifecycle
+        run: bun run test:e2e
+      - name: Run axe accessibility audit
+        run: bun run test:a11y
+      - name: Print process logs on failure
+        if: failure()
+        shell: bash
+        run: |
+          cat "$RUNNER_TEMP/api.log" || true
+          cat "$RUNNER_TEMP/web.log" || true
+          cat "$RUNNER_TEMP/caddy.log" || true
+          cat "$RUNNER_TEMP/browser-postgresql.log" || true
+      - name: Stop user-space services
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          for pid in "${CADDY_PID:-}" "${WEB_PID:-}" "${API_PID:-}"; do
+            if [ -n "$pid" ]; then kill "$pid" 2>/dev/null || true; fi
+          done
+          export PATH="$PGROOT/usr/lib/postgresql/15/bin:$PATH"
+          export LD_LIBRARY_PATH="$PGROOT/usr/lib/x86_64-linux-gnu:$PGROOT/lib/x86_64-linux-gnu"
+          if [ -n "${PGDATA:-}" ] && [ -f "$PGDATA/postmaster.pid" ]; then
+            pg_ctl --pgdata="$PGDATA" --mode=fast stop
+          fi
