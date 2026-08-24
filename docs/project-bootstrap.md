@@ -79,16 +79,28 @@ bun run version:set 0.1.0 --dry-run
 bun run version:set 0.1.0
 ```
 
-The command updates:
+The command updates the product release state together:
 
 ```text
+version.txt
+.release-please-manifest.json
 package.json
 apps/desktop/src-tauri/Cargo.toml
 apps/desktop/src-tauri/Cargo.lock
 apps/desktop/src-tauri/tauri.conf.json
 ```
 
-Add the matching product section to `CHANGELOG.md`. `bun run template:validate` verifies the synchronized values and the dated changelog section.
+The source template currently carries a one-time top-level `bootstrap-sha` in `release-please-config.json` so Release Please can onboard the historical `0.3.0` template baseline even though that repository did not have a matching tag. That SHA belongs only to `matrix-hq/code-template` and does not exist in a repository created with **Use this template**. Remove it before the generated repository begins normal development, or replace it with a full commit SHA from the generated repository when you deliberately want to bound the first Release Please changelog.
+
+During this one-time product bootstrap, replace the template changelog with the product baseline or add the matching initial product section. After bootstrap, Release Please owns `CHANGELOG.md`, version files, and the manifest during normal development. Contributors should drive subsequent versions with Conventional Commits rather than editing release metadata directly.
+
+Run:
+
+```bash
+bun run template:validate
+```
+
+The validator checks that the current product version agrees across Release Please, package, Tauri, and Cargo state.
 
 After changing Rust dependencies, regenerate the lockfile with Cargo. A version-only change should leave dependency entries untouched.
 
@@ -250,7 +262,8 @@ Before feature development:
 
 - remove placeholder copy and sample data that no longer describe the product
 - remove unused dependencies, services, environment variables, and workflows
-- update `README.md`, `SECURITY.md`, and the changelog
+- update `README.md` and `SECURITY.md`, and initialize the product changelog once
+- remove or reseed the source template's Release Please `bootstrap-sha`
 - replace the template code owners with the real team
 - choose and document the product license and ownership policy
 - apply and verify the repository branch policy
@@ -258,4 +271,4 @@ Before feature development:
 - create the initial product release plan
 - record the source template commit or release for future comparison
 
-A project is initialized when the repository describes the real product, every enabled capability has an owner and requirement, every disabled capability has been removed cleanly, and repository governance reflects the real team.
+A project is initialized when the repository describes the real product, every enabled capability has an owner and requirement, every disabled capability has been removed cleanly, release automation is anchored to the generated repository rather than the source template, and repository governance reflects the real team.
