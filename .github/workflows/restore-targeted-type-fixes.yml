@@ -1,0 +1,66 @@
+name: Restore targeted type fixes
+
+on:
+  push:
+    branches:
+      - ci/release-please-gate
+    paths:
+      - .github/workflows/restore-targeted-type-fixes.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: code-template-restore-targeted-type-fixes
+  cancel-in-progress: false
+
+jobs:
+  restore:
+    name: Restore exact source and apply minimal changes
+    runs-on: [self-hosted, linux, x64, matrix]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ci/release-please-gate
+          fetch-depth: 0
+      - name: Restore previous blobs and apply only intended edits
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file blob b7313a31cff398791305d7724128f01c33873e23 > apps/web/src/routes/index.tsx
+          git cat-file blob 53f839b7267720a13f462e094b3b9081a6d0e9c5 > apps/api/src/app.ts
+          python3 - <<'PY'
+          from pathlib import Path
+
+          web = Path('apps/web/src/routes/index.tsx')
+          content = web.read_text()
+          marker = '  Card,\n'
+          if marker not in content:
+              raise SystemExit('Card import marker missing.')
+          web.write_text(content.replace(marker, '  Card,\n  CardContent,\n', 1))
+
+          api = Path('apps/api/src/app.ts')
+          content = api.read_text()
+          previous = ".get('/health', () => ({ ok: true, runtime: 'bun' as const }), {"
+          next_value = ".get('/health', () => ({ ok: true as const, runtime: 'bun' as const }), {"
+          if previous not in content:
+              raise SystemExit('Health response marker missing.')
+          api.write_text(content.replace(previous, next_value, 1))
+          PY
+      - name: Verify minimal diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          test "$(git diff --numstat apps/web/src/routes/index.tsx | awk '{print $1":"$2}')" = "1:0"
+          test "$(git diff --numstat apps/api/src/app.ts | awk '{print $1":"$2}')" = "1:1"
+      - name: Commit corrected targeted changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name matrix-template-agent
+          git config user.email actions@users.noreply.github.com
+          git add apps/web/src/routes/index.tsx apps/api/src/app.ts
+          git commit -m "fix(types): apply targeted API and web corrections"
+          git push origin HEAD:ci/release-please-gate
