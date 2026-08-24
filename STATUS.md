@@ -48,14 +48,29 @@ Do not redo these areas unless an executable failure proves a concrete defect:
 - publisher fail-closed checks that require an existing Release Please tag and GitHub Release
 - explicit GitHub-hosted runner images for Ubuntu 24.04, macOS 15, and Windows Server 2025
 - fork-safe preview permissions and removal of repository-variable reads from untrusted native PR builds
+- Playwright Git metadata capture disabled for future reports
+- browser report uploads blocked for fork pull requests and retained for one day only
 
 ## Public visibility audit
 
-A pre-public review covered the current tree, representative history where credentials and infrastructure were introduced, retained branches, pull-request and issue text, workflow permissions, environment templates, and repository-visible documentation.
+A pre-public review covered the current tree, representative history where credentials and infrastructure were introduced, retained branches, pull-request and issue text, workflow permissions, environment templates, historical Actions logs, and downloadable test reports.
 
 No live credential, private key, customer data, production endpoint, signing material, or personal dataset was found. Values such as `matrix`, `minio`, `miniosecret`, and the Better Auth placeholder are local development examples bound to localhost or isolated CI services.
 
-Current documentation no longer publishes organization-specific runner machine names. Historical commits remain part of the Git history, so the complete Gitleaks history scan must run immediately after GitHub-hosted runners become available. Any finding from that executable scan blocks the visibility transition or requires immediate rotation and history remediation.
+Current documentation no longer publishes organization-specific runner machine names. Historical Git commits include an iCloud relay address in author metadata. That address is not a credential and appears to be privacy-preserving, but it will be visible to anyone who clones the public Git history. Rewriting all reachable history would be disruptive and has not been performed.
+
+Two unexpired historical Playwright reports also embed that Git author address because Playwright captured commit metadata automatically on CI:
+
+```text
+artifact 9464035422
+artifact 9464176353
+```
+
+Delete both artifacts before changing repository visibility. Future reports set `captureGitInfo.commit` and `captureGitInfo.diff` to `false`, are not uploaded for fork pull requests, and have one-day retention.
+
+Historical successful job logs were inspected and contained only localhost endpoints, synthetic test identities, and local CI credentials. Failed runs created after private Actions capacity was exhausted executed zero steps and produced no artifacts in the inspected runs.
+
+Historical commits remain part of the Git history, so the complete Gitleaks history scan must run immediately after GitHub-hosted runners become available. Any executable finding blocks the visibility transition or requires immediate rotation and history remediation.
 
 The connector used for this work cannot enumerate stored repository secret values. Workflow references were reviewed instead. The only non-GitHub automation secret required by the proposed release flow is `RELEASE_PLEASE_TOKEN`, and it is available only to the trusted `main` push workflow.
 
@@ -63,7 +78,23 @@ The connector used for this work cannot enumerate stored repository secret value
 
 ### 1. Repository visibility
 
-The repository is still private until an administrator changes GitHub visibility to public. The connected GitHub integration does not expose the repository-visibility mutation.
+The repository is still private until an administrator changes GitHub visibility to public. The connected GitHub integration does not expose repository visibility or Actions artifact deletion mutations.
+
+Before changing visibility:
+
+```bash
+gh api -X DELETE repos/matrix-hq/code-template/actions/artifacts/9464035422
+gh api -X DELETE repos/matrix-hq/code-template/actions/artifacts/9464176353
+```
+
+Then either use GitHub Settings or run the guarded repository command from this branch:
+
+```bash
+GITHUB_ADMIN_TOKEN=... \
+  bun run repo:metadata --apply \
+  --visibility=public \
+  --confirm-visibility=public
+```
 
 After the visibility change, confirm that standard GitHub-hosted jobs start on these explicit images:
 
@@ -129,16 +160,17 @@ Do not run `version:set`, create the tag manually, or publish artifacts from a m
 When continuing in another session, use this order:
 
 1. read this file and issue #8
-2. change repository visibility to public
-3. confirm minimal Ubuntu, macOS, and Windows jobs start
-4. run the full executable validation set, beginning with full-history secret scanning
-5. fix only defects proven by those checks
-6. run the real GitHub template consumer proof
-7. apply repository metadata and branch protection
-8. review and merge the Release Please pull request for `0.4.0`
-9. verify the gated publishers and fresh-template result
-10. close issue #8
+2. delete the two historical Playwright artifacts
+3. change repository visibility to public
+4. confirm minimal Ubuntu, macOS, and Windows jobs start
+5. run the full executable validation set, beginning with full-history secret scanning
+6. fix only defects proven by those checks
+7. run the real GitHub template consumer proof
+8. apply repository metadata and branch protection
+9. review and merge the Release Please pull request for `0.4.0`
+10. verify the gated publishers and fresh-template result
+11. close issue #8
 
 ## Definition of done
 
-The template is ready for `0.4.0` when public GitHub-hosted runners execute successfully, the complete history scan is clean, all retained platform claims have executable evidence, the generated-consumer path is proven, GitHub governance is applied, and the Release Please publication gate can reproduce the documented baseline from its immutable tag without overstating unsupported platforms.
+The template is ready for `0.4.0` when historical reports containing Git author metadata are removed, public GitHub-hosted runners execute successfully, the complete history scan is clean, all retained platform claims have executable evidence, the generated-consumer path is proven, GitHub governance is applied, and the Release Please publication gate can reproduce the documented baseline from its immutable tag without overstating unsupported platforms.
