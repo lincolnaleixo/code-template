@@ -57,9 +57,46 @@ jobs:
       - name: Scan current tree and every reachable Git ref
         shell: bash
         run: |
-          set -euo pipefail
-          /tmp/gitleaks dir . --redact --no-banner
-          /tmp/gitleaks git . --log-opts="--all" --redact --no-banner
+          set -uo pipefail
+          current_rc=0
+          history_rc=0
+          /tmp/gitleaks dir . \
+            --redact \
+            --no-banner \
+            --report-format json \
+            --report-path /tmp/gitleaks-current.json || current_rc=$?
+          /tmp/gitleaks git . \
+            --log-opts="--all" \
+            --redact \
+            --no-banner \
+            --report-format json \
+            --report-path /tmp/gitleaks-history.json || history_rc=$?
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          for label, filename in (
+              ('current tree', '/tmp/gitleaks-current.json'),
+              ('reachable history', '/tmp/gitleaks-history.json'),
+          ):
+              path = Path(filename)
+              if not path.exists() or not path.read_text().strip():
+                  continue
+              findings = json.loads(path.read_text())
+              for finding in findings:
+                  safe = {
+                      'scope': label,
+                      'rule': finding.get('RuleID'),
+                      'file': finding.get('File'),
+                      'line': finding.get('StartLine') or finding.get('Line'),
+                      'commit': finding.get('Commit'),
+                      'fingerprint': finding.get('Fingerprint'),
+                  }
+                  print(json.dumps(safe, sort_keys=True))
+          PY
+          if [ "$current_rc" -ne 0 ] || [ "$history_rc" -ne 0 ]; then
+            exit 1
+          fi
 
       - name: Delete identified historical browser reports
         shell: bash
