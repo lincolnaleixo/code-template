@@ -35,7 +35,15 @@ Changing a repository from private to public exposes the current tree, reachable
 7. confirm the repository license policy and do not confuse public visibility with an open-source license
 8. rotate any credential that may have appeared in source, history, logs, artifacts, screenshots, comments, or caches, even if it was later deleted
 
+Delete an Actions artifact that should not become public with a token holding repository `Actions: write` permission:
+
+```bash
+gh api -X DELETE repos/OWNER/REPOSITORY/actions/artifacts/ARTIFACT_ID
+```
+
 The repository security workflow checks out full history and runs Gitleaks after runner access is available. A green current-tree scan is not enough when a secret may have existed in an older commit.
+
+Playwright reports disable automatic Git commit and diff capture so future browser artifacts do not reproduce author identity or complete source diffs. Browser reports are not uploaded for fork pull requests and are retained for one day.
 
 ## Public pull-request safety
 
@@ -78,7 +86,22 @@ GITHUB_ADMIN_TOKEN=... \
   --topics="typescript,bun,react,product-category"
 ```
 
-The command normalizes topics to lowercase, removes duplicates, enforces GitHub topic syntax, limits the payload to 20 topics, and never prints the token.
+A visibility change is deliberately separate from the default metadata operation. Preview a public transition:
+
+```bash
+bun run repo:metadata --visibility=public
+```
+
+Apply it only after the public visibility review is complete. The command requires an exact confirmation value in the same invocation:
+
+```bash
+GITHUB_ADMIN_TOKEN=... \
+  bun run repo:metadata --apply \
+  --visibility=public \
+  --confirm-visibility=public
+```
+
+The command normalizes topics to lowercase, removes duplicates, enforces GitHub topic syntax, limits the payload to 20 topics, never prints the token, and refuses an unconfirmed visibility mutation.
 
 ## Main branch baseline
 
@@ -181,6 +204,8 @@ Settings
 ```
 
 Confirm that direct pushes, force pushes, branch deletion, and unresolved conversations are rejected. When approval or code-owner review is enabled, confirm those requirements with a PR authored by a different maintainer.
+
+A private-to-public transition disables push rulesets. Reapply or verify the intended branch policy after the visibility change and after hosted check names are stable.
 
 Also verify the API response with an administrative token:
 
