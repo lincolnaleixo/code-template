@@ -12,7 +12,8 @@ Write down the current requirements before changing code:
 - authentication and organization model
 - persistence, uploads, realtime, jobs, and external integrations
 - deployment environment and compliance constraints
-- intended distribution, ownership, and licensing model
+- intended repository visibility, distribution, ownership, and licensing model
+- hosted or self-hosted runner policy and expected Actions cost
 - team responsible for reviews, releases, and operations
 
 Do not keep a capability only because it may be useful someday.
@@ -209,19 +210,33 @@ Before production, document:
 
 See [deployment.md](deployment.md).
 
-## 11. Establish ownership, licensing, and repository policy
+## 11. Establish visibility, ownership, licensing, runners, and repository policy
 
-Choose the product's distribution policy and update:
+Choose the product's repository and distribution policy. Update or configure:
 
 ```text
-package.json license field
+GitHub repository visibility
+package.json private and license fields
 LICENSE or approved proprietary notice, when applicable
 .github/CODEOWNERS
+GitHub-hosted or self-hosted runner labels
 README.md
 SECURITY.md
 ```
 
-The template starts as private and `UNLICENSED`. Do not publish or distribute a generated product until its real policy and third-party obligations are reviewed.
+The source template is publicly visible but explicitly `UNLICENSED`. Its root `private: true` field only prevents accidental package publication. A generated product must choose its own private or public repository visibility and its own license. Public visibility is not an open-source license.
+
+Before changing a generated repository from private to public, audit the current tree, complete history, branches, PRs, issues, Actions logs and artifacts, workflow secret references, and distributable assets. Rotate any credential that may have appeared anywhere in those surfaces.
+
+The template's standard runner baseline is:
+
+```text
+ubuntu-24.04
+macos-15
+windows-2025
+```
+
+A generated product may keep these GitHub-hosted images or deliberately adopt self-hosted infrastructure. Document runner access, architecture, cost, maintenance, and isolation before changing the labels.
 
 Preview branch protection:
 
@@ -264,11 +279,13 @@ Before feature development:
 - remove unused dependencies, services, environment variables, and workflows
 - update `README.md` and `SECURITY.md`, and initialize the product changelog once
 - remove or reseed the source template's Release Please `bootstrap-sha`
+- choose repository visibility and complete the matching sensitivity audit
 - replace the template code owners with the real team
 - choose and document the product license and ownership policy
+- configure and validate the product runner policy
 - apply and verify the repository branch policy
 - verify no template secret or example credential was promoted to production
 - create the initial product release plan
 - record the source template commit or release for future comparison
 
-A project is initialized when the repository describes the real product, every enabled capability has an owner and requirement, every disabled capability has been removed cleanly, release automation is anchored to the generated repository rather than the source template, and repository governance reflects the real team.
+A project is initialized when the repository describes the real product, every enabled capability has an owner and requirement, every disabled capability has been removed cleanly, release automation is anchored to the generated repository rather than the source template, and visibility, runner policy, licensing, ownership, and branch governance reflect the real team.
