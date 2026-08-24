@@ -218,7 +218,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          NODE_ENV=test API_PORT="$API_PORT" HOST=127.0.0.1 \
+          NODE_ENV=test PORT="$API_PORT" HOST=127.0.0.1 \
             bun run --cwd apps/api start > "$RUNNER_TEMP/api-$GITHUB_RUN_ID.log" 2>&1 &
           api_pid=$!
           NODE_ENV=production PORT="$WEB_PORT" HOST=127.0.0.1 API_URL="http://127.0.0.1:$API_PORT" \
