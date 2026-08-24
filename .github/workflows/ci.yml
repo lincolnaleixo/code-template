@@ -153,7 +153,7 @@ jobs:
         if: failure()
         run: docker compose --profile full logs --no-color
       - name: Upload browser and accessibility reports
-        if: always()
+        if: always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: browser-reports
@@ -161,7 +161,7 @@ jobs:
             playwright-report
             test-results
           if-no-files-found: ignore
-          retention-days: 7
+          retention-days: 1
       - name: Stop the stack
         if: always()
         run: docker compose --profile full down -v --remove-orphans
