@@ -81,7 +81,9 @@ jobs:
           export PATH="$PGROOT/usr/lib/postgresql/15/bin:$PATH"
           export LD_LIBRARY_PATH="$PGROOT/usr/lib/x86_64-linux-gnu:$PGROOT/lib/x86_64-linux-gnu"
           pgdata="$RUNNER_TEMP/postgresql-data"
-          rm -rf "$pgdata"
+          pgsocket="$RUNNER_TEMP/postgresql-socket"
+          rm -rf "$pgdata" "$pgsocket"
+          mkdir -p "$pgsocket"
           initdb \
             --pgdata="$pgdata" \
             --username="$PGUSER" \
@@ -92,10 +94,13 @@ jobs:
           pg_ctl \
             --pgdata="$pgdata" \
             --log="$RUNNER_TEMP/postgresql.log" \
-            --options="-h 127.0.0.1 -p $PGPORT" \
+            --options="-h 127.0.0.1 -p $PGPORT -k $pgsocket" \
             start
           createdb --host=127.0.0.1 --port="$PGPORT" --username="$PGUSER" "$PGDATABASE"
-          echo "PGDATA=$pgdata" >> "$GITHUB_ENV"
+          {
+            echo "PGDATA=$pgdata"
+            echo "PGSOCKET=$pgsocket"
+          } >> "$GITHUB_ENV"
       - name: Apply every committed migration to the empty database
         run: bun run db:migrate
       - name: Run authentication and authorization integration tests
