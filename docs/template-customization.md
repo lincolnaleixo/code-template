@@ -46,13 +46,23 @@ browser report artifacts
 
 Release publishers require one additional cleanup step. When disabling `containerReleases`, remove `.github/workflows/release-containers.yml` and the `publish-containers` job from `.github/workflows/release-please.yml`. When disabling `nativeReleases`, remove `.github/workflows/release-native.yml` and the `publish-native` job. The validator checks this coupling in both directions.
 
+Desktop version targets are a separate concern from native publication. When disabling `desktop`, remove these `extra-files` from the root package in `release-please-config.json` together with the Tauri/Cargo files themselves:
+
+```text
+apps/desktop/src-tauri/tauri.conf.json
+apps/desktop/src-tauri/Cargo.toml
+apps/desktop/src-tauri/Cargo.lock
+```
+
+`bun run version:set` updates those files only when the complete desktop version set exists. It skips them when desktop has been removed cleanly and fails when only part of the version metadata remains. `bun run template:validate` also rejects stale Release Please desktop targets when `desktop` is disabled.
+
 `bun run template:validate` reports:
 
 - enabled capabilities with missing required files
 - disabled capabilities with known implementation files still present
 - enabled capabilities whose required dependencies are disabled
 - inconsistent package, Release Please, Tauri, or Cargo versions
-- stale Release Please publisher references
+- stale Release Please publisher or desktop version references
 - missing root license policy
 - invalid dependency version ranges
 - incompatible shared UI and shadcn workspace configuration
@@ -79,7 +89,7 @@ A replacement should preserve stable domain contracts where that reduces migrati
 
 ### Web-only SaaS
 
-Keep web, API, PostgreSQL, authentication, organizations, UI, Docker, and browser tests. Remove Capacitor, Tauri, the native release workflow, and the matching `publish-native` Release Please job.
+Keep web, API, PostgreSQL, authentication, organizations, UI, Docker, and browser tests. Remove Capacitor, Tauri, the native release workflow, the matching `publish-native` Release Please job, and the Tauri/Cargo Release Please `extra-files`.
 
 ### Public content site
 
