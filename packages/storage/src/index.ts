@@ -16,7 +16,8 @@ export const storage = new S3Client({
   credentials: environment.S3_ACCESS_KEY
     ? {
         accessKeyId: environment.S3_ACCESS_KEY,
-        secretAccessKey: environment.S3_SECRET_KEY ?? '',
+        // Runtime environment lookup only; no credential literal is committed.
+        secretAccessKey: environment.S3_SECRET_KEY ?? '', // gitleaks:allow
       }
     : undefined,
 })
