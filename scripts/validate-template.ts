@@ -14,6 +14,35 @@ interface PackageManifest {
   }
 }
 
+interface ReleasePleaseExtraFile {
+  jsonpath?: string
+  path?: string
+  type?: string
+}
+
+interface ReleasePleaseSection {
+  hidden?: boolean
+  section?: string
+  type?: string
+}
+
+interface ReleasePleasePackage {
+  'changelog-path'?: string
+  'changelog-sections'?: ReleasePleaseSection[]
+  'extra-files'?: ReleasePleaseExtraFile[]
+  'release-type'?: string
+  'skip-github-release'?: boolean
+  'version-file'?: string
+}
+
+interface ReleasePleaseConfig {
+  'bump-minor-pre-major'?: boolean
+  'bump-patch-for-minor-pre-major'?: boolean
+  'include-component-in-tag'?: boolean
+  'include-v-in-tag'?: boolean
+  packages?: Record<string, ReleasePleasePackage>
+}
+
 interface ShadcnConfig {
   aliases?: Record<string, string>
   iconLibrary?: string
@@ -83,16 +112,22 @@ const featureDependencies: Partial<Record<TemplateFeature, TemplateFeature[]>> =
 }
 
 const alwaysRequired = [
+  '.github/workflows/release-please.yml',
+  '.release-please-manifest.json',
   'AGENTS.md',
   'CHANGELOG.md',
+  'CONTRIBUTING.md',
   'README.md',
   'RULES.md',
   'SECURITY.md',
   'bun.lock',
   'docs/architecture.md',
+  'docs/release.md',
   'docs/template-customization.md',
   'package.json',
+  'release-please-config.json',
   'template.config.ts',
+  'version.txt',
 ]
 
 const errors: string[] = []
@@ -137,9 +172,105 @@ for (const [feature, enabled] of Object.entries(templateFeatures) as [TemplateFe
 const rootManifest = (await Bun.file('package.json').json()) as PackageManifest
 const catalog = rootManifest.workspaces?.catalog ?? {}
 const rootVersion = rootManifest.version ?? ''
+const releaseVersion = (await Bun.file('version.txt').text()).trim()
+const releaseManifest = (await Bun.file('.release-please-manifest.json').json()) as Record<
+  string,
+  string
+>
+const releaseConfig = (await Bun.file('release-please-config.json').json()) as ReleasePleaseConfig
+const rootReleaseConfig = releaseConfig.packages?.['.']
+const releaseWorkflow = await Bun.file('.github/workflows/release-please.yml').text()
 
 if (!exactVersion.test(rootVersion)) {
   errors.push(`Root package version must be exact semantic versioning, received "${rootVersion}".`)
+}
+if (!exactVersion.test(releaseVersion)) {
+  errors.push(`version.txt must contain an exact semantic version, received "${releaseVersion}".`)
+}
+if (releaseVersion !== rootVersion) {
+  errors.push(`version.txt version ${releaseVersion || '<missing>'} must match ${rootVersion}.`)
+}
+if (releaseManifest['.'] !== rootVersion) {
+  errors.push(
+    `Release Please manifest version ${releaseManifest['.'] ?? '<missing>'} must match ${rootVersion}.`,
+  )
+}
+
+if (!rootReleaseConfig) {
+  errors.push('release-please-config.json must configure the repository root package.')
+} else {
+  if (rootReleaseConfig['release-type'] !== 'simple') {
+    errors.push('Release Please must use the simple release strategy for the repository root.')
+  }
+  if (rootReleaseConfig['version-file'] !== 'version.txt') {
+    errors.push('Release Please must own version.txt as its version file.')
+  }
+  if (rootReleaseConfig['changelog-path'] !== 'CHANGELOG.md') {
+    errors.push('Release Please must own CHANGELOG.md.')
+  }
+  if (rootReleaseConfig['skip-github-release'] !== false) {
+    errors.push('Release Please must create the canonical GitHub Release.')
+  }
+
+  const requiredExtraFiles = [
+    ['json', 'package.json', '$.version'],
+    ['json', 'apps/desktop/src-tauri/tauri.conf.json', '$.version'],
+    ['toml', 'apps/desktop/src-tauri/Cargo.toml', '$.package.version'],
+  ] as const
+
+  for (const [type, path, jsonpath] of requiredExtraFiles) {
+    const configured = rootReleaseConfig['extra-files']?.some(
+      (extra) => extra.type === type && extra.path === path && extra.jsonpath === jsonpath,
+    )
+    if (!configured) {
+      errors.push(`Release Please is missing the ${path} version update at ${jsonpath}.`)
+    }
+  }
+
+  const visibleTypes = ['feat', 'fix', 'perf', 'deps', 'security']
+  const hiddenTypes = ['docs', 'refactor', 'test', 'build', 'ci', 'chore']
+  const sections = rootReleaseConfig['changelog-sections'] ?? []
+
+  for (const type of visibleTypes) {
+    const section = sections.find((candidate) => candidate.type === type)
+    if (!section || section.hidden === true) {
+      errors.push(`Release Please changelog type "${type}" must remain user-visible.`)
+    }
+  }
+  for (const type of hiddenTypes) {
+    const section = sections.find((candidate) => candidate.type === type)
+    if (!section || section.hidden !== true) {
+      errors.push(`Release Please changelog type "${type}" must remain hidden.`)
+    }
+  }
+}
+
+if (releaseConfig['include-component-in-tag'] !== false) {
+  errors.push('Release tags must not include a component prefix.')
+}
+if (releaseConfig['include-v-in-tag'] !== true) {
+  errors.push('Release tags must keep the v prefix.')
+}
+if (releaseConfig['bump-minor-pre-major'] !== false) {
+  errors.push('Breaking changes must use strict SemVer major bumps, including before 1.0.0.')
+}
+if (releaseConfig['bump-patch-for-minor-pre-major'] !== false) {
+  errors.push('Features must use strict SemVer minor bumps, including before 1.0.0.')
+}
+
+const publisherReferences = [
+  ['containerReleases', './.github/workflows/release-containers.yml'],
+  ['nativeReleases', './.github/workflows/release-native.yml'],
+] as const
+
+for (const [feature, workflow] of publisherReferences) {
+  const referenced = releaseWorkflow.includes(`uses: ${workflow}`)
+  if (templateFeatures[feature] && !referenced) {
+    errors.push(`Release Please must invoke ${workflow} while ${feature} is enabled.`)
+  }
+  if (!templateFeatures[feature] && referenced) {
+    errors.push(`Release Please must stop invoking ${workflow} when ${feature} is disabled.`)
+  }
 }
 
 if (!rootManifest.license?.trim()) {
@@ -171,11 +302,11 @@ for await (const path of manifestGlob.scan('.')) {
 }
 
 const changelog = await Bun.file('CHANGELOG.md').text()
-if (!changelog.includes('## [Unreleased]')) {
-  errors.push('CHANGELOG.md must keep an Unreleased section.')
-}
-if (rootVersion && !changelog.includes(`## [${rootVersion}] - `)) {
-  errors.push(`CHANGELOG.md does not contain a dated release section for version ${rootVersion}.`)
+if (rootVersion) {
+  const releaseHeading = new RegExp(`^##\\s+\\[?${escapeRegExp(rootVersion)}\\]?(?:\\s|\\(|$)`, 'm')
+  if (!releaseHeading.test(changelog)) {
+    errors.push(`CHANGELOG.md does not contain a release section for version ${rootVersion}.`)
+  }
 }
 
 for (const path of ['docker-compose.yml', 'apps/api/Dockerfile', 'apps/web/Dockerfile']) {
@@ -283,6 +414,25 @@ if (templateFeatures.desktop) {
     if (lockVersion !== rootVersion) {
       errors.push(`Cargo.lock version ${lockVersion ?? '<missing>'} must match ${rootVersion}.`)
     }
+
+    const cargoLockExtra = rootReleaseConfig?.['extra-files']?.find(
+      (extra) => extra.type === 'toml' && extra.path === 'apps/desktop/src-tauri/Cargo.lock',
+    )
+    const cargoLockIndexMatch = cargoLockExtra?.jsonpath?.match(/^\$\.package\[(\d+)\]\.version$/)
+    if (!cargoLockIndexMatch) {
+      errors.push('Release Please must target the root Cargo.lock package version by array index.')
+    } else {
+      const configuredIndex = Number(cargoLockIndexMatch[1])
+      const cargoPackages = [
+        ...cargoLock.matchAll(/\[\[package\]\]\s+name = "([^"]+)"\s+version = "([^"]+)"/g),
+      ]
+      const configuredPackage = cargoPackages[configuredIndex]
+      if (configuredPackage?.[1] !== cargoName) {
+        errors.push(
+          `Release Please Cargo.lock index ${configuredIndex} points to ${configuredPackage?.[1] ?? '<missing>'} instead of ${cargoName}.`,
+        )
+      }
+    }
   } else {
     errors.push('Cargo.toml package name is missing.')
   }
@@ -293,4 +443,4 @@ if (errors.length > 0) {
   process.exit(1)
 }
 
-console.log('Template capabilities, versions, UI contracts, and dependency policies are consistent.')
+console.log('Template capabilities, release automation, versions, UI contracts, and dependency policies are consistent.')
