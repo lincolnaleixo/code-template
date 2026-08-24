@@ -122,14 +122,16 @@ export interface TabsContentProps extends HTMLAttributes<HTMLDivElement> {
 
 export function TabsContent({ children, className, value, ...props }: TabsContentProps) {
   const context = useTabsContext()
-  if (context.value !== value) return null
+  const active = context.value === value
 
   return (
     <div
       aria-labelledby={tabId(context.baseId, value)}
       className={cn('mt-4 outline-none', className)}
+      hidden={!active}
       id={panelId(context.baseId, value)}
       role="tabpanel"
+      tabIndex={active ? 0 : -1}
       {...props}
     >
       {children}
