@@ -3,14 +3,19 @@ import {
   createContext,
   type HTMLAttributes,
   type KeyboardEvent,
+  useCallback,
   useContext,
+  useEffect,
   useId,
+  useState,
 } from 'react'
 import { cn } from '../utils'
 
 interface TabsContextValue {
   baseId: string
   onValueChange: (value: string) => void
+  panels: ReadonlySet<string>
+  registerPanel: (value: string) => () => void
   value: string
 }
 
@@ -37,9 +42,27 @@ export interface TabsProps extends HTMLAttributes<HTMLDivElement> {
 
 export function Tabs({ children, onValueChange, value, ...props }: TabsProps) {
   const baseId = useId()
+  const [panels, setPanels] = useState<ReadonlySet<string>>(() => new Set())
+  const registerPanel = useCallback((panelValue: string) => {
+    setPanels((current) => {
+      if (current.has(panelValue)) return current
+      const next = new Set(current)
+      next.add(panelValue)
+      return next
+    })
+
+    return () => {
+      setPanels((current) => {
+        if (!current.has(panelValue)) return current
+        const next = new Set(current)
+        next.delete(panelValue)
+        return next
+      })
+    }
+  }, [])
 
   return (
-    <TabsContext.Provider value={{ baseId, onValueChange, value }}>
+    <TabsContext.Provider value={{ baseId, onValueChange, panels, registerPanel, value }}>
       <div {...props}>{children}</div>
     </TabsContext.Provider>
   )
@@ -89,10 +112,11 @@ export interface TabsTriggerProps extends ButtonHTMLAttributes<HTMLButtonElement
 export function TabsTrigger({ children, className, onClick, value, ...props }: TabsTriggerProps) {
   const context = useTabsContext()
   const active = context.value === value
+  const controls = context.panels.has(value) ? panelId(context.baseId, value) : undefined
 
   return (
     <button
-      aria-controls={panelId(context.baseId, value)}
+      aria-controls={controls}
       aria-selected={active}
       className={cn(
         'inline-flex flex-1 items-center justify-center rounded-md px-3 py-1.5 text-sm',
@@ -123,6 +147,9 @@ export interface TabsContentProps extends HTMLAttributes<HTMLDivElement> {
 export function TabsContent({ children, className, value, ...props }: TabsContentProps) {
   const context = useTabsContext()
   const active = context.value === value
+  const registerPanel = context.registerPanel
+
+  useEffect(() => registerPanel(value), [registerPanel, value])
 
   return (
     <div
