@@ -25,16 +25,21 @@ jobs:
       - name: Install and run actionlint
         shell: bash
         env:
-          ACTIONLINT_VERSION: 1.7.7
+          ACTIONLINT_VERSION: 1.7.12
         run: |
           set -euo pipefail
           archive="actionlint_${ACTIONLINT_VERSION}_linux_x86_64.tar.gz"
+          checksums="actionlint_${ACTIONLINT_VERSION}_checksums.txt"
           base="https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}"
-          curl --fail --silent --show-error --location --output "$RUNNER_TEMP/$archive" "$base/$archive"
-          curl --fail --silent --show-error --location --output "$RUNNER_TEMP/checksums.txt" "$base/checksums.txt"
+          curl --fail --silent --show-error --location \
+            --output "$RUNNER_TEMP/$archive" \
+            "$base/$archive"
+          curl --fail --silent --show-error --location \
+            --output "$RUNNER_TEMP/$checksums" \
+            "$base/$checksums"
           (
             cd "$RUNNER_TEMP"
-            grep " $archive$" checksums.txt | sha256sum --check --strict -
+            grep " $archive$" "$checksums" | sha256sum --check --strict -
             tar -xzf "$archive" actionlint
           )
           "$RUNNER_TEMP/actionlint" -color
