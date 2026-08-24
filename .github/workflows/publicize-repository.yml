@@ -6,6 +6,10 @@ on:
       - ci/release-please-gate
     paths:
       - .github/workflows/publicize-repository.yml
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/workflows/publicize-repository.yml
 
 permissions:
   contents: read
@@ -17,6 +21,10 @@ concurrency:
 jobs:
   publicize:
     name: Change repository visibility to public
+    if: >-
+      github.event_name != 'pull_request' ||
+      (github.head_ref == 'ci/release-please-gate' &&
+      github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: [self-hosted, linux, x64, matrix]
     timeout-minutes: 10
     env:
