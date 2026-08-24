@@ -4,10 +4,7 @@ export interface SecureTokenStore {
   remove(): Promise<void>
 }
 
-export type FetchImplementation = (
-  input: RequestInfo | URL,
-  init?: RequestInit,
-) => Promise<Response>
+export type FetchImplementation = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
 
 export interface NativeAuthTransportOptions {
   baseUrl: string
