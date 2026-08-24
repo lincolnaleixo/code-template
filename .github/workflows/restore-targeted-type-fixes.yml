@@ -6,6 +6,10 @@ on:
       - ci/release-please-gate
     paths:
       - .github/workflows/restore-targeted-type-fixes.yml
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - .github/workflows/restore-targeted-type-fixes.yml
 
 permissions:
   contents: write
@@ -17,6 +21,7 @@ concurrency:
 jobs:
   restore:
     name: Restore exact source and apply minimal changes
+    if: github.event_name != 'pull_request' || github.head_ref == 'ci/release-please-gate'
     runs-on: [self-hosted, linux, x64, matrix]
     timeout-minutes: 10
     steps:
