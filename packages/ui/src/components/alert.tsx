@@ -26,5 +26,5 @@ export function AlertTitle({ className, ...props }: HTMLAttributes<HTMLHeadingEl
 }
 
 export function AlertDescription({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('text-sm leading-6 opacity-90', className)} {...props} />
+  return <div className={cn('text-sm leading-6', className)} {...props} />
 }
