@@ -7,6 +7,10 @@ on:
         description: Semantic-version tag created by Release Please
         required: true
         type: string
+      publish:
+        description: Internal publication authorization from Release Please
+        required: true
+        type: boolean
   workflow_dispatch:
     inputs:
       tag:
@@ -69,7 +73,7 @@ jobs:
 
   publish:
     name: Publish ${{ matrix.component }} image
-    if: github.event_name == 'workflow_call'
+    if: inputs.publish == true
     runs-on: ubuntu-latest
     permissions:
       contents: read
