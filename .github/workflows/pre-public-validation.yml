@@ -52,16 +52,26 @@ jobs:
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
           bun-version: ${{ env.BUN_VERSION }}
-      - run: bun ci
-      - run: bun run template:validate
-      - run: bun run docs:check
-      - run: bun run lint:ci
-      - run: bun run generated:check
-      - run: bun run typecheck
-      - run: bun run test:coverage
-      - run: bun run build
-      - run: bun run build:native
-      - run: bun run test:template-consumer
+      - name: Install locked dependencies
+        run: bun ci
+      - name: Validate template contracts
+        run: bun run template:validate
+      - name: Validate documentation links
+        run: bun run docs:check
+      - name: Run Biome CI
+        run: bun run lint:ci
+      - name: Verify generated schemas are current
+        run: bun run generated:check
+      - name: Type-check every workspace
+        run: bun run typecheck
+      - name: Run unit tests with coverage
+        run: bun run test:coverage
+      - name: Build API and SSR web application
+        run: bun run build
+      - name: Build shared native web bundle
+        run: bun run build:native
+      - name: Validate an isolated generated consumer
+        run: bun run test:template-consumer
 
   tauri-linux:
     name: Tauri Linux
