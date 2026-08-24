@@ -4,6 +4,8 @@ A TypeScript-first, self-hostable product template for web, API, iOS, Android, m
 
 This repository is configured as a GitHub template. It is deliberately modular: keep only the capabilities justified by the target product. Operational customization is documented in `README.md` and `docs/`; engineering style is defined in `RULES.md`.
 
+The source repository is intended to be publicly visible so its standard GitHub-hosted workflows can run without consuming private-repository Actions minutes. Public visibility does not change the explicit `UNLICENSED` policy and does not grant an open-source license.
+
 ## Included stack
 
 | Area | Technology |
@@ -287,7 +289,9 @@ The main pipeline validates:
 4. PostgreSQL authentication and authorization integration tests
 5. hardened Docker Compose, authenticated Playwright behavior, and axe accessibility audits in light and dark themes
 
-Security workflows add dependency audit, secret scanning, filesystem and image scanning, SBOM, and provenance. Native workflows compile the retained desktop and mobile targets.
+The workflows use explicit standard GitHub-hosted images: Ubuntu 24.04 for Linux jobs, macOS 15 for Apple jobs, and Windows Server 2025 for Windows builds. Pull requests from forks receive no repository secrets. Preview image publication runs only for a branch in this repository or an explicit manual dispatch.
+
+Security workflows add dependency audit, secret scanning, filesystem and image scanning, SBOM, provenance, CodeQL, and dependency review when supported by the repository visibility and plan. Native workflows compile the retained desktop and mobile targets.
 
 ## Native delivery
 
@@ -317,7 +321,7 @@ See [docs/release.md](docs/release.md).
 
 ## Licensing and repository governance
 
-The private template is explicitly `UNLICENSED` and intentionally does not impose an open-source license on generated products. Every product must choose its own distribution policy, replace the template code owners, and review third-party obligations.
+The publicly visible source template is explicitly `UNLICENSED` and does not grant an open-source license. The root package remains `private: true` only to prevent accidental package-registry publication. Every generated product must choose its own distribution policy, replace the template code owners, and review third-party obligations.
 
 Branch protection is an administrative repository setting and is not copied into generated repositories. Preview the intended policy with:
 
