@@ -28,7 +28,7 @@ When the answer is no, remove it cleanly.
 5. Remove related Docker services, volumes, networks, health checks, and exposed ports.
 6. Remove or adapt CI, security, preview, release, and native jobs.
 7. Remove or adapt tests that exercised the capability.
-8. Update `README.md`, relevant files in `docs/`, and `CHANGELOG.md`.
+8. Update `README.md` and relevant files in `docs/`. Release Please owns `CHANGELOG.md` during normal development.
 9. Run `bun run template:validate`, `bun run check`, and all builds that remain supported.
 
 A capability is not disabled when its code is merely unreachable. No dead implementation, dependency, service, or workflow should remain.
@@ -44,17 +44,20 @@ browser and accessibility workflow steps
 browser report artifacts
 ```
 
+Release publishers require one additional cleanup step. When disabling `containerReleases`, remove `.github/workflows/release-containers.yml` and the `publish-containers` job from `.github/workflows/release-please.yml`. When disabling `nativeReleases`, remove `.github/workflows/release-native.yml` and the `publish-native` job. The validator checks this coupling in both directions.
+
 `bun run template:validate` reports:
 
 - enabled capabilities with missing required files
 - disabled capabilities with known implementation files still present
 - enabled capabilities whose required dependencies are disabled
-- inconsistent package, Tauri, Cargo, or changelog versions
+- inconsistent package, Release Please, Tauri, or Cargo versions
+- stale Release Please publisher references
 - missing root license policy
 - invalid dependency version ranges
 - incompatible shared UI and shadcn workspace configuration
 
-The validator intentionally does not force optional process files such as issue forms or contribution guidance to remain in every generated product. When removing them, update README links and run `bun run docs:check`.
+The validator intentionally does not force optional process files such as issue forms to remain in every generated product. Contribution guidance and the root automated release contract remain part of this template baseline unless the generated project deliberately replaces those processes and their validation rules. When removing process documentation, update README links and run `bun run docs:check`.
 
 Ownership and licensing are not optional capabilities. Replace the template policy with the real product policy instead of silently inheriting or deleting it. See [licensing.md](licensing.md) and [repository-governance.md](repository-governance.md).
 
@@ -76,7 +79,7 @@ A replacement should preserve stable domain contracts where that reduces migrati
 
 ### Web-only SaaS
 
-Keep web, API, PostgreSQL, authentication, organizations, UI, Docker, and browser tests. Remove Capacitor, Tauri, and native release workflows.
+Keep web, API, PostgreSQL, authentication, organizations, UI, Docker, and browser tests. Remove Capacitor, Tauri, the native release workflow, and the matching `publish-native` Release Please job.
 
 ### Public content site
 
@@ -88,7 +91,7 @@ Keep Tauri, UI, and the native web bundle. Remove server modules when the tool i
 
 ### Prototype
 
-Keep structured logs and basic health checks. Telemetry exporters, container releases, native signing, and complex authorization can remain disabled until required.
+Keep structured logs and basic health checks. Telemetry exporters, container releases, native publication, and complex authorization can remain disabled until required.
 
 ### Product without uploads
 
