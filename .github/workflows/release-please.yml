@@ -16,6 +16,7 @@ jobs:
     name: Prepare or publish release
     runs-on: ubuntu-24.04
     permissions:
+      actions: write
       contents: write
       issues: write
       pull-requests: write
@@ -23,21 +24,58 @@ jobs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
-      - name: Require Release Please automation token
-        env:
-          RELEASE_PLEASE_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-        run: |
-          if [ -z "$RELEASE_PLEASE_TOKEN" ]; then
-            echo "::error::RELEASE_PLEASE_TOKEN is required so automated release pull requests trigger their checks."
-            exit 1
-          fi
       - name: Create or update release pull request
         id: release
         uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
-          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          token: ${{ github.token }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+      - name: Resolve release pull request branch
+        id: release-pr
+        if: ${{ steps.release.outputs.prs_created == 'true' }}
+        env:
+          RELEASE_PR: ${{ steps.release.outputs.pr }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+
+          pull_request = json.loads(os.environ['RELEASE_PR'])
+          branch = pull_request.get('headBranchName')
+          sha = pull_request.get('sha')
+          if not branch:
+              raise SystemExit('Release Please did not return a headBranchName.')
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
+              print(f'branch={branch}', file=output)
+              if sha:
+                  print(f'sha={sha}', file=output)
+          PY
+
+      - name: Dispatch checks for release pull request head
+        if: ${{ steps.release.outputs.prs_created == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_PR_BRANCH: ${{ steps.release-pr.outputs.branch }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for workflow in ci.yml security.yml release-native.yml; do
+            gh api \
+              --method POST \
+              "repos/$GITHUB_REPOSITORY/actions/workflows/$workflow/dispatches" \
+              -f ref="$RELEASE_PR_BRANCH"
+          done
+          {
+            echo "## Release pull request validation"
+            echo
+            echo "- Branch: $RELEASE_PR_BRANCH"
+            echo "- Dispatched: CI, Security, Native builds"
+            echo "- Authentication: repository GITHUB_TOKEN"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   publish-containers:
     name: Publish containers
