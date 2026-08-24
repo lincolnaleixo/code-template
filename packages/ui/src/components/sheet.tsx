@@ -47,6 +47,9 @@ export function Sheet({
       onClick={(event) => {
         if (event.target === event.currentTarget) onOpenChange(false)
       }}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') onOpenChange(false)
+      }}
       ref={ref}
     >
       <section
