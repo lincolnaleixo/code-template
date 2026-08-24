@@ -1,0 +1,65 @@
+name: Pre-public audit
+
+on:
+  push:
+    branches:
+      - ci/release-please-gate
+    paths:
+      - .github/workflows/pre-public-audit.yml
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: code-template-pre-public-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    name: Scan history and remove identified reports
+    runs-on: [self-hosted, linux, x64, matrix]
+    timeout-minutes: 45
+    steps:
+      - name: Checkout complete history
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Scan complete Git history for secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            -v "$PWD:/repo" \
+            ghcr.io/gitleaks/gitleaks:v8.30.1 \
+            git /repo --redact --no-banner
+
+      - name: Delete identified historical browser reports
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for artifact_id in 9464035422 9464176353; do
+            status="$(curl --silent --show-error \
+              --output /tmp/artifact-delete.json \
+              --write-out '%{http_code}' \
+              -X DELETE \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id")"
+            if [ "$status" != "204" ] && [ "$status" != "404" ]; then
+              echo "Unable to delete artifact $artifact_id (HTTP $status)." >&2
+              exit 1
+            fi
+          done
+          {
+            echo "## Pre-public audit"
+            echo
+            echo "- Full Git history secret scan: passed"
+            echo "- Identified historical reports: deleted or already absent"
+          } >> "$GITHUB_STEP_SUMMARY"
