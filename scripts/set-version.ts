@@ -48,38 +48,52 @@ const rootNext = `${JSON.stringify(rootManifest, null, 2)}\n`
 updates.push({ next: rootNext, path: rootPath, previous: rootPrevious })
 
 const tauriPath = 'apps/desktop/src-tauri/tauri.conf.json'
-const tauriPrevious = await readFile(tauriPath, 'utf8')
-const tauriConfig = JSON.parse(tauriPrevious) as Record<string, unknown>
-tauriConfig.version = version
-const tauriNext = `${JSON.stringify(tauriConfig, null, 2)}\n`
-updates.push({ next: tauriNext, path: tauriPath, previous: tauriPrevious })
-
 const cargoTomlPath = 'apps/desktop/src-tauri/Cargo.toml'
-const cargoTomlPrevious = await readFile(cargoTomlPath, 'utf8')
-const cargoName = cargoTomlPrevious.match(/^name\s*=\s*"([^"]+)"/m)?.[1]
-if (!cargoName) throw new Error('Unable to find the Cargo package name.')
-
-const cargoTomlNext = replaceRequired(
-  cargoTomlPrevious,
-  /(\[package\][\s\S]*?^version\s*=\s*")[^"]+("\s*$)/m,
-  `$1${version}$2`,
-  'the [package] version in Cargo.toml',
-)
-updates.push({ next: cargoTomlNext, path: cargoTomlPath, previous: cargoTomlPrevious })
-
 const cargoLockPath = 'apps/desktop/src-tauri/Cargo.lock'
-const cargoLockPrevious = await readFile(cargoLockPath, 'utf8')
-const escapedCargoName = cargoName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-const cargoLockPattern = new RegExp(
-  `(\\[\\[package\\]\\]\\s+name = "${escapedCargoName}"\\s+version = ")[^"]+("\\s+)`,
+const desktopVersionPaths = [tauriPath, cargoTomlPath, cargoLockPath]
+const desktopVersionPathExists = await Promise.all(
+  desktopVersionPaths.map((path) => Bun.file(path).exists()),
 )
-const cargoLockNext = replaceRequired(
-  cargoLockPrevious,
-  cargoLockPattern,
-  `$1${version}$2`,
-  `the ${cargoName} package version in Cargo.lock`,
-)
-updates.push({ next: cargoLockNext, path: cargoLockPath, previous: cargoLockPrevious })
+const hasAnyDesktopVersionPath = desktopVersionPathExists.some(Boolean)
+const hasAllDesktopVersionPaths = desktopVersionPathExists.every(Boolean)
+
+if (hasAnyDesktopVersionPath && !hasAllDesktopVersionPaths) {
+  const missing = desktopVersionPaths.filter((_, index) => !desktopVersionPathExists[index])
+  throw new Error(`Desktop version metadata is incomplete. Missing: ${missing.join(', ')}`)
+}
+
+if (hasAllDesktopVersionPaths) {
+  const tauriPrevious = await readFile(tauriPath, 'utf8')
+  const tauriConfig = JSON.parse(tauriPrevious) as Record<string, unknown>
+  tauriConfig.version = version
+  const tauriNext = `${JSON.stringify(tauriConfig, null, 2)}\n`
+  updates.push({ next: tauriNext, path: tauriPath, previous: tauriPrevious })
+
+  const cargoTomlPrevious = await readFile(cargoTomlPath, 'utf8')
+  const cargoName = cargoTomlPrevious.match(/^name\s*=\s*"([^"]+)"/m)?.[1]
+  if (!cargoName) throw new Error('Unable to find the Cargo package name.')
+
+  const cargoTomlNext = replaceRequired(
+    cargoTomlPrevious,
+    /(\[package\][\s\S]*?^version\s*=\s*")[^"]+("\s*$)/m,
+    `$1${version}$2`,
+    'the [package] version in Cargo.toml',
+  )
+  updates.push({ next: cargoTomlNext, path: cargoTomlPath, previous: cargoTomlPrevious })
+
+  const cargoLockPrevious = await readFile(cargoLockPath, 'utf8')
+  const escapedCargoName = cargoName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const cargoLockPattern = new RegExp(
+    `(\\[\\[package\\]\\]\\s+name = "${escapedCargoName}"\\s+version = ")[^"]+("\\s+)`,
+  )
+  const cargoLockNext = replaceRequired(
+    cargoLockPrevious,
+    cargoLockPattern,
+    `$1${version}$2`,
+    `the ${cargoName} package version in Cargo.lock`,
+  )
+  updates.push({ next: cargoLockNext, path: cargoLockPath, previous: cargoLockPrevious })
+}
 
 const changed = updates.filter((update) => update.previous !== update.next)
 
