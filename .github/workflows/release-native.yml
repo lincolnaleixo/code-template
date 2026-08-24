@@ -82,7 +82,9 @@ jobs:
           librsvg2-dev
       - run: bun ci
       - run: bun run build:desktop
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      - name: Retain desktop bundle
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: desktop-${{ runner.os }}
           path: apps/desktop/src-tauri/target/release/bundle/**
@@ -114,7 +116,9 @@ jobs:
       - name: Compile debug APK
         working-directory: apps/mobile/android
         run: ./gradlew assembleDebug --no-daemon
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      - name: Retain Android APK
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: android-debug
           path: apps/mobile/android/app/build/outputs/apk/debug/*.apk
@@ -153,7 +157,9 @@ jobs:
           ditto -c -k --sequesterRsrc --keepParent
           apps/mobile/ios/build/Build/Products/Debug-iphonesimulator/App.app
           apps/mobile/ios-simulator.zip
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      - name: Retain iOS simulator application
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: ios-simulator
           path: apps/mobile/ios-simulator.zip
