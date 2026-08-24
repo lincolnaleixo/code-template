@@ -48,7 +48,7 @@ concurrency:
 
 env:
   BUN_VERSION: 1.3.14
-  VITE_API_URL: ${{ inputs.api_url || vars.NATIVE_API_URL || 'https://api.example.com' }}
+  VITE_API_URL: ${{ inputs.api_url || 'https://api.example.com' }}
   VITE_APP_NAME: Matrix Template
 
 jobs:
@@ -164,7 +164,7 @@ jobs:
     name: Attach native artifacts to GitHub release
     if: inputs.publish == true
     needs: [desktop, android, ios]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
