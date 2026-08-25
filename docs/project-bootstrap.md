@@ -1,6 +1,6 @@
 # Project Bootstrap
 
-Use this checklist after creating a repository from this template. The goal is to turn the capability superset into the smallest coherent product foundation before feature development begins.
+Use this checklist after creating a repository from `lincolnaleixo/code-template`. The goal is to turn the capability superset into the smallest coherent product foundation before feature development begins.
 
 ## 1. Record the product profile
 
@@ -91,7 +91,7 @@ apps/desktop/src-tauri/Cargo.lock
 apps/desktop/src-tauri/tauri.conf.json
 ```
 
-The source template currently carries a one-time top-level `bootstrap-sha` in `release-please-config.json` so Release Please can onboard its historical `0.3.0` baseline even though the source repository did not have a matching tag. That SHA belongs only to the source template history and does not exist in a repository created with **Use this template**. Remove it before the generated repository begins normal development, or replace it with a full commit SHA from the generated repository when you deliberately want to bound the first Release Please changelog.
+The source template currently carries a one-time top-level `bootstrap-sha` in `release-please-config.json` so Release Please can onboard the historical `0.3.0` template baseline even though that repository did not have a matching tag. That SHA belongs only to `lincolnaleixo/code-template` and does not exist in a repository created with **Use this template**. Remove it before the generated repository begins normal development, or replace it with a full commit SHA from the generated repository when you deliberately want to bound the first Release Please changelog.
 
 During this one-time product bootstrap, replace the template changelog with the product baseline or add the matching initial product section. After bootstrap, Release Please owns `CHANGELOG.md`, version files, and the manifest during normal development. Contributors should drive subsequent versions with Conventional Commits rather than editing release metadata directly.
 
