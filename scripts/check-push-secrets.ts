@@ -23,11 +23,7 @@ if (refUpdates.length === 0) {
   process.exit(0)
 }
 
-const configuredRemotes = new Set(
-  gitText(root, ['remote'])
-    .split(/\r?\n/u)
-    .filter(Boolean),
-)
+const configuredRemotes = new Set(gitText(root, ['remote']).split(/\r?\n/u).filter(Boolean))
 const commits = new Set<string>()
 const tagObjects = new Set<string>()
 
