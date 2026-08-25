@@ -96,11 +96,7 @@ try {
   const secretPath = join(repositoryRoot, 'staged-secret.txt')
   await writeFile(secretPath, canarySecret())
   git(['add', 'staged-secret.txt'])
-  const preCommitResult = execute(
-    'git',
-    ['commit', '-m', 'test: reject staged secret'],
-    repositoryRoot,
-  )
+  const preCommitResult = execute('git', ['commit', '-m', 'test: reject staged secret'], repositoryRoot)
   expectStatus(preCommitResult, 1, 'installed pre-commit hook')
   expectSecretMasked(preCommitResult, 'installed pre-commit hook')
   git(['reset', '--hard', 'HEAD'])
@@ -108,11 +104,7 @@ try {
 
   await writeFile(join(repositoryRoot, 'safe.txt'), 'safe content\n')
   git(['add', 'safe.txt'])
-  const commitMessageResult = execute(
-    'git',
-    ['commit', '-m', canarySecret().trim()],
-    repositoryRoot,
-  )
+  const commitMessageResult = execute('git', ['commit', '-m', canarySecret().trim()], repositoryRoot)
   expectStatus(commitMessageResult, 1, 'installed commit-msg hook')
   expectSecretMasked(commitMessageResult, 'installed commit-msg hook')
   git(['commit', '-m', 'test: accept safe commit message'])
