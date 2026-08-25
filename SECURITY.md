@@ -59,9 +59,9 @@ The hooks use Secretlint with the repository policy in `.secretlintrc.json`:
 - unknown binary payloads and oversized text payloads fail closed because content scanners cannot inspect them reliably
 - reviewed image and font payloads are accepted only when their extension matches a known file signature, and printable binary metadata is still scanned for secrets
 - safe and secret canaries run before repository content so a missing, broken, or over-broad scanner blocks the operation instead of silently passing
-- `.secretlintignore` is locked to the exact reviewed desktop icon patterns, so a broad future ignore cannot silently weaken local hooks or CI
+- `.secretlintignore` is locked to the exact reviewed image and font extension patterns, so a future broad path or additional extension cannot silently weaken local hooks or CI
 
-CI runs the same path, size, binary-signature, and binary-metadata policy against every tracked blob, then performs an exact Secretlint scan of every Git-tracked path with Git ignore handling disabled. Existing Gitleaks, Trivy, dependency-review, and CodeQL jobs remain independent remote barriers.
+CI runs the same path, size, binary-signature, and binary-metadata policy against every tracked blob, then performs an exact Secretlint scan of every Git-tracked path with Git ignore handling disabled. The image and font patterns skipped by the text batch remain covered by signature validation and printable-metadata scanning. Existing Gitleaks, Trivy, dependency-review, and CodeQL jobs remain independent remote barriers.
 
 Local hooks are defense in depth and can be bypassed deliberately with Git's `--no-verify`. Bypass does not waive the CI gate or the requirement to rotate a credential that may have been exposed. Handle false positives with narrow reviewed examples or fingerprints. Do not add broad ignored directories or disable a provider rule merely to make a check pass.
 
