@@ -134,13 +134,10 @@ describe('API with PostgreSQL and Better Auth', () => {
     expect(organizationResponse.status).toBe(200)
     const createdOrganization = (await organizationResponse.json()) as { id: string }
 
-    const createProjectResponse = await jsonRequest(
-      `/api/organizations/${createdOrganization.id}/projects`,
-      {
-        cookie: owner.cookie,
-        body: { name: '  Production   Template  ' },
-      },
-    )
+    const createProjectResponse = await jsonRequest(`/api/organizations/${createdOrganization.id}/projects`, {
+      cookie: owner.cookie,
+      body: { name: '  Production   Template  ' },
+    })
 
     expect(createProjectResponse.status).toBe(201)
     const createdProject = (await createProjectResponse.json()) as {
@@ -152,21 +149,19 @@ describe('API with PostgreSQL and Better Auth', () => {
     expect(createdProject.organizationId).toBe(createdOrganization.id)
     expect(createdProject.createdBy).toBe(owner.userId)
 
-    const ownerListResponse = await jsonRequest(
-      `/api/organizations/${createdOrganization.id}/projects`,
-      { cookie: owner.cookie },
-    )
+    const ownerListResponse = await jsonRequest(`/api/organizations/${createdOrganization.id}/projects`, {
+      cookie: owner.cookie,
+    })
     expect(ownerListResponse.status).toBe(200)
     expect((await ownerListResponse.json()) as unknown[]).toHaveLength(1)
 
-    const outsiderListResponse = await jsonRequest(
-      `/api/organizations/${createdOrganization.id}/projects`,
-      { cookie: outsider.cookie },
-    )
+    const outsiderListResponse = await jsonRequest(`/api/organizations/${createdOrganization.id}/projects`, {
+      cookie: outsider.cookie,
+    })
     expect(outsiderListResponse.status).toBe(403)
-    expect(
-      ((await outsiderListResponse.json()) as { error: { code: string } }).error.code,
-    ).toBe('PERMISSION_DENIED')
+    expect(((await outsiderListResponse.json()) as { error: { code: string } }).error.code).toBe(
+      'PERMISSION_DENIED',
+    )
   })
 
   test('invalidates protected access after sign out', async () => {

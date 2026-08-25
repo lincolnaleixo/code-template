@@ -1,6 +1,6 @@
 import {
-  createContext,
   type ButtonHTMLAttributes,
+  createContext,
   type HTMLAttributes,
   type KeyboardEvent,
   useContext,
@@ -122,15 +122,16 @@ export interface TabsContentProps extends HTMLAttributes<HTMLDivElement> {
 
 export function TabsContent({ children, className, value, ...props }: TabsContentProps) {
   const context = useTabsContext()
-  if (context.value !== value) return null
+  const active = context.value === value
 
   return (
     <div
+      aria-hidden={!active}
       aria-labelledby={tabId(context.baseId, value)}
-      className={cn('mt-4 outline-none focus-visible:ring-2 focus-visible:ring-ring/40', className)}
+      className={cn('mt-4 outline-none', className)}
+      hidden={!active}
       id={panelId(context.baseId, value)}
       role="tabpanel"
-      tabIndex={0}
       {...props}
     >
       {children}

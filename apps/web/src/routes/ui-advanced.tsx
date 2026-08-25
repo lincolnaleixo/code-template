@@ -91,9 +91,7 @@ const columns: Array<DataTableColumn<TeamMember>> = [
   },
   {
     cell: (member) => (
-      <Badge variant={member.status === 'Active' ? 'success' : 'warning'}>
-        {member.status}
-      </Badge>
+      <Badge variant={member.status === 'Active' ? 'success' : 'warning'}>{member.status}</Badge>
     ),
     header: 'Status',
     id: 'status',
@@ -113,10 +111,7 @@ function AdvancedUiPlayground() {
     if (!normalized) return members
 
     return members.filter((member) =>
-      [member.name, member.email, member.role, member.status]
-        .join(' ')
-        .toLowerCase()
-        .includes(normalized),
+      [member.name, member.email, member.role, member.status].join(' ').toLowerCase().includes(normalized),
     )
   }, [query])
 
@@ -147,8 +142,8 @@ function AdvancedUiPlayground() {
             <div>
               <h2 className="text-xl font-semibold tracking-tight">Data table</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                A lightweight typed table for common product screens. TanStack Table remains available
-                for advanced sorting, grouping, and virtualization.
+                A lightweight typed table for common product screens. TanStack Table remains available for
+                advanced sorting, grouping, and virtualization.
               </p>
             </div>
             <SearchInput
@@ -193,10 +188,7 @@ function AdvancedUiPlayground() {
             title="Notifications"
           >
             <label className="flex items-start gap-3 rounded-lg border p-4">
-              <Checkbox
-                checked={emailUpdates}
-                onChange={(event) => setEmailUpdates(event.target.checked)}
-              />
+              <Checkbox checked={emailUpdates} onChange={(event) => setEmailUpdates(event.target.checked)} />
               <span>
                 <span className="block text-sm font-medium">Email updates</span>
                 <span className="mt-1 block text-xs leading-5 text-muted-foreground">
@@ -212,22 +204,14 @@ function AdvancedUiPlayground() {
                   A compact summary of product activity.
                 </p>
               </div>
-              <Switch
-                checked={weeklyDigest}
-                id="weekly-digest"
-                onCheckedChange={setWeeklyDigest}
-              />
+              <Switch checked={weeklyDigest} id="weekly-digest" onCheckedChange={setWeeklyDigest} />
             </div>
           </SettingsSection>
 
           <SettingsSection
             actions={
               <Tooltip content="This opens a confirmation dialog." side="left">
-                <Button
-                  onClick={() => setConfirmOpen(true)}
-                  size="sm"
-                  variant="destructive"
-                >
+                <Button onClick={() => setConfirmOpen(true)} size="sm" variant="destructive">
                   Delete workspace
                 </Button>
               </Tooltip>

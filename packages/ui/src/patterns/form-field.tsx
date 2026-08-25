@@ -11,14 +11,7 @@ export interface FormFieldProps {
   label: ReactNode
 }
 
-export function FormField({
-  children,
-  className,
-  description,
-  error,
-  htmlFor,
-  label,
-}: FormFieldProps) {
+export function FormField({ children, className, description, error, htmlFor, label }: FormFieldProps) {
   return (
     <div className={cn('grid gap-2', className)}>
       <Label htmlFor={htmlFor}>{label}</Label>

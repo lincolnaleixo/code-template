@@ -1,0 +1,5 @@
+# Historical false positives: these lines read the validated S3_SECRET_KEY
+# environment variable and contain no credential value. Keep both exceptions
+# commit-scoped so a future edit is scanned normally.
+b510cc50a299e3cbaa68dae85866827a86526cff:packages/storage/src/index.ts:generic-api-key:19
+d78f214ca8395dadb05bce518ac5773629f5aead:packages/storage/src/index.ts:generic-api-key:19

@@ -79,9 +79,11 @@ Caddy is the public ingress in the provided Compose topology. Replace it when th
 
 ## Container releases
 
-A semantic version tag triggers `.github/workflows/release-containers.yml`, publishing multi-architecture API and web images to GHCR with SBOM and provenance.
+Release Please owns the canonical semantic-version tag and GitHub Release. Merging the automated release pull request invokes `.github/workflows/release-containers.yml` through the trusted release workflow, publishing multi-architecture API and web images to GHCR with SBOM and provenance.
 
-Pull requests can publish OCI preview coordinates through the preview workflow for deployment on any compatible environment.
+A manual `Release containers` run is verify-only. It builds both images without logging into GHCR and cannot create or modify a release.
+
+Pull requests from a branch in this repository can publish OCI preview coordinates through the preview workflow for deployment on any compatible environment. Fork pull requests do not receive package-write permission and do not publish preview images.
 
 ## Rollback
 

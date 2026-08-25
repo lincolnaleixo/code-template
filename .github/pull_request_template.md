@@ -37,6 +37,7 @@ Commands not executed are listed below with the reason. Do not mark a check as p
 ## Documentation and release
 
 - [ ] Documentation reflects changed commands, architecture, configuration, or behavior
-- [ ] `CHANGELOG.md` was updated, or the change is not material to consumers
+- [ ] The commit or squash title that will land on `main` follows Conventional Commits
+- [ ] Release-managed versions, `version.txt`, `.release-please-manifest.json`, and `CHANGELOG.md` were not edited manually, or this pull request explicitly changes release automation or performs documented recovery
 - [ ] Generated schemas, migrations, and lockfiles are current
 - [ ] The release or project-bootstrap documentation remains accurate

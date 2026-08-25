@@ -12,14 +12,17 @@ export function Avatar({ className, ...props }: HTMLAttributes<HTMLDivElement>) 
 
 export type AvatarImageProps = ImgHTMLAttributes<HTMLImageElement> & { alt: string }
 
-export function AvatarImage({ className, ...props }: AvatarImageProps) {
-  return <img className={cn('aspect-square size-full object-cover', className)} {...props} />
+export function AvatarImage({ alt, className, ...props }: AvatarImageProps) {
+  return <img alt={alt} className={cn('aspect-square size-full object-cover', className)} {...props} />
 }
 
 export function AvatarFallback({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn('flex size-full items-center justify-center text-xs font-medium text-muted-foreground', className)}
+      className={cn(
+        'flex size-full items-center justify-center text-xs font-medium text-muted-foreground',
+        className,
+      )}
       {...props}
     />
   )

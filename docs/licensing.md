@@ -1,8 +1,8 @@
 # Licensing and Ownership
 
-## Template repository decision
+## Source repository decision
 
-`matrix-hq/code-template` is an internal private template. It intentionally uses:
+`matrix-hq/code-template` is intended to be a publicly visible GitHub template while retaining an explicit no-license default:
 
 ```json
 {
@@ -11,7 +11,9 @@
 }
 ```
 
-The repository intentionally does not include an open-source `LICENSE` file. This keeps the template from granting a public license by default and prevents a newly generated product from inheriting an accidental distribution policy.
+The `private` package field prevents accidental publication to a package registry. It does not describe or control GitHub repository visibility.
+
+The repository intentionally does not include an open-source `LICENSE` file. Public visibility allows people to inspect the source, but it does not by itself grant a general license to copy, modify, or redistribute it. A separate owner decision is required before treating this repository as an open-source project.
 
 This document records repository policy. It is not a substitute for legal review when a product is distributed to customers, published publicly, sold, embedded in hardware, or submitted to an application store.
 
@@ -46,7 +48,7 @@ Choose one of these deliberate outcomes:
 
 ## Third-party software
 
-Dependencies, generated native projects, icons, fonts, examples, and copied component source retain their own license terms. The template's internal licensing decision does not relicense third-party material.
+Dependencies, generated native projects, icons, fonts, examples, and copied component source retain their own license terms. The template's repository policy does not relicense third-party material.
 
 Before a public or commercial release:
 

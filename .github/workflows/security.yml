@@ -21,7 +21,7 @@ env:
 jobs:
   open-source-scans:
     name: Audit, secrets and repository scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -39,17 +39,20 @@ jobs:
           ghcr.io/gitleaks/gitleaks:v8.30.1
           git /repo --redact --no-banner
       - name: Scan source, lockfile and infrastructure
+        # Bun audit checks the resolved application graph. Some installed
+        # packages also ship unrelated development lockfiles in node_modules.
         run: >-
           docker run --rm
           -v "$PWD:/workspace"
           aquasec/trivy:0.70.0
           fs --exit-code 1 --severity HIGH,CRITICAL
           --scanners vuln,secret,misconfig
+          --skip-dirs /workspace/node_modules
           /workspace
 
   container-scan:
     name: Build and scan OCI images
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - name: Build API image
@@ -78,7 +81,7 @@ jobs:
     if: github.event_name == 'pull_request' && (github.event.repository.visibility == 'public' || vars.GHAS_ENABLED == 'true')
     permissions:
       contents: read
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - uses: actions/dependency-review-action@v5
@@ -94,7 +97,7 @@ jobs:
       contents: read
       packages: read
       security-events: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - uses: github/codeql-action/init@v4

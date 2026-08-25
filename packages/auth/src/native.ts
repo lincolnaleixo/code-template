@@ -4,10 +4,12 @@ export interface SecureTokenStore {
   remove(): Promise<void>
 }
 
+export type FetchImplementation = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>
+
 export interface NativeAuthTransportOptions {
   baseUrl: string
   tokenStore: SecureTokenStore
-  fetchImplementation?: typeof fetch
+  fetchImplementation?: FetchImplementation
 }
 
 function absoluteUrl(baseUrl: string, input: RequestInfo | URL): RequestInfo | URL {
@@ -16,8 +18,8 @@ function absoluteUrl(baseUrl: string, input: RequestInfo | URL): RequestInfo | U
   return new URL(input, baseUrl)
 }
 
-export function createNativeAuthFetch(options: NativeAuthTransportOptions): typeof fetch {
-  const request = options.fetchImplementation ?? fetch
+export function createNativeAuthFetch(options: NativeAuthTransportOptions): FetchImplementation {
+  const request: FetchImplementation = options.fetchImplementation ?? fetch
 
   return async (input, init = {}) => {
     const headers = new Headers(init.headers)

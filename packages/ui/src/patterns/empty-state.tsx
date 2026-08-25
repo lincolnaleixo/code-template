@@ -9,13 +9,7 @@ export interface EmptyStateProps {
   title: ReactNode
 }
 
-export function EmptyState({
-  action,
-  className,
-  description,
-  icon,
-  title,
-}: EmptyStateProps) {
+export function EmptyState({ action, className, description, icon, title }: EmptyStateProps) {
   return (
     <div
       className={cn(
@@ -31,9 +25,7 @@ export function EmptyState({
           </div>
         )}
         <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
-        {description && (
-          <div className="mt-2 text-sm leading-6 text-muted-foreground">{description}</div>
-        )}
+        {description && <div className="mt-2 text-sm leading-6 text-muted-foreground">{description}</div>}
         {action && <div className="mt-5">{action}</div>}
       </div>
     </div>

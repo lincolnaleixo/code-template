@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { Button } from '../components/button'
 import { Dialog } from '../components/dialog'
 
