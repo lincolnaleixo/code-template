@@ -88,6 +88,7 @@
     "test:e2e": "playwright test",
     "test:a11y": "bun run scripts/check-accessibility.ts",
     "test:template-consumer": "bun run scripts/check-template-consumer.ts",
+    "test:secret-guards": "bun run scripts/test-secret-guards.ts",
     "test:coverage": "bun test --coverage apps/api/test/health.test.ts packages/domain/test packages/env/test packages/observability/test",
     "docs:check": "bun run scripts/check-doc-links.ts",
     "db:generate": "bun run --cwd packages/db generate",
