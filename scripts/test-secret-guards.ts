@@ -11,6 +11,7 @@ const repositoryRoot = join(temporaryRoot, 'repository')
 const remoteRoot = join(temporaryRoot, 'remote.git')
 const stagedGuard = join(sourceRoot, 'scripts', 'check-staged-secrets.ts')
 const pushGuard = join(sourceRoot, 'scripts', 'check-push-secrets.ts')
+const encoder = new TextEncoder()
 
 type CommandResult = {
   status: number
@@ -50,7 +51,7 @@ function git(args: string[], cwd = repositoryRoot): string {
 }
 
 function canarySecret(): string {
-  return `token = "ghp_${'aBcDeFgHiJkLmNoPqRsT'}${'uVwXyZ0123456789'}"\n`
+  return `token = "ghp_${'7Qm4vZ2xN9cR'}${'6sT8uW3yA5bD'}${'1eF0gHkJpLqM'}"\n`
 }
 
 function prePushInput(localOid: string, remoteOid: string): string {
@@ -110,11 +111,56 @@ try {
   git(['rm', '--cached', 'payload.bin'])
   await rm(join(repositoryRoot, 'payload.bin'))
 
-  await writeFile(join(repositoryRoot, 'icon.png'), new Uint8Array([0, 1, 2, 3]))
+  await writeFile(join(repositoryRoot, 'spoofed.png'), new Uint8Array([0, 1, 2, 3]))
+  git(['add', 'spoofed.png'])
+  expectStatus(
+    execute(process.execPath, [stagedGuard], repositoryRoot),
+    1,
+    'spoofed reviewed binary extension scan',
+  )
+  git(['rm', '--cached', 'spoofed.png'])
+  await rm(join(repositoryRoot, 'spoofed.png'))
+
+  const pngHeader = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+  await writeFile(join(repositoryRoot, 'icon.png'), pngHeader)
   git(['add', 'icon.png'])
-  expectStatus(execute(process.execPath, [stagedGuard], repositoryRoot), 0, 'reviewed binary type scan')
+  expectStatus(execute(process.execPath, [stagedGuard], repositoryRoot), 0, 'reviewed binary signature scan')
   git(['rm', '--cached', 'icon.png'])
   await rm(join(repositoryRoot, 'icon.png'))
+
+  await writeFile(
+    join(repositoryRoot, 'icon-with-secret.png'),
+    new Uint8Array([...pngHeader, ...encoder.encode(canarySecret())]),
+  )
+  git(['add', 'icon-with-secret.png'])
+  expectStatus(
+    execute(process.execPath, [stagedGuard], repositoryRoot),
+    1,
+    'reviewed binary printable metadata scan',
+  )
+  git(['rm', '--cached', 'icon-with-secret.png'])
+  await rm(join(repositoryRoot, 'icon-with-secret.png'))
+
+  await writeFile(join(repositoryRoot, 'invalid-utf8.bin'), new Uint8Array([0xff, 0xd8, 0xff]))
+  git(['add', 'invalid-utf8.bin'])
+  expectStatus(
+    execute(process.execPath, [stagedGuard], repositoryRoot),
+    1,
+    'invalid UTF-8 binary scan',
+  )
+  git(['rm', '--cached', 'invalid-utf8.bin'])
+  await rm(join(repositoryRoot, 'invalid-utf8.bin'))
+
+  await mkdir(join(repositoryRoot, 'certificates'), { recursive: true })
+  await writeFile(join(repositoryRoot, 'certificates', 'public.pem'), canarySecret())
+  git(['add', 'certificates/public.pem'])
+  expectStatus(
+    execute(process.execPath, [stagedGuard], repositoryRoot),
+    1,
+    'allowed certificate path content scan',
+  )
+  git(['rm', '--cached', 'certificates/public.pem'])
+  await rm(join(repositoryRoot, 'certificates'), { recursive: true })
 
   await writeFile(join(repositoryRoot, 'outgoing.txt'), canarySecret())
   git(['add', 'outgoing.txt'])
@@ -148,6 +194,16 @@ try {
     ),
     0,
     'safe outgoing commit scan',
+  )
+  expectStatus(
+    execute(
+      process.execPath,
+      [pushGuard, 'origin', remoteRoot],
+      repositoryRoot,
+      prePushInput(safeOutgoingOid, 'f'.repeat(remoteOid.length)),
+    ),
+    0,
+    'safe outgoing scan with an unavailable remote SHA',
   )
 
   git(['commit', '--allow-empty', '-m', canarySecret().trim()])
