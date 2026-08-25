@@ -30,8 +30,10 @@ jobs:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
       - run: bun ci
+      - run: bun run security:hooks:verify
       - run: bun run security:secrets:verify
       - run: bun run test:secret-guards
+      - run: bun run security:policy
       - run: bun run security:secrets
       - run: bun run template:validate
       - run: bun run docs:check
