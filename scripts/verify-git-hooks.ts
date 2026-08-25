@@ -5,7 +5,9 @@ import { gitText, repositoryRoot } from './secret-guard'
 const root = repositoryRoot()
 const hooksPath = gitText(root, ['config', '--get', 'core.hooksPath'])
 if (hooksPath !== '.husky/_') {
-  throw new Error(`Expected core.hooksPath to be .husky/_, received ${hooksPath || '<empty>'}. Run \`bun ci\`.`)
+  throw new Error(
+    `Expected core.hooksPath to be .husky/_, received ${hooksPath || '<empty>'}. Run \`bun ci\`.`,
+  )
 }
 
 for (const hook of ['commit-msg', 'pre-commit', 'pre-push']) {
