@@ -80,6 +80,7 @@ jobs:
           libssl-dev
           libayatana-appindicator3-dev
           librsvg2-dev
+          pkg-config
       - run: bun ci
       - run: bun run build:desktop
       - name: Retain desktop bundle
@@ -105,7 +106,6 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
-          cache: gradle
       - run: bun ci
       - run: bun run build:native
       - name: Generate and synchronize Android project

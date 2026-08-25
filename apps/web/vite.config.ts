@@ -44,7 +44,7 @@ export default defineConfig(({ mode }) => {
             }
           : {},
       ),
-      ...(nativeBuild ? [] : [nitro({ preset: 'bun' })]),
+      nitro({ preset: 'bun' }),
       tailwindcss(),
       react(),
     ],
