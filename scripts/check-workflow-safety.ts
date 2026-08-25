@@ -188,12 +188,7 @@ requireText(
 
 const securityPath = '.github/workflows/security.yml'
 const security = workflows.get(securityPath) ?? ''
-requireText(
-  securityPath,
-  security,
-  'fetch-depth: 0',
-  'the secret scan must receive complete Git history.',
-)
+requireText(securityPath, security, 'fetch-depth: 0', 'the secret scan must receive complete Git history.')
 requireText(
   securityPath,
   security,
