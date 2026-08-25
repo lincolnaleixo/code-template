@@ -28,6 +28,7 @@ The default workflows provide:
 
 - reproducible Bun installs from a committed lockfile
 - dependency audit
+- local staged-index and outgoing-history secret guards
 - secret scanning with Gitleaks
 - source, configuration, and container scanning with Trivy
 - CodeQL and dependency review when GitHub Advanced Security is available
@@ -38,6 +39,16 @@ The default workflows provide:
 - SBOM and provenance generation for released OCI images
 
 These controls are a baseline. Each generated project must complete its own threat model and adapt the controls to its data, users, jurisdictions, integrations, and deployment environment.
+
+## Local secret prevention
+
+`bun ci` installs versioned pre-commit and pre-push hooks through Husky.
+
+The pre-commit guard scans the exact blobs staged in Git. This matters when a file is only partially staged, because scanning the working tree could miss a secret that remains in the index. It rejects known high-risk credential paths and uses Secretlint with a fail-closed canary before accepting staged text.
+
+The pre-push guard scans annotated tags, commit messages, and the changed blob at every outgoing commit that the remote does not already contain. Scanning each commit prevents an add-then-remove sequence from hiding a secret in intermediate history. It then runs the normal repository check suite.
+
+Local hooks are defense in depth. Git permits deliberate bypass, so protected branches and the CI Gitleaks, Secretlint, Trivy, dependency-review, and CodeQL checks remain authoritative. Do not broaden ignore files to suppress a finding. Every exception must identify a reviewed synthetic value or binary asset narrowly enough that a future real secret in the same area is still detected.
 
 ## Secrets and credentials
 
