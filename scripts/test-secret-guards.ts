@@ -118,8 +118,8 @@ try {
   await writeFile(commitMessagePath, `fix: safe subject\n\n# ${canarySecret()}`)
   expectStatus(
     execute(process.execPath, [commitMessageGuard, commitMessagePath], repositoryRoot),
-    0,
-    'comment-only commit-message scan',
+    1,
+    'comment-prefixed secret commit-message scan',
   )
 
   const partialPath = join(repositoryRoot, 'partial.txt')
