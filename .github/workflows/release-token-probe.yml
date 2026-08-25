@@ -1,0 +1,30 @@
+name: Release token probe
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-token-probe-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify Release Please token presence
+    if: github.event.pull_request.number == 10 && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require configured token without exposing it
+        env:
+          RELEASE_PLEASE_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$RELEASE_PLEASE_TOKEN" ]; then
+            echo "::error::RELEASE_PLEASE_TOKEN is not configured for GitHub Actions."
+            exit 1
+          fi
+          echo "RELEASE_PLEASE_TOKEN is configured."
