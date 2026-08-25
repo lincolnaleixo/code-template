@@ -19,9 +19,7 @@ const configuredIgnorePatterns = (await Bun.file('.secretlintignore').text())
   .filter((line) => line.length > 0 && !line.startsWith('#'))
 const expectedIgnoreSet = new Set(expectedIgnoredBinaryPatterns)
 const configuredIgnoreSet = new Set(configuredIgnorePatterns)
-const unexpectedIgnorePatterns = configuredIgnorePatterns.filter(
-  (pattern) => !expectedIgnoreSet.has(pattern),
-)
+const unexpectedIgnorePatterns = configuredIgnorePatterns.filter((pattern) => !expectedIgnoreSet.has(pattern))
 const missingIgnorePatterns = expectedIgnoredBinaryPatterns.filter(
   (pattern) => !configuredIgnoreSet.has(pattern),
 )
@@ -34,9 +32,7 @@ if (
   throw new Error(
     [
       'Secretlint ignore policy must contain only the reviewed binary extension patterns.',
-      unexpectedIgnorePatterns.length > 0
-        ? `Unexpected: ${unexpectedIgnorePatterns.join(', ')}`
-        : undefined,
+      unexpectedIgnorePatterns.length > 0 ? `Unexpected: ${unexpectedIgnorePatterns.join(', ')}` : undefined,
       missingIgnorePatterns.length > 0 ? `Missing: ${missingIgnorePatterns.join(', ')}` : undefined,
       configuredIgnoreSet.size !== configuredIgnorePatterns.length
         ? 'Duplicate ignore patterns are not allowed.'
