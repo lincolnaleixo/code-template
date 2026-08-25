@@ -21,7 +21,7 @@ const SAFE_BINARY_EXTENSIONS = new Set([
   '.woff',
   '.woff2',
 ])
-const BLOCKED_FILE_EXTENSIONS = new Set([
+const ALWAYS_BLOCKED_FILE_EXTENSIONS = new Set([
   '.age',
   '.asc',
   '.jks',
@@ -35,8 +35,6 @@ const BLOCKED_FILE_EXTENSIONS = new Set([
   '.pfx',
   '.pkcs12',
   '.ppk',
-  '.tfstate',
-  '.tfvars',
 ])
 const BLOCKED_EXACT_BASENAMES = new Set([
   '_auth',
@@ -55,11 +53,12 @@ const BLOCKED_EXACT_BASENAMES = new Set([
   'secrets.yml',
   'service-account.json',
   'service_account.json',
-  'terraform.tfstate',
 ])
 const BLOCKED_PATH_SEGMENTS = new Set(['.aws', '.azure', '.docker', '.gnupg', '.kube', '.ssh'])
 const BLOCKED_CREDENTIAL_DATA_PATTERN =
-  /^(?:client[-_]?secret|service[-_]?account|credentials?|secrets?)(?:[._-](?:dev|development|local|prod|production|staging))?\.(?:conf|config|ini|json|properties|toml|xml|ya?ml)$/u
+  /^(?:client[-_]?secret|service[-_]?account|credentials?|secrets?)(?:[._-][a-z0-9][a-z0-9._-]*)?\.(?:conf|config|ini|json|properties|toml|xml|ya?ml)$/u
+const TERRAFORM_SECRET_FILE_PATTERN =
+  /(?:^|\.)(?:tfstate(?:\.backup)?|(?:auto\.)?tfvars(?:\.json)?)$/u
 const TEMPLATE_PATH_MARKER_PATTERN = /(?:^|[._-])(?:example|sample|template)(?:[._-]|$)/u
 const utf8Decoder = new TextDecoder()
 const strictUtf8Decoder = new TextDecoder('utf-8', { fatal: true })
@@ -151,8 +150,11 @@ export function forbiddenSecretPath(fileName: string): boolean {
   if (basename === '.env' || basename.startsWith('.env.')) {
     return !templatePath
   }
-  if (BLOCKED_FILE_EXTENSIONS.has(extension)) {
+  if (ALWAYS_BLOCKED_FILE_EXTENSIONS.has(extension)) {
     return true
+  }
+  if (TERRAFORM_SECRET_FILE_PATTERN.test(basename)) {
+    return !templatePath
   }
   if (BLOCKED_EXACT_BASENAMES.has(basename)) {
     return true
