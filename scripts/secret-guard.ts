@@ -44,6 +44,13 @@ type CommandResult = {
   stderr: Uint8Array
 }
 
+type TreeRecord = {
+  mode: string
+  type: string
+  oid: string
+  path: string
+}
+
 function runCommand(
   command: string,
   args: string[],
@@ -70,6 +77,25 @@ function commandFailure(command: string, args: string[], result: CommandResult):
   )
 }
 
+function parseTreeRecord(record: string): TreeRecord | undefined {
+  const separator = record.indexOf('\t')
+  if (separator < 0) {
+    return undefined
+  }
+
+  const [mode, type, oid] = record.slice(0, separator).split(/\s+/u)
+  if (!mode || !type || !oid) {
+    return undefined
+  }
+
+  return {
+    mode,
+    type,
+    oid,
+    path: record.slice(separator + 1),
+  }
+}
+
 export function gitText(root: string, args: string[]): string {
   const result = runCommand('git', args, { cwd: root })
   if (result.status !== 0) {
@@ -93,6 +119,32 @@ export function repositoryRoot(cwd = process.cwd()): string {
 export function parseNullSeparated(value: Uint8Array | string): string[] {
   const text = typeof value === 'string' ? value : decoder.decode(value)
   return text.split('\0').filter(Boolean)
+}
+
+export function stagedBlobOid(root: string, path: string): string {
+  const records = parseNullSeparated(gitBytes(root, ['ls-files', '--stage', '-z', '--', path]))
+  for (const record of records) {
+    const separator = record.indexOf('\t')
+    if (separator < 0) {
+      continue
+    }
+    const [mode, oid, stage] = record.slice(0, separator).split(/\s+/u)
+    if (mode && oid && stage === '0') {
+      return oid
+    }
+  }
+  throw new Error(`Unable to resolve the staged blob for ${path}; resolve index conflicts first.`)
+}
+
+export function treeBlobOid(root: string, commit: string, path: string): string | undefined {
+  const records = parseNullSeparated(gitBytes(root, ['ls-tree', '-z', commit, '--', path]))
+  for (const rawRecord of records) {
+    const record = parseTreeRecord(rawRecord)
+    if (record?.type === 'blob' && record.path === path) {
+      return record.oid
+    }
+  }
+  return undefined
 }
 
 export function isZeroOid(value: string): boolean {
