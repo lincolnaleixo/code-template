@@ -53,6 +53,17 @@ for (const [path, text] of workflows) {
     errors.push(`${path}: the public template baseline must use explicit GitHub-hosted runner images.`)
   }
 
+  for (const match of text.matchAll(/^\s*(?:-\s+)?uses:\s+([^\s#]+)/gmu)) {
+    const reference = match[1]
+    if (!reference || reference.startsWith('./')) continue
+
+    const separator = reference.lastIndexOf('@')
+    const revision = separator >= 0 ? reference.slice(separator + 1) : ''
+    if (!/^[0-9a-f]{40}$/iu.test(revision)) {
+      errors.push(`${path}: external action ${reference} must be pinned to a full commit SHA.`)
+    }
+  }
+
   const header = headerBeforeJobs(text)
   if (
     /\b(?:actions|checks|contents|deployments|id-token|issues|packages|pull-requests|security-events|statuses):\s*write\b/u.test(
