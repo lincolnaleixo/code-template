@@ -40,6 +40,8 @@ const BLOCKED_FILE_EXTENSIONS = new Set([
 ])
 const BLOCKED_EXACT_BASENAMES = new Set([
   '_auth',
+  'client-secret.json',
+  'client_secret.json',
   'credentials',
   'credentials.json',
   'credentials.tfrc.json',
@@ -48,18 +50,17 @@ const BLOCKED_EXACT_BASENAMES = new Set([
   'id_ecdsa',
   'id_ed25519',
   'id_rsa',
+  'secrets.json',
+  'secrets.yaml',
+  'secrets.yml',
+  'service-account.json',
+  'service_account.json',
   'terraform.tfstate',
 ])
-const BLOCKED_PATH_SEGMENTS = new Set([
-  '.aws',
-  '.azure',
-  '.docker',
-  '.gnupg',
-  '.kube',
-  '.ssh',
-])
-const BLOCKED_FILENAME_PATTERN = /(^|[._-])(credential|credentials|keystore|secret|secrets)([._-]|$)/u
-const ALLOWED_TEMPLATE_SUFFIXES = ['.example', '.sample', '.template']
+const BLOCKED_PATH_SEGMENTS = new Set(['.aws', '.azure', '.docker', '.gnupg', '.kube', '.ssh'])
+const BLOCKED_CREDENTIAL_DATA_PATTERN =
+  /^(?:client[-_]?secret|service[-_]?account|credentials?|secrets?)(?:[._-](?:dev|development|local|prod|production|staging))?\.(?:conf|config|ini|json|properties|toml|xml|ya?ml)$/u
+const TEMPLATE_PATH_MARKER_PATTERN = /(?:^|[._-])(?:example|sample|template)(?:[._-]|$)/u
 const utf8Decoder = new TextDecoder()
 const strictUtf8Decoder = new TextDecoder('utf-8', { fatal: true })
 const utf8Encoder = new TextEncoder()
@@ -75,12 +76,7 @@ function commandForDisplay(command: string, args: string[]): string {
   return [command, ...args].join(' ')
 }
 
-function runCommand(
-  command: string,
-  args: string[],
-  cwd: string,
-  input?: Uint8Array,
-): CommandResult {
+function runCommand(command: string, args: string[], cwd: string, input?: Uint8Array): CommandResult {
   const result = spawnSync(command, args, {
     cwd,
     input,
@@ -125,19 +121,24 @@ export function gitBytes(root: string, args: string[]): Buffer {
   return result.stdout
 }
 
+export function gitBytesWithInput(root: string, args: string[], input: Uint8Array): Buffer {
+  const result = runCommand('git', args, root, input)
+  if (result.status !== 0) {
+    throw commandError('git', args, result)
+  }
+  return result.stdout
+}
+
 export function gitText(root: string, args: string[]): string {
   return utf8Decoder.decode(gitBytes(root, args)).trim()
 }
 
 export function parseNullSeparated(content: Uint8Array): string[] {
-  return utf8Decoder
-    .decode(content)
-    .split('\0')
-    .filter(Boolean)
+  return utf8Decoder.decode(content).split('\0').filter(Boolean)
 }
 
 function isTemplatePath(fileName: string): boolean {
-  return ALLOWED_TEMPLATE_SUFFIXES.some((suffix) => fileName.endsWith(suffix))
+  return TEMPLATE_PATH_MARKER_PATTERN.test(fileName)
 }
 
 export function forbiddenSecretPath(fileName: string): boolean {
@@ -161,7 +162,7 @@ export function forbiddenSecretPath(fileName: string): boolean {
   if (parts.some((part) => BLOCKED_PATH_SEGMENTS.has(part))) {
     return true
   }
-  return BLOCKED_FILENAME_PATTERN.test(basename)
+  return BLOCKED_CREDENTIAL_DATA_PATTERN.test(basename)
 }
 
 function containsBinaryControlCharacter(text: string): boolean {
@@ -226,14 +227,9 @@ export function hasReviewedBinarySignature(fileName: string, content: Uint8Array
     case '.woff2':
       return startsWithAscii(content, 'wOF2')
     case '.otf':
-      return (
-        startsWithAscii(content, 'OTTO') ||
-        startsWithBytes(content, [0x00, 0x01, 0x00, 0x00])
-      )
+      return startsWithAscii(content, 'OTTO') || startsWithBytes(content, [0x00, 0x01, 0x00, 0x00])
     case '.ttf':
-      return (
-        startsWithBytes(content, [0x00, 0x01, 0x00, 0x00]) || startsWithAscii(content, 'true')
-      )
+      return startsWithBytes(content, [0x00, 0x01, 0x00, 0x00]) || startsWithAscii(content, 'true')
     default:
       return false
   }
@@ -260,7 +256,9 @@ function extractPrintableAscii(content: Uint8Array): Uint8Array {
     }
 
     if (extractedBytes + current.length > MAX_SCANNABLE_TEXT_BYTES) {
-      throw new Error('Reviewed binary contains more printable metadata than the secret guard can scan safely.')
+      throw new Error(
+        'Reviewed binary contains more printable metadata than the secret guard can scan safely.',
+      )
     }
   }
   flush()
@@ -276,7 +274,15 @@ function secretlintResult(root: string, fileName: string, content: Uint8Array): 
 
   return runCommand(
     process.execPath,
-    ['x', 'secretlint', '--secretlintrc', '.secretlintrc.json', `--stdinFileName=${fileName}`],
+    [
+      'x',
+      'secretlint',
+      '--secretlintrc',
+      '.secretlintrc.json',
+      '--no-color',
+      '--no-terminalLink',
+      `--stdinFileName=${fileName}`,
+    ],
     root,
     content,
   )
@@ -317,9 +323,7 @@ export function verifySecretlintCanary(root: string): void {
   const secretResult = secretlintResult(
     root,
     'secret-guard-secret-canary.txt',
-    utf8Encoder.encode(
-      `token = "ghp_${'7Qm4vZ2xN9cR'}${'6sT8uW3yA5bD'}${'1eF0gHkJpLqM'}"\n`,
-    ),
+    utf8Encoder.encode(`token = "ghp_${'7Qm4vZ2xN9cR'}${'6sT8uW3yA5bD'}${'1eF0gHkJpLqM'}"\n`),
   )
   if (secretResult.status === 0) {
     throw new Error('Secretlint did not detect its GitHub token canary; refusing to continue.')
@@ -330,7 +334,7 @@ export function verifySecretlintCanary(root: string): void {
   }
 }
 
-export function scanSecretBlob(root: string, fileName: string, content: Uint8Array): boolean {
+export function scanSecretBlobPolicy(root: string, fileName: string, content: Uint8Array): boolean {
   if (forbiddenSecretPath(fileName)) {
     console.error(`Secret guard blocked high-risk credential path: ${fileName}`)
     return false
@@ -369,6 +373,20 @@ export function scanSecretBlob(root: string, fileName: string, content: Uint8Arr
       `Secret guard blocked oversized text file ${fileName} (${content.byteLength} bytes; limit ${MAX_SCANNABLE_TEXT_BYTES}).`,
     )
     return false
+  }
+
+  return true
+}
+
+export function scanSecretBlob(root: string, fileName: string, content: Uint8Array): boolean {
+  if (!scanSecretBlobPolicy(root, fileName, content)) {
+    return false
+  }
+
+  const extension = extname(fileName).toLowerCase()
+  const binary = SAFE_BINARY_EXTENSIONS.has(extension) || isBinaryContent(content)
+  if (binary) {
+    return true
   }
 
   return scanWithSecretlint(root, fileName, content)
