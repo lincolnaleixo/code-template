@@ -84,6 +84,9 @@ try {
   }
 
   await run(['bun', 'ci'])
+  await run(['bun', 'run', 'security:hooks:verify'])
+  await run(['bun', 'run', 'security:secrets:verify'])
+  await run(['bun', 'run', 'security:policy'])
   await run(['bun', 'run', 'check'])
   await run(['bun', 'run', 'build'])
   await run(['bun', 'run', 'build:native'], {
@@ -96,7 +99,7 @@ try {
     throw new Error(`Consumer validation changed tracked source files:\n${status}`)
   }
 
-  console.log('Fresh template consumer smoke test passed.')
+  console.log('Fresh template consumer smoke test passed with local secret guards installed.')
 } finally {
   if (keepWorkspace) console.log(`Template consumer retained at ${consumerRoot}`)
   else await rm(temporaryRoot, { force: true, recursive: true })
