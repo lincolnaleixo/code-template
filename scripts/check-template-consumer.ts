@@ -85,9 +85,7 @@ try {
 
   const commitCount = await capture(['git', 'rev-list', '--count', 'HEAD'])
   if (commitCount !== '1') {
-    throw new Error(
-      `Generated consumer must start with one source-independent commit, received ${commitCount}.`,
-    )
+    throw new Error(`Generated consumer must start with one source-independent commit, received ${commitCount}.`)
   }
 
   const generatedReleaseConfig = JSON.parse(await readFile(releaseConfigPath, 'utf8')) as Record<

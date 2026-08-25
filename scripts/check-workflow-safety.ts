@@ -1,4 +1,6 @@
-const workflowPaths = [
+import { spawnSync } from 'node:child_process'
+
+const requiredWorkflowPaths = [
   '.github/workflows/ci.yml',
   '.github/workflows/preview-images.yml',
   '.github/workflows/release-containers.yml',
@@ -7,16 +9,44 @@ const workflowPaths = [
   '.github/workflows/security.yml',
 ]
 
+function discoverAutomationPaths(): string[] {
+  const result = spawnSync(
+    'git',
+    [
+      'ls-files',
+      '-z',
+      '--',
+      ':(glob).github/workflows/*.yml',
+      ':(glob).github/workflows/*.yaml',
+      ':(glob).github/actions/**/action.yml',
+      ':(glob).github/actions/**/action.yaml',
+    ],
+    { encoding: 'utf8' },
+  )
+
+  if (result.status !== 0) {
+    const detail = result.stderr?.trim()
+    throw new Error(`Unable to enumerate GitHub automation files${detail ? `: ${detail}` : '.'}`)
+  }
+
+  return (result.stdout ?? '').split('\0').filter(Boolean).sort()
+}
+
 const errors: string[] = []
+const automationPaths = discoverAutomationPaths()
 const workflows = new Map<string, string>()
 
-for (const path of workflowPaths) {
-  const file = Bun.file(path)
-  if (!(await file.exists())) {
+for (const path of requiredWorkflowPaths) {
+  if (!automationPaths.includes(path)) {
     errors.push(`Required workflow is missing: ${path}`)
-    continue
   }
-  workflows.set(path, await file.text())
+}
+if (automationPaths.length === 0) {
+  errors.push('No GitHub workflow or composite-action files were discovered.')
+}
+
+for (const path of automationPaths) {
+  workflows.set(path, await Bun.file(path).text())
 }
 
 function requireText(path: string, text: string, expected: string, reason: string): void {
@@ -224,4 +254,6 @@ if (errors.length > 0) {
   process.exit(1)
 }
 
-console.log('Public pull-request, manual verification, and release publication workflow contracts are safe.')
+console.log(
+  `Public workflow safety passed for ${automationPaths.length} workflow and composite-action file(s).`,
+)
