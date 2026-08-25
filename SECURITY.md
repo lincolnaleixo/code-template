@@ -28,7 +28,7 @@ The default workflows provide:
 
 - reproducible Bun installs from a committed lockfile
 - dependency audit
-- local staged-index and outgoing-history secret gates
+- local staged-index, commit-message, and outgoing-history secret gates
 - dependency review and CodeQL on public repositories
 - secret scanning with Gitleaks
 - source, configuration, and container scanning with Trivy
@@ -42,14 +42,16 @@ These controls are a baseline. Each generated project must complete its own thre
 
 ## Local secret gates
 
-`bun ci` runs Husky's `prepare` script and installs repository-owned `pre-commit` and `pre-push` hooks automatically. Verify the installation at any time with:
+`bun ci` runs Husky's `prepare` script and installs repository-owned `commit-msg`, `pre-commit`, and `pre-push` hooks automatically. Verify the installation and scanner policy at any time with:
 
 ```bash
 bun run security:hooks:verify
+bun run security:secrets:verify
 ```
 
 The hooks use Secretlint with the repository policy in `.secretlintrc.json`:
 
+- `commit-msg` removes Git comment lines, then scans the message that would be recorded in history
 - `pre-commit` reads the exact blobs staged in the Git index, not unstaged worktree content
 - `pre-push` reads every outgoing commit, including intermediate add-then-remove commits, plus outgoing commit and annotated tag messages
 - high-risk credential paths such as non-template `.env*`, private key stores, credential directories, and Terraform state fail closed even when content scanning finds no provider token
@@ -57,7 +59,9 @@ The hooks use Secretlint with the repository policy in `.secretlintrc.json`:
 - reviewed image and font payloads are accepted only when their extension matches a known file signature, and printable binary metadata is still scanned for secrets
 - safe and secret canaries run before repository content so a missing, broken, or over-broad scanner blocks the operation instead of silently passing
 
-The full CI scans remain authoritative. Local hooks are defense in depth and can be bypassed deliberately with Git's `--no-verify`; doing so does not waive the CI gate or the requirement to rotate a credential that may have been exposed.
+CI runs the same path, size, binary-signature, and binary-metadata policy against every tracked blob, then performs a batched Secretlint scan of tracked text. Existing Gitleaks, Trivy, dependency-review, and CodeQL jobs remain independent remote barriers.
+
+Local hooks are defense in depth and can be bypassed deliberately with Git's `--no-verify`. Bypass does not waive the CI gate or the requirement to rotate a credential that may have been exposed. Handle false positives with narrow reviewed examples or fingerprints. Do not add broad ignored directories or disable a provider rule merely to make a check pass.
 
 ## Secrets and credentials
 
