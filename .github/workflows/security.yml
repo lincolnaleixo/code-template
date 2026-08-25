@@ -17,7 +17,11 @@ concurrency:
 
 env:
   BUN_VERSION: 1.3.14
-  GITLEAKS_IMAGE: ghcr.io/gitleaks/gitleaks:v8.30.0
+  # v8.30.1 is a known silent false-negative release and the v8.30.0
+  # container also failed the canonical PAT canary in this repository.
+  # Keep the control version proven by the upstream regression report until
+  # a newer image passes the fail-closed canary below.
+  GITLEAKS_IMAGE: ghcr.io/gitleaks/gitleaks:v8.18.4
 
 jobs:
   open-source-scans:
@@ -71,7 +75,7 @@ jobs:
           docker run --rm
           -v "$PWD:/repo"
           "$GITLEAKS_IMAGE"
-          git /repo --redact --no-banner
+          detect --source /repo --redact --no-banner
       - name: Scan source, lockfile and infrastructure
         # Bun audit checks the resolved application graph. Some installed
         # packages also ship unrelated development lockfiles in node_modules.
