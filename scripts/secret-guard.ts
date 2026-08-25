@@ -1,7 +1,6 @@
 import { spawnSync } from 'node:child_process'
 import { existsSync, realpathSync } from 'node:fs'
 import { extname, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
 
 const MAX_PROCESS_OUTPUT_BYTES = 32 * 1024 * 1024
 const MAX_SCANNABLE_TEXT_BYTES = 8 * 1024 * 1024
@@ -104,8 +103,8 @@ function commandError(command: string, args: string[], result: CommandResult): E
 }
 
 export function repositoryRoot(): string {
-  const scriptRoot = resolve(fileURLToPath(new URL('..', import.meta.url)))
-  const result = runCommand('git', ['rev-parse', '--show-toplevel'], scriptRoot)
+  const invocationDirectory = realpathSync(process.cwd())
+  const result = runCommand('git', ['rev-parse', '--show-toplevel'], invocationDirectory)
   if (result.status !== 0) {
     throw commandError('git', ['rev-parse', '--show-toplevel'], result)
   }
@@ -115,12 +114,7 @@ export function repositoryRoot(): string {
     throw new Error('Git returned an empty repository root.')
   }
 
-  const expectedRoot = realpathSync(scriptRoot)
-  const resolvedRoot = realpathSync(root)
-  if (resolvedRoot !== expectedRoot) {
-    throw new Error(`Secret guard must run from ${expectedRoot}, not ${resolvedRoot}.`)
-  }
-  return resolvedRoot
+  return realpathSync(root)
 }
 
 export function gitBytes(root: string, args: string[]): Buffer {
