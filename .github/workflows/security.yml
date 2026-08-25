@@ -41,7 +41,7 @@ jobs:
           canary_log="$RUNNER_TEMP/gitleaks-canary.log"
           rm -rf "$canary_dir"
           mkdir -p "$canary_dir"
-          printf 'github_token = "ghp_%s%s"\n' \
+          printf 'token = "ghp_%s%s"\n' \
             'aBcDeFgHiJkLmNoPqRsT' \
             'uVwXyZ0123456789' \
             > "$canary_dir/canary.txt"
@@ -50,7 +50,7 @@ jobs:
           docker run --rm \
             -v "$canary_dir:/canary:ro" \
             "$GITLEAKS_IMAGE" \
-            dir /canary --redact --no-banner \
+            detect --no-git --source /canary/canary.txt --redact --no-banner \
             > "$canary_log" 2>&1
           status=$?
           set -e
