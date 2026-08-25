@@ -138,7 +138,7 @@ A checkbox may be marked not applicable only with a short reason. Do not claim a
 
 ## Licensing and ownership
 
-The template is private and explicitly `UNLICENSED`. Changes that introduce copied source, assets, fonts, icons, generated SDKs, or distributable binaries must consider their license and attribution obligations.
+The source template is public and explicitly `UNLICENSED`. Changes that introduce copied source, assets, fonts, icons, generated SDKs, or distributable binaries must consider their license and attribution obligations.
 
 Do not add a public license or change ownership policy without an explicit repository-owner decision. See [docs/licensing.md](docs/licensing.md).
 
