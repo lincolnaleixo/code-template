@@ -102,7 +102,7 @@
     "security:hooks:verify": "bun run scripts/verify-git-hooks.ts",
     "security:policy": "bun run scripts/check-tracked-secret-policy.ts",
     "security:push": "bun run scripts/check-push-secrets.ts",
-    "security:secrets": "secretlint \"**/*\"",
+    "security:secrets": "bun run scripts/check-tracked-secrets.ts",
     "security:secrets:verify": "bun run scripts/verify-secret-guards.ts",
     "security:staged": "bun run scripts/check-staged-secrets.ts",
     "prepush:check": "bun run check",
