@@ -27,15 +27,7 @@ const BLOCKED_BASENAMES = new Set([
   'id_ed25519',
   'id_rsa',
 ])
-const BLOCKED_EXTENSIONS = new Set([
-  '.jks',
-  '.key',
-  '.kdbx',
-  '.keystore',
-  '.mobileprovision',
-  '.p12',
-  '.pfx',
-])
+const BLOCKED_EXTENSIONS = new Set(['.jks', '.key', '.kdbx', '.keystore', '.mobileprovision', '.p12', '.pfx'])
 const decoder = new TextDecoder()
 
 type CommandResult = {
@@ -158,9 +150,7 @@ export function forbiddenSecretPath(path: string): string | undefined {
   const extension = extname(basename)
 
   const isDotEnv = basename === '.env' || basename.startsWith('.env.')
-  const isDotEnvTemplate = ['.example', '.sample', '.template'].some((suffix) =>
-    basename.endsWith(suffix),
-  )
+  const isDotEnvTemplate = ['.example', '.sample', '.template'].some((suffix) => basename.endsWith(suffix))
   if (isDotEnv && !isDotEnvTemplate) {
     return 'environment files must stay local; commit an .env.example, .env.sample, or .env.template instead'
   }
@@ -244,11 +234,7 @@ export function verifySecretlintCanary(root: string): void {
   }
 
   const canary = `github_token = "ghp_${'aBcDeFgHiJkLmNoPqRsT'}${'uVwXyZ0123456789'}"\n`
-  const secretResult = secretlintResult(
-    root,
-    'secret-canary.txt',
-    new TextEncoder().encode(canary),
-  )
+  const secretResult = secretlintResult(root, 'secret-canary.txt', new TextEncoder().encode(canary))
   if (secretResult.status !== 1) {
     printSecretlintResult(secretResult)
     throw new Error(
