@@ -146,12 +146,10 @@ export function forbiddenSecretPath(fileName: string): boolean {
   const parts = normalized.split('/').filter(Boolean)
   const basename = parts.at(-1) ?? ''
   const extension = extname(basename)
+  const templatePath = isTemplatePath(basename)
 
-  if (isTemplatePath(basename)) {
-    return false
-  }
   if (basename === '.env' || basename.startsWith('.env.')) {
-    return true
+    return !templatePath
   }
   if (BLOCKED_FILE_EXTENSIONS.has(extension)) {
     return true
@@ -161,6 +159,9 @@ export function forbiddenSecretPath(fileName: string): boolean {
   }
   if (parts.some((part) => BLOCKED_PATH_SEGMENTS.has(part))) {
     return true
+  }
+  if (templatePath) {
+    return false
   }
   return BLOCKED_CREDENTIAL_DATA_PATTERN.test(basename)
 }
