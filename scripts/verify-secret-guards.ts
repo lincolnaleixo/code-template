@@ -7,6 +7,7 @@ const blockedPaths = [
   '.env',
   '.env.local',
   '.aws/credentials',
+  '.aws/credentials.example',
   '.kube/config',
   '.docker/config.json',
   'config/client-secret.production.yaml',
@@ -14,6 +15,7 @@ const blockedPaths = [
   'config/service-account.json',
   'deploy/terraform.tfstate',
   'deploy/prod.tfvars',
+  'signing/release.example.p12',
   'signing/release.p12',
   'ssh/id_ed25519',
 ]
