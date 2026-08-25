@@ -108,6 +108,20 @@ try {
   const commitMessageResult = execute('git', ['commit', '-m', canarySecret().trim()], repositoryRoot)
   expectStatus(commitMessageResult, 1, 'installed commit-msg hook')
   expectSecretMasked(commitMessageResult, 'installed commit-msg hook')
+
+  const verbatimCommentResult = execute(
+    'git',
+    [
+      'commit',
+      '--cleanup=verbatim',
+      '-m',
+      `test: reject verbatim comment secret\n\n# ${canarySecret().trim()}`,
+    ],
+    repositoryRoot,
+  )
+  expectStatus(verbatimCommentResult, 1, 'installed verbatim commit-msg hook')
+  expectSecretMasked(verbatimCommentResult, 'installed verbatim commit-msg hook')
+
   git(['commit', '-m', 'test: accept safe commit message'])
   git(['push', 'origin', 'main'])
   const publishedOid = git(['rev-parse', 'HEAD'])
