@@ -223,7 +223,8 @@ try {
   git(['tag', '-a', 'v0.0.0-canary', '-m', canarySecret().trim()])
   const tagOid = git(['rev-parse', 'refs/tags/v0.0.0-canary'])
   const zeroOid = '0'.repeat(remoteOid.length)
-  const tagInput = `refs/tags/v0.0.0-canary ${tagOid} refs/tags/v0.0.0-canary ${zeroOid}\n`
+  const tagInput =
+    `refs/tags/v0.0.0-canary ${tagOid} refs/tags/v0.0.0-canary ${zeroOid}\n`
   expectStatus(
     execute(process.execPath, [pushGuard, 'origin', remoteRoot], repositoryRoot, tagInput),
     1,
