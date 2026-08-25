@@ -9,6 +9,9 @@ const blockedPaths = [
   '.aws/credentials',
   '.kube/config',
   '.docker/config.json',
+  'config/client-secret.production.yaml',
+  'config/secrets.json',
+  'config/service-account.json',
   'deploy/terraform.tfstate',
   'deploy/prod.tfvars',
   'signing/release.p12',
@@ -23,9 +26,13 @@ for (const path of blockedPaths) {
 const allowedPaths = [
   '.env.example',
   '.env.local.template',
-  'docs/config.sample',
-  'apps/desktop/src-tauri/icons/icon.png',
   'certificates/public.pem',
+  'config/secrets.example.json',
+  'config/service-account.template.json',
+  'docs/config.sample',
+  'scripts/check-push-secrets.ts',
+  'scripts/check-staged-secrets.ts',
+  'src/secrets-manager.ts',
 ]
 for (const path of allowedPaths) {
   if (forbiddenSecretPath(path)) {
