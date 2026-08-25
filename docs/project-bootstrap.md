@@ -1,6 +1,6 @@
 # Project Bootstrap
 
-Use this checklist after creating a repository from `matrix-hq/code-template`. The goal is to turn the capability superset into the smallest coherent product foundation before feature development begins.
+Use this checklist after creating a repository from this template. The goal is to turn the capability superset into the smallest coherent product foundation before feature development begins.
 
 ## 1. Record the product profile
 
@@ -91,7 +91,7 @@ apps/desktop/src-tauri/Cargo.lock
 apps/desktop/src-tauri/tauri.conf.json
 ```
 
-The source template currently carries a one-time top-level `bootstrap-sha` in `release-please-config.json` so Release Please can onboard the historical `0.3.0` template baseline even though that repository did not have a matching tag. That SHA belongs only to `matrix-hq/code-template` and does not exist in a repository created with **Use this template**. Remove it before the generated repository begins normal development, or replace it with a full commit SHA from the generated repository when you deliberately want to bound the first Release Please changelog.
+The source template currently carries a one-time top-level `bootstrap-sha` in `release-please-config.json` so Release Please can onboard its historical `0.3.0` baseline even though the source repository did not have a matching tag. That SHA belongs only to the source template history and does not exist in a repository created with **Use this template**. Remove it before the generated repository begins normal development, or replace it with a full commit SHA from the generated repository when you deliberately want to bound the first Release Please changelog.
 
 During this one-time product bootstrap, replace the template changelog with the product baseline or add the matching initial product section. After bootstrap, Release Please owns `CHANGELOG.md`, version files, and the manifest during normal development. Contributors should drive subsequent versions with Conventional Commits rather than editing release metadata directly.
 
@@ -131,7 +131,7 @@ Validate light, dark, system theme, compact density, comfortable density, keyboa
 
 See [ui.md](ui.md).
 
-## 6. Configure environments
+## 6. Configure environments and local secret gates
 
 Copy `.env.example` into the environment-specific secret and configuration system. Do not commit populated environment files.
 
@@ -146,6 +146,17 @@ At minimum, decide:
 - metrics protection and OpenTelemetry export when enabled
 
 Production should fail fast when a required value is missing or unsafe.
+
+A locked install activates the repository-owned Git hooks. Verify them before the first product commit:
+
+```bash
+bun ci
+bun run security:hooks:verify
+bun run security:secrets:verify
+bun run security:policy
+```
+
+The hooks block secrets in commit messages, staged Git blobs, and every outgoing commit that is not already on the destination remote. Keep the remote CI scans enabled because local hooks can be bypassed deliberately.
 
 ## 7. Adapt authentication and authorization
 
@@ -254,6 +265,10 @@ Run the checks relevant to retained capabilities:
 
 ```bash
 bun ci
+bun run security:hooks:verify
+bun run security:secrets:verify
+bun run security:policy
+bun run security:secrets
 bun run check
 bun run build
 bun run test:integration
@@ -283,6 +298,7 @@ Before feature development:
 - replace the template code owners with the real team
 - choose and document the product license and ownership policy
 - configure and validate the product runner policy
+- verify the local commit-message, pre-commit, and pre-push secret gates
 - apply and verify the repository branch policy
 - verify no template secret or example credential was promoted to production
 - create the initial product release plan
