@@ -36,6 +36,7 @@ jobs:
       - run: bun run security:policy
       - run: bun run security:secrets
       - run: bun run template:validate
+      - run: bun run workflow:safety
       - run: bun run docs:check
       - run: bun run lint:ci
       - run: bun run generated:check
