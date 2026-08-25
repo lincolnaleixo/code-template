@@ -52,7 +52,6 @@ jobs:
     with:
       tag: ${{ needs.release-please.outputs.tag_name }}
       publish: true
-    secrets: inherit
 
   publish-native:
     name: Publish native artifacts
@@ -65,4 +64,3 @@ jobs:
       tag: ${{ needs.release-please.outputs.tag_name }}
       publish: true
       api_url: https://api.example.com
-    secrets: inherit

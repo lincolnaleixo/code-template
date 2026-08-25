@@ -46,6 +46,9 @@ for (const [path, text] of workflows) {
   if (/permissions:\s*write-all/u.test(text)) {
     errors.push(`${path}: write-all permissions are forbidden.`)
   }
+  if (/\bsecrets:\s*inherit\b/u.test(text)) {
+    errors.push(`${path}: reusable workflows must not inherit every repository secret.`)
+  }
   if (/continue-on-error:\s*true/u.test(text)) {
     errors.push(`${path}: required security and delivery checks must not continue after errors.`)
   }
