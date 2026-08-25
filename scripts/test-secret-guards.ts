@@ -9,6 +9,7 @@ const sourceRoot = process.cwd()
 const temporaryRoot = await mkdtemp(join(tmpdir(), 'matrix-secret-guards-'))
 const repositoryRoot = join(temporaryRoot, 'repository')
 const remoteRoot = join(temporaryRoot, 'remote.git')
+const commitMessageGuard = join(sourceRoot, 'scripts', 'check-commit-message-secrets.ts')
 const stagedGuard = join(sourceRoot, 'scripts', 'check-staged-secrets.ts')
 const pushGuard = join(sourceRoot, 'scripts', 'check-push-secrets.ts')
 const encoder = new TextEncoder()
@@ -64,7 +65,7 @@ try {
   if (hooksPathResult.stdout.trim() !== '.husky/_') {
     throw new Error(`Husky configured an unexpected hooks path: ${hooksPathResult.stdout.trim()}`)
   }
-  for (const hook of ['pre-commit', 'pre-push']) {
+  for (const hook of ['commit-msg', 'pre-commit', 'pre-push']) {
     if (!existsSync(join(sourceRoot, '.husky', '_', hook))) {
       throw new Error(`Husky did not install the ${hook} wrapper.`)
     }
@@ -86,6 +87,26 @@ try {
   git(['remote', 'add', 'origin', remoteRoot])
   git(['push', '--set-upstream', 'origin', 'main'])
   const remoteOid = git(['rev-parse', 'refs/remotes/origin/main'])
+
+  const commitMessagePath = join(repositoryRoot, '.git', 'COMMIT_EDITMSG')
+  await writeFile(commitMessagePath, 'fix: keep the commit message safe\n')
+  expectStatus(
+    execute(process.execPath, [commitMessageGuard, commitMessagePath], repositoryRoot),
+    0,
+    'safe commit-message scan',
+  )
+  await writeFile(commitMessagePath, canarySecret())
+  expectStatus(
+    execute(process.execPath, [commitMessageGuard, commitMessagePath], repositoryRoot),
+    1,
+    'secret commit-message scan',
+  )
+  await writeFile(commitMessagePath, `fix: safe subject\n\n# ${canarySecret()}`)
+  expectStatus(
+    execute(process.execPath, [commitMessageGuard, commitMessagePath], repositoryRoot),
+    0,
+    'comment-only commit-message scan',
+  )
 
   const partialPath = join(repositoryRoot, 'partial.txt')
   await writeFile(partialPath, 'safe staged content\n')
@@ -143,11 +164,7 @@ try {
 
   await writeFile(join(repositoryRoot, 'invalid-utf8.bin'), new Uint8Array([0xff, 0xd8, 0xff]))
   git(['add', 'invalid-utf8.bin'])
-  expectStatus(
-    execute(process.execPath, [stagedGuard], repositoryRoot),
-    1,
-    'invalid UTF-8 binary scan',
-  )
+  expectStatus(execute(process.execPath, [stagedGuard], repositoryRoot), 1, 'invalid UTF-8 binary scan')
   git(['rm', '--cached', 'invalid-utf8.bin'])
   await rm(join(repositoryRoot, 'invalid-utf8.bin'))
 
@@ -223,8 +240,7 @@ try {
   git(['tag', '-a', 'v0.0.0-canary', '-m', canarySecret().trim()])
   const tagOid = git(['rev-parse', 'refs/tags/v0.0.0-canary'])
   const zeroOid = '0'.repeat(remoteOid.length)
-  const tagInput =
-    `refs/tags/v0.0.0-canary ${tagOid} refs/tags/v0.0.0-canary ${zeroOid}\n`
+  const tagInput = `refs/tags/v0.0.0-canary ${tagOid} refs/tags/v0.0.0-canary ${zeroOid}\n`
   expectStatus(
     execute(process.execPath, [pushGuard, 'origin', remoteRoot], repositoryRoot, tagInput),
     1,
@@ -242,7 +258,7 @@ try {
     'already-published range scan',
   )
 
-  console.log('Local pre-commit and pre-push secret guard behavior passed.')
+  console.log('Local commit-message, pre-commit, and pre-push secret guard behavior passed.')
 } finally {
   await rm(temporaryRoot, { force: true, recursive: true })
 }
