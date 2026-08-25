@@ -17,6 +17,7 @@ concurrency:
 
 env:
   BUN_VERSION: 1.3.14
+  GITLEAKS_IMAGE: ghcr.io/gitleaks/gitleaks:v8.30.0
 
 jobs:
   open-source-scans:
@@ -32,11 +33,44 @@ jobs:
       - run: bun ci
       - name: Audit JavaScript dependencies
         run: bun run security:audit
+      - name: Verify Gitleaks fails closed on a known canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          canary_dir="$RUNNER_TEMP/gitleaks-canary"
+          canary_log="$RUNNER_TEMP/gitleaks-canary.log"
+          rm -rf "$canary_dir"
+          mkdir -p "$canary_dir"
+          printf 'github_token = "ghp_%s%s"\n' \
+            'aBcDeFgHiJkLmNoPqRsT' \
+            'uVwXyZ0123456789' \
+            > "$canary_dir/canary.txt"
+
+          set +e
+          docker run --rm \
+            -v "$canary_dir:/canary:ro" \
+            "$GITLEAKS_IMAGE" \
+            dir /canary --redact --no-banner \
+            > "$canary_log" 2>&1
+          status=$?
+          set -e
+          rm -rf "$canary_dir"
+
+          if [ "$status" -eq 0 ]; then
+            echo "::error::Gitleaks did not detect the known canary secret."
+            exit 1
+          fi
+          if [ "$status" -ne 1 ]; then
+            cat "$canary_log"
+            echo "::error::Gitleaks canary failed with unexpected exit code $status."
+            exit 1
+          fi
+          echo "Gitleaks canary detection passed."
       - name: Scan Git history for secrets
         run: >-
           docker run --rm
           -v "$PWD:/repo"
-          ghcr.io/gitleaks/gitleaks:v8.30.1
+          "$GITLEAKS_IMAGE"
           git /repo --redact --no-banner
       - name: Scan source, lockfile and infrastructure
         # Bun audit checks the resolved application graph. Some installed
