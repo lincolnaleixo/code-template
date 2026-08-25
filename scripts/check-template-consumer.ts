@@ -1,4 +1,4 @@
-import { cp, mkdtemp, readFile, rm } from 'node:fs/promises'
+import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { basename, join, relative, sep } from 'node:path'
 
@@ -68,11 +68,33 @@ try {
     recursive: true,
   })
 
+  const releaseConfigPath = join(consumerRoot, 'release-please-config.json')
+  const releaseConfig = JSON.parse(await readFile(releaseConfigPath, 'utf8')) as Record<string, unknown>
+  const sourceBootstrapSha = releaseConfig['bootstrap-sha']
+  if (typeof sourceBootstrapSha !== 'string' || !/^[0-9a-f]{40}$/iu.test(sourceBootstrapSha)) {
+    throw new Error('Source release configuration must contain the expected full bootstrap-sha.')
+  }
+  delete releaseConfig['bootstrap-sha']
+  await writeFile(releaseConfigPath, `${JSON.stringify(releaseConfig, null, 2)}\n`)
+
   await run(['git', 'init', '-b', 'main'])
   await run(['git', 'config', 'user.name', 'template-smoke'])
   await run(['git', 'config', 'user.email', 'template-smoke@example.invalid'])
   await run(['git', 'add', '.'])
   await run(['git', 'commit', '-m', 'chore: initialize generated product'])
+
+  const commitCount = await capture(['git', 'rev-list', '--count', 'HEAD'])
+  if (commitCount !== '1') {
+    throw new Error(`Generated consumer must start with one source-independent commit, received ${commitCount}.`)
+  }
+
+  const generatedReleaseConfig = JSON.parse(await readFile(releaseConfigPath, 'utf8')) as Record<
+    string,
+    unknown
+  >
+  if ('bootstrap-sha' in generatedReleaseConfig) {
+    throw new Error('Generated consumer must not retain the source repository bootstrap-sha.')
+  }
 
   const manifest = JSON.parse(await readFile(join(consumerRoot, 'package.json'), 'utf8')) as {
     name?: string
@@ -96,7 +118,9 @@ try {
     throw new Error(`Consumer validation changed tracked source files:\n${status}`)
   }
 
-  console.log('Fresh template consumer smoke test passed.')
+  console.log(
+    `Fresh template consumer smoke test passed with source bootstrap ${sourceBootstrapSha.slice(0, 12)} removed.`,
+  )
 } finally {
   if (keepWorkspace) console.log(`Template consumer retained at ${consumerRoot}`)
   else await rm(temporaryRoot, { force: true, recursive: true })
