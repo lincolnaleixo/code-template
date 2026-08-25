@@ -5,6 +5,7 @@ import {
   parseNullSeparated,
   repositoryRoot,
   scanSecretBlob,
+  treeBlobOid,
   verifySecretlintCanary,
 } from './secret-guard'
 
@@ -93,20 +94,14 @@ for (const commit of commits) {
   )
 
   for (const path of changedPaths) {
-    const objectSpec = `${commit}:${path}`
-    const objectType = gitText(root, ['cat-file', '-t', objectSpec]).trim()
-    if (objectType !== 'blob') {
-      continue
-    }
-
-    const blobOid = gitText(root, ['rev-parse', objectSpec]).trim()
-    if (scannedBlobs.has(blobOid)) {
+    const blobOid = treeBlobOid(root, commit, path)
+    if (!blobOid || scannedBlobs.has(blobOid)) {
       continue
     }
     scannedBlobs.add(blobOid)
     scannedFiles += 1
 
-    const content = gitBytes(root, ['cat-file', 'blob', objectSpec])
+    const content = gitBytes(root, ['cat-file', 'blob', blobOid])
     if (!scanSecretBlob(root, path, content)) {
       failed = true
     }
