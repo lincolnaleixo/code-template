@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+
+bun run security:push "$@"
+bun run prepush:check
