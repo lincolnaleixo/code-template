@@ -43,11 +43,7 @@ gh api -X DELETE repos/OWNER/REPOSITORY/actions/artifacts/ARTIFACT_ID
 
 The repository security workflow checks out full history and runs Gitleaks after runner access is available. A green current-tree scan is not enough when a secret may have existed in an older commit.
 
-The only Gitleaks exceptions are two commit-scoped false positives for the
-historical S3 client line above. The line reads the validated
-`S3_SECRET_KEY` environment variable and contains no credential value. Each
-fingerprint is tied to one old commit and line so a changed implementation is
-scanned normally.
+The only Gitleaks exceptions are two commit-scoped false positives for the historical S3 client line. The line reads the validated `S3_SECRET_KEY` environment variable and contains no credential value. Each fingerprint is tied to one old commit and line so a changed implementation is scanned normally.
 
 Playwright reports disable automatic Git commit and diff capture so future browser artifacts do not reproduce author identity or complete source diffs. Browser reports are not uploaded for fork pull requests and are retained for one day.
 
@@ -211,7 +207,7 @@ Settings
 
 Confirm that direct pushes, force pushes, branch deletion, and unresolved conversations are rejected. When approval or code-owner review is enabled, confirm those requirements with a PR authored by a different maintainer.
 
-A private-to-public transition disables push rulesets. Reapply or verify the intended branch policy after the visibility change and after hosted check names are stable.
+A private-to-public transition can change repository rules. Reapply or verify the intended branch policy after a visibility change and after hosted check names are stable.
 
 Also verify the API response with an administrative token:
 
@@ -220,7 +216,7 @@ curl --fail --silent \
   -H "Accept: application/vnd.github+json" \
   -H "Authorization: Bearer $GITHUB_ADMIN_TOKEN" \
   -H "X-GitHub-Api-Version: 2026-03-10" \
-  https://api.github.com/repos/matrix-hq/code-template/branches/main/protection
+  https://api.github.com/repos/lincolnaleixo/code-template/branches/main/protection
 ```
 
 Never print the token or the complete shell environment.
