@@ -114,11 +114,7 @@ try {
   git(['add', 'outgoing.txt'])
   git(['commit', '--no-verify', '-m', 'test: remove visible secret'])
 
-  expectStatus(
-    execute('git', ['push', 'origin', 'main'], repositoryRoot),
-    1,
-    'installed pre-push hook',
-  )
+  expectStatus(execute('git', ['push', 'origin', 'main'], repositoryRoot), 1, 'installed pre-push hook')
 
   const remoteOid = git(['--git-dir', remoteRoot, 'rev-parse', 'refs/heads/main'], temporaryRoot)
   if (remoteOid !== publishedOid) {
