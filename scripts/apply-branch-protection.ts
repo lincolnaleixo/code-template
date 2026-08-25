@@ -47,7 +47,7 @@ function parseChecks(value: string | undefined): string[] {
     .filter(Boolean)
 }
 
-const repository = option('repository') ?? process.env.GITHUB_REPOSITORY ?? 'matrix-hq/code-template'
+const repository = option('repository') ?? process.env.GITHUB_REPOSITORY ?? 'lincolnaleixo/code-template'
 const branch = option('branch') ?? process.env.BRANCH_NAME ?? 'main'
 const approvals = integerOption('approvals', 0)
 const requireCodeOwnerReview = booleanOption(
