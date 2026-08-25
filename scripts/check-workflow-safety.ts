@@ -1,4 +1,4 @@
-const workflowPaths = [
+const requiredWorkflowPaths = [
   '.github/workflows/ci.yml',
   '.github/workflows/preview-images.yml',
   '.github/workflows/release-containers.yml',
@@ -7,16 +7,37 @@ const workflowPaths = [
   '.github/workflows/security.yml',
 ]
 
+async function discoverAutomationPaths(): Promise<string[]> {
+  const paths = new Set<string>()
+  for (const pattern of [
+    '.github/workflows/*.yml',
+    '.github/workflows/*.yaml',
+    '.github/actions/**/action.yml',
+    '.github/actions/**/action.yaml',
+  ]) {
+    const glob = new Bun.Glob(pattern)
+    for await (const path of glob.scan({ cwd: '.', onlyFiles: true })) {
+      paths.add(path.replaceAll('\\', '/'))
+    }
+  }
+  return [...paths].sort()
+}
+
 const errors: string[] = []
+const automationPaths = await discoverAutomationPaths()
 const workflows = new Map<string, string>()
 
-for (const path of workflowPaths) {
-  const file = Bun.file(path)
-  if (!(await file.exists())) {
+for (const path of requiredWorkflowPaths) {
+  if (!automationPaths.includes(path)) {
     errors.push(`Required workflow is missing: ${path}`)
-    continue
   }
-  workflows.set(path, await file.text())
+}
+if (automationPaths.length === 0) {
+  errors.push('No GitHub workflow or composite-action files were discovered.')
+}
+
+for (const path of automationPaths) {
+  workflows.set(path, await Bun.file(path).text())
 }
 
 function requireText(path: string, text: string, expected: string, reason: string): void {
@@ -224,4 +245,6 @@ if (errors.length > 0) {
   process.exit(1)
 }
 
-console.log('Public pull-request, manual verification, and release publication workflow contracts are safe.')
+console.log(
+  `Public workflow safety passed for ${automationPaths.length} workflow and composite-action file(s).`,
+)
