@@ -1,3 +1,5 @@
+import { spawnSync } from 'node:child_process'
+
 const requiredWorkflowPaths = [
   '.github/workflows/ci.yml',
   '.github/workflows/preview-images.yml',
@@ -7,24 +9,31 @@ const requiredWorkflowPaths = [
   '.github/workflows/security.yml',
 ]
 
-async function discoverAutomationPaths(): Promise<string[]> {
-  const paths = new Set<string>()
-  for (const pattern of [
-    '.github/workflows/*.yml',
-    '.github/workflows/*.yaml',
-    '.github/actions/**/action.yml',
-    '.github/actions/**/action.yaml',
-  ]) {
-    const glob = new Bun.Glob(pattern)
-    for await (const path of glob.scan({ cwd: '.', onlyFiles: true })) {
-      paths.add(path.replaceAll('\\', '/'))
-    }
+function discoverAutomationPaths(): string[] {
+  const result = spawnSync(
+    'git',
+    [
+      'ls-files',
+      '-z',
+      '--',
+      ':(glob).github/workflows/*.yml',
+      ':(glob).github/workflows/*.yaml',
+      ':(glob).github/actions/**/action.yml',
+      ':(glob).github/actions/**/action.yaml',
+    ],
+    { encoding: 'utf8' },
+  )
+
+  if (result.status !== 0) {
+    const detail = result.stderr?.trim()
+    throw new Error(`Unable to enumerate GitHub automation files${detail ? `: ${detail}` : '.'}`)
   }
-  return [...paths].sort()
+
+  return (result.stdout ?? '').split('\0').filter(Boolean).sort()
 }
 
 const errors: string[] = []
-const automationPaths = await discoverAutomationPaths()
+const automationPaths = discoverAutomationPaths()
 const workflows = new Map<string, string>()
 
 for (const path of requiredWorkflowPaths) {
