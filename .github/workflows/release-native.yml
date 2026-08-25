@@ -145,7 +145,7 @@ jobs:
       - name: Compile simulator application
         run: >-
           xcodebuild
-          -workspace apps/mobile/ios/App/App.xcworkspace
+          -project apps/mobile/ios/App/App.xcodeproj
           -scheme App
           -configuration Debug
           -sdk iphonesimulator
