@@ -1,11 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { isAbsolute, resolve } from 'node:path'
-import {
-  gitBytesWithInput,
-  repositoryRoot,
-  scanSecretBlob,
-  verifySecretlintCanary,
-} from './secret-guard'
+import { gitBytesWithInput, repositoryRoot, scanSecretBlob, verifySecretlintCanary } from './secret-guard'
 
 const messageFile = process.argv[2]
 if (!messageFile) {
