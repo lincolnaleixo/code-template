@@ -37,6 +37,7 @@ const BLOCKED_FILE_EXTENSIONS = new Set([
   '.pkcs12',
   '.ppk',
   '.tfstate',
+  '.tfvars',
 ])
 const BLOCKED_EXACT_BASENAMES = new Set([
   '_auth',
