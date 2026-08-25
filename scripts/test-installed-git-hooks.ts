@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 const MAX_OUTPUT_BYTES = 32 * 1024 * 1024
+const CANARY_TOKEN = `ghp_${'7Qm4vZ2xN9cR'}${'6sT8uW3yA5bD'}${'1eF0gHkJpLqM'}`
 const sourceRoot = process.cwd()
 const temporaryRoot = await mkdtemp(join(tmpdir(), 'matrix-installed-hooks-'))
 const repositoryRoot = join(temporaryRoot, 'repository')
@@ -37,6 +38,13 @@ function expectStatus(result: CommandResult, expected: number, label: string): v
   )
 }
 
+function expectSecretMasked(result: CommandResult, label: string): void {
+  const output = `${result.stdout}\n${result.stderr}`
+  if (output.includes(CANARY_TOKEN)) {
+    throw new Error(`${label} printed the unmasked canary token.`)
+  }
+}
+
 function git(args: string[], cwd = repositoryRoot): string {
   const result = execute('git', args, cwd)
   expectStatus(result, 0, `git ${args.join(' ')}`)
@@ -44,7 +52,7 @@ function git(args: string[], cwd = repositoryRoot): string {
 }
 
 function canarySecret(): string {
-  return `token = "ghp_${'7Qm4vZ2xN9cR'}${'6sT8uW3yA5bD'}${'1eF0gHkJpLqM'}"\n`
+  return `token = "${CANARY_TOKEN}"\n`
 }
 
 try {
@@ -88,21 +96,25 @@ try {
   const secretPath = join(repositoryRoot, 'staged-secret.txt')
   await writeFile(secretPath, canarySecret())
   git(['add', 'staged-secret.txt'])
-  expectStatus(
-    execute('git', ['commit', '-m', 'test: reject staged secret'], repositoryRoot),
-    1,
-    'installed pre-commit hook',
+  const preCommitResult = execute(
+    'git',
+    ['commit', '-m', 'test: reject staged secret'],
+    repositoryRoot,
   )
+  expectStatus(preCommitResult, 1, 'installed pre-commit hook')
+  expectSecretMasked(preCommitResult, 'installed pre-commit hook')
   git(['reset', '--hard', 'HEAD'])
   await rm(secretPath, { force: true })
 
   await writeFile(join(repositoryRoot, 'safe.txt'), 'safe content\n')
   git(['add', 'safe.txt'])
-  expectStatus(
-    execute('git', ['commit', '-m', canarySecret().trim()], repositoryRoot),
-    1,
-    'installed commit-msg hook',
+  const commitMessageResult = execute(
+    'git',
+    ['commit', '-m', canarySecret().trim()],
+    repositoryRoot,
   )
+  expectStatus(commitMessageResult, 1, 'installed commit-msg hook')
+  expectSecretMasked(commitMessageResult, 'installed commit-msg hook')
   git(['commit', '-m', 'test: accept safe commit message'])
   git(['push', 'origin', 'main'])
   const publishedOid = git(['rev-parse', 'HEAD'])
@@ -114,7 +126,9 @@ try {
   git(['add', 'outgoing.txt'])
   git(['commit', '--no-verify', '-m', 'test: remove visible secret'])
 
-  expectStatus(execute('git', ['push', 'origin', 'main'], repositoryRoot), 1, 'installed pre-push hook')
+  const prePushResult = execute('git', ['push', 'origin', 'main'], repositoryRoot)
+  expectStatus(prePushResult, 1, 'installed pre-push hook')
+  expectSecretMasked(prePushResult, 'installed pre-push hook')
 
   const remoteOid = git(['--git-dir', remoteRoot, 'rev-parse', 'refs/heads/main'], temporaryRoot)
   if (remoteOid !== publishedOid) {
