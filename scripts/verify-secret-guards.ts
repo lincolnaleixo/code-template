@@ -1,13 +1,17 @@
 import { forbiddenSecretPath, repositoryRoot, verifySecretlintCanary } from './secret-guard'
 
 const expectedIgnoredBinaryPatterns = [
-  'apps/desktop/src-tauri/icons/*.gif',
-  'apps/desktop/src-tauri/icons/*.icns',
-  'apps/desktop/src-tauri/icons/*.ico',
-  'apps/desktop/src-tauri/icons/*.jpeg',
-  'apps/desktop/src-tauri/icons/*.jpg',
-  'apps/desktop/src-tauri/icons/*.png',
-  'apps/desktop/src-tauri/icons/*.webp',
+  '**/*.gif',
+  '**/*.icns',
+  '**/*.ico',
+  '**/*.jpeg',
+  '**/*.jpg',
+  '**/*.otf',
+  '**/*.png',
+  '**/*.ttf',
+  '**/*.webp',
+  '**/*.woff',
+  '**/*.woff2',
 ]
 const configuredIgnorePatterns = (await Bun.file('.secretlintignore').text())
   .split(/\r?\n/u)
@@ -29,7 +33,7 @@ if (
 ) {
   throw new Error(
     [
-      'Secretlint ignore policy must contain only the reviewed desktop binary patterns.',
+      'Secretlint ignore policy must contain only the reviewed binary extension patterns.',
       unexpectedIgnorePatterns.length > 0
         ? `Unexpected: ${unexpectedIgnorePatterns.join(', ')}`
         : undefined,
