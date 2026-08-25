@@ -276,13 +276,7 @@ function secretlintResult(root: string, fileName: string, content: Uint8Array): 
 
   return runCommand(
     process.execPath,
-    [
-      'x',
-      'secretlint',
-      '--secretlintrc',
-      '.secretlintrc.json',
-      `--stdinFileName=${fileName}`,
-    ],
+    ['x', 'secretlint', '--secretlintrc', '.secretlintrc.json', `--stdinFileName=${fileName}`],
     root,
     content,
   )
