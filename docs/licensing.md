@@ -2,7 +2,7 @@
 
 ## Source repository decision
 
-`matrix-hq/code-template` is intended to be a publicly visible GitHub template while retaining an explicit no-license default:
+`lincolnaleixo/code-template` is a publicly visible GitHub template with an explicit no-license default:
 
 ```json
 {
