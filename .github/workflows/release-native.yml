@@ -82,6 +82,8 @@ jobs:
           librsvg2-dev
           pkg-config
       - run: bun ci
+      - run: bun run security:hooks:verify
+      - run: bun run security:secrets:verify
       - run: bun run build:desktop
       - name: Retain desktop bundle
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
@@ -107,6 +109,8 @@ jobs:
           distribution: temurin
           java-version: "21"
       - run: bun ci
+      - run: bun run security:hooks:verify
+      - run: bun run security:secrets:verify
       - run: bun run build:native
       - name: Generate and synchronize Android project
         working-directory: apps/mobile
@@ -136,6 +140,8 @@ jobs:
         with:
           bun-version: ${{ env.BUN_VERSION }}
       - run: bun ci
+      - run: bun run security:hooks:verify
+      - run: bun run security:secrets:verify
       - run: bun run build:native
       - name: Generate and synchronize iOS project
         working-directory: apps/mobile
