@@ -25,6 +25,12 @@ Release Please owns `CHANGELOG.md`, `version.txt`, `.release-please-manifest.jso
 
 `bun ci` installs the repository hooks through Husky. The hooks are defense in depth and do not replace protected branches or CI.
 
+The commit-message hook:
+
+- strips Git comment lines before scanning
+- rejects credentials pasted into a message before the commit is created
+- uses the same fail-closed Secretlint canaries as the file guards
+
 The pre-commit hook:
 
 - reads the exact blobs in Git's staged index, not the potentially different working-tree files
@@ -43,10 +49,14 @@ The pre-push hook:
 Run the guards directly when diagnosing them:
 
 ```bash
+bun run security:hooks:verify
 bun run security:secrets:verify
+bun run security:policy
 bun run security:secrets
 bun run security:staged
 ```
+
+CI applies the high-risk path, text-size, binary-signature, and binary-metadata policy to every tracked blob. It then runs Secretlint across tracked text. Existing Gitleaks, Trivy, dependency-review, and CodeQL checks remain independent remote controls.
 
 A hook can be deliberately bypassed with Git's `--no-verify` behavior or by disabling Husky. Treat bypass as an exceptional local action, record why it was necessary, and never use it to merge around a failing CI check. False positives must be handled with a narrow, documented rule allowance rather than a broad ignored path.
 
