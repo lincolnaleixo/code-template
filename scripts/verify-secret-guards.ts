@@ -1,5 +1,53 @@
 import { forbiddenSecretPath, repositoryRoot, verifySecretlintCanary } from './secret-guard'
 
+const expectedIgnoredBinaryPatterns = [
+  'apps/desktop/src-tauri/icons/*.gif',
+  'apps/desktop/src-tauri/icons/*.icns',
+  'apps/desktop/src-tauri/icons/*.ico',
+  'apps/desktop/src-tauri/icons/*.jpeg',
+  'apps/desktop/src-tauri/icons/*.jpg',
+  'apps/desktop/src-tauri/icons/*.png',
+  'apps/desktop/src-tauri/icons/*.webp',
+]
+const configuredIgnorePatterns = (await Bun.file('.secretlintignore').text())
+  .split(/\r?\n/u)
+  .map((line) => line.trim())
+  .filter((line) => line.length > 0 && !line.startsWith('#'))
+const expectedIgnoreSet = new Set(expectedIgnoredBinaryPatterns)
+const configuredIgnoreSet = new Set(configuredIgnorePatterns)
+const unexpectedIgnorePatterns = configuredIgnorePatterns.filter(
+  (pattern) => !expectedIgnoreSet.has(pattern),
+)
+const missingIgnorePatterns = expectedIgnoredBinaryPatterns.filter(
+  (pattern) => !configuredIgnoreSet.has(pattern),
+)
+
+if (
+  configuredIgnoreSet.size !== configuredIgnorePatterns.length ||
+  unexpectedIgnorePatterns.length > 0 ||
+  missingIgnorePatterns.length > 0
+) {
+  throw new Error(
+    [
+      'Secretlint ignore policy must contain only the reviewed desktop binary patterns.',
+      unexpectedIgnorePatterns.length > 0
+        ? `Unexpected: ${unexpectedIgnorePatterns.join(', ')}`
+        : undefined,
+      missingIgnorePatterns.length > 0 ? `Missing: ${missingIgnorePatterns.join(', ')}` : undefined,
+      configuredIgnoreSet.size !== configuredIgnorePatterns.length
+        ? 'Duplicate ignore patterns are not allowed.'
+        : undefined,
+    ]
+      .filter(Boolean)
+      .join(' '),
+  )
+}
+
+if (process.argv.includes('--ignore-only')) {
+  console.log('Local secret ignore policy passed.')
+  process.exit(0)
+}
+
 const root = repositoryRoot()
 verifySecretlintCanary(root)
 
@@ -49,4 +97,4 @@ for (const path of allowedPaths) {
   }
 }
 
-console.log('Local secret guard canary and path policy passed.')
+console.log('Local secret guard canary, ignore policy, and path policy passed.')
