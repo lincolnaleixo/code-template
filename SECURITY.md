@@ -4,7 +4,7 @@
 
 Do not disclose suspected vulnerabilities in public issues, discussions, pull requests, or chat channels.
 
-Use GitHub private vulnerability reporting when it is enabled for this repository. Otherwise, contact the organization maintainers through an approved private channel and include:
+Use GitHub private vulnerability reporting when it is enabled for this repository. Otherwise, contact the repository maintainers through an approved private channel and include:
 
 - affected component and version
 - impact and realistic attack scenario
@@ -46,6 +46,7 @@ These controls are a baseline. Each generated project must complete its own thre
 
 ```bash
 bun run security:hooks:verify
+bun run security:secrets:ignore
 bun run security:secrets:verify
 ```
 
@@ -58,8 +59,9 @@ The hooks use Secretlint with the repository policy in `.secretlintrc.json`:
 - unknown binary payloads and oversized text payloads fail closed because content scanners cannot inspect them reliably
 - reviewed image and font payloads are accepted only when their extension matches a known file signature, and printable binary metadata is still scanned for secrets
 - safe and secret canaries run before repository content so a missing, broken, or over-broad scanner blocks the operation instead of silently passing
+- `.secretlintignore` is locked to the exact reviewed desktop icon patterns, so a broad future ignore cannot silently weaken local hooks or CI
 
-CI runs the same path, size, binary-signature, and binary-metadata policy against every tracked blob, then performs a batched Secretlint scan of tracked text. Existing Gitleaks, Trivy, dependency-review, and CodeQL jobs remain independent remote barriers.
+CI runs the same path, size, binary-signature, and binary-metadata policy against every tracked blob, then performs an exact Secretlint scan of every Git-tracked path with Git ignore handling disabled. Existing Gitleaks, Trivy, dependency-review, and CodeQL jobs remain independent remote barriers.
 
 Local hooks are defense in depth and can be bypassed deliberately with Git's `--no-verify`. Bypass does not waive the CI gate or the requirement to rotate a credential that may have been exposed. Handle false positives with narrow reviewed examples or fingerprints. Do not add broad ignored directories or disable a provider rule merely to make a check pass.
 
