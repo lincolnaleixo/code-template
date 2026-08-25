@@ -21,6 +21,35 @@ This repository is a product template. Changes should improve the default withou
 
 Release Please owns `CHANGELOG.md`, `version.txt`, `.release-please-manifest.json`, and the release version fields in package, Tauri, and Cargo metadata. Do not change those release values during ordinary feature work.
 
+## Local Git secret guards
+
+`bun ci` installs the repository hooks through Husky. The hooks are defense in depth and do not replace protected branches or CI.
+
+The pre-commit hook:
+
+- reads the exact blobs in Git's staged index, not the potentially different working-tree files
+- rejects high-risk credential, environment, signing, state, and key filenames
+- verifies Secretlint against a safe canary and a known-secret canary before trusting it
+- scans staged text with Secretlint while masking detected values
+- allows only reviewed image and font binary types and blocks unreviewed binary payloads
+
+The pre-push hook:
+
+- reads the ref updates supplied by Git
+- scans annotated tags, commit messages, and every unique changed blob in commits that are not already on the remote
+- catches secrets that were added in an intermediate commit and removed later
+- runs `bun run check` after the outgoing-history scan passes
+
+Run the guards directly when diagnosing them:
+
+```bash
+bun run security:secrets:verify
+bun run security:secrets
+bun run security:staged
+```
+
+A hook can be deliberately bypassed with Git's `--no-verify` behavior or by disabling Husky. Treat bypass as an exceptional local action, record why it was necessary, and never use it to merge around a failing CI check. False positives must be handled with a narrow, documented rule allowance rather than a broad ignored path.
+
 ## Commit messages and versions
 
 Conventional Commits are part of the release contract, not just a naming preference. Use a focused type and optional scope, for example:
@@ -138,7 +167,7 @@ A checkbox may be marked not applicable only with a short reason. Do not claim a
 
 ## Licensing and ownership
 
-The template is private and explicitly `UNLICENSED`. Changes that introduce copied source, assets, fonts, icons, generated SDKs, or distributable binaries must consider their license and attribution obligations.
+The source template is public and explicitly `UNLICENSED`. Changes that introduce copied source, assets, fonts, icons, generated SDKs, or distributable binaries must consider their license and attribution obligations.
 
 Do not add a public license or change ownership policy without an explicit repository-owner decision. See [docs/licensing.md](docs/licensing.md).
 
