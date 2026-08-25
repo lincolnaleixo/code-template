@@ -57,8 +57,7 @@ const BLOCKED_EXACT_BASENAMES = new Set([
 const BLOCKED_PATH_SEGMENTS = new Set(['.aws', '.azure', '.docker', '.gnupg', '.kube', '.ssh'])
 const BLOCKED_CREDENTIAL_DATA_PATTERN =
   /^(?:client[-_]?secret|service[-_]?account|credentials?|secrets?)(?:[._-][a-z0-9][a-z0-9._-]*)?\.(?:conf|config|ini|json|properties|toml|xml|ya?ml)$/u
-const TERRAFORM_SECRET_FILE_PATTERN =
-  /(?:^|\.)(?:tfstate(?:\.backup)?|(?:auto\.)?tfvars(?:\.json)?)$/u
+const TERRAFORM_SECRET_FILE_PATTERN = /(?:^|\.)(?:tfstate(?:\.backup)?|(?:auto\.)?tfvars(?:\.json)?)$/u
 const TEMPLATE_PATH_MARKER_PATTERN = /(?:^|[._-])(?:example|sample|template)(?:[._-]|$)/u
 const utf8Decoder = new TextDecoder()
 const strictUtf8Decoder = new TextDecoder('utf-8', { fatal: true })
