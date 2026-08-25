@@ -12,6 +12,7 @@ const remoteRoot = join(temporaryRoot, 'remote.git')
 const commitMessageGuard = join(sourceRoot, 'scripts', 'check-commit-message-secrets.ts')
 const stagedGuard = join(sourceRoot, 'scripts', 'check-staged-secrets.ts')
 const pushGuard = join(sourceRoot, 'scripts', 'check-push-secrets.ts')
+const trackedGuard = join(sourceRoot, 'scripts', 'check-tracked-secrets.ts')
 const encoder = new TextEncoder()
 
 type CommandResult = {
@@ -82,6 +83,19 @@ try {
   await writeFile(join(repositoryRoot, 'README.md'), '# Secret guard test\n')
   git(['add', 'README.md'])
   git(['commit', '-m', 'chore: initialize secret guard test'])
+
+  await writeFile(join(repositoryRoot, '.gitignore'), 'ignored-secret.txt\n')
+  git(['add', '.gitignore'])
+  git(['commit', '-m', 'test: add ignored tracked-file fixture'])
+  await writeFile(join(repositoryRoot, 'ignored-secret.txt'), canarySecret())
+  git(['add', '--force', 'ignored-secret.txt'])
+  expectStatus(
+    execute(process.execPath, [trackedGuard], repositoryRoot),
+    1,
+    'force-tracked ignored secret scan',
+  )
+  git(['rm', '--cached', '--force', 'ignored-secret.txt'])
+  await rm(join(repositoryRoot, 'ignored-secret.txt'))
 
   git(['init', '--bare', remoteRoot], temporaryRoot)
   git(['remote', 'add', 'origin', remoteRoot])
