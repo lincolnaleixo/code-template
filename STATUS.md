@@ -51,15 +51,7 @@ Historical Git author metadata remains reachable. It is not a credential. Histor
 
 ## Branch governance
 
-The `main` branch is protected. GitHub reports:
-
-- protection enabled for everyone, including administrators
-- force pushes disabled
-- branch deletion disabled
-- required pull requests and conversation resolution
-- stable CI, Security, CodeQL, dependency review, container, browser, Android, iOS, Linux, macOS, and Windows checks required before merge
-
-The required check set includes:
+The public branch endpoint confirms that `main` is protected and requires the stable CI, Security, CodeQL, dependency review, container, browser, Android, iOS, Linux, macOS, and Windows checks listed below:
 
 ```text
 Audit, secrets and repository scan
@@ -77,6 +69,8 @@ Tauri macos-15
 Tauri ubuntu-24.04
 Tauri windows-2025
 ```
+
+The connected GitHub App receives HTTP 403 from the full branch-protection endpoint. An administrator must still confirm that protection applies to administrators, force pushes and deletion are disabled, pull requests are required, and conversation resolution is enabled. Do not mark those fields complete solely from the public branch summary.
 
 ## PR #10 validation
 
@@ -115,15 +109,16 @@ Its current stacked head has successful CI, Security, Native, and Preview runs. 
 
 Before merging PR #10:
 
-1. prove that repository-scoped `RELEASE_PLEASE_TOKEN` exists without exposing its value
-2. execute a real fork pull request and prove it receives no repository secrets, package-write path, release path, preview publication, or repository-hosted native binary upload
-3. create a temporary repository through GitHub **Use this template**
-4. follow `docs/project-bootstrap.md` in that generated repository
-5. remove or reseed the source-specific Release Please `bootstrap-sha`
-6. prove install, documentation, minimal web/API lifecycle, and source-independent identity
-7. delete or archive the temporary proof repository after recording evidence
+1. configure and prove that repository-scoped `RELEASE_PLEASE_TOKEN` exists without exposing its value
+2. confirm the full `main` protection fields through an administrative UI or token
+3. execute a real fork pull request and prove it receives no repository secrets, package-write path, release path, preview publication, or repository-hosted native binary upload
+4. create a temporary repository through GitHub **Use this template**
+5. follow `docs/project-bootstrap.md` in that generated repository
+6. remove or reseed the source-specific Release Please `bootstrap-sha`
+7. prove install, documentation, minimal web/API lifecycle, and source-independent identity
+8. delete or archive the temporary proof repository after recording evidence
 
-The connected GitHub integration can verify repository files, pull requests, workflow runs, and branch protection. It cannot enumerate Actions secret names, create a fork under another account, or create a new repository through the template endpoint.
+The connected GitHub integration can verify repository files, pull requests, workflow runs, public branch protection summaries, and required check names. It cannot enumerate or create Actions secrets, read the full protection payload, create a fork under another account, or create a new repository through the template endpoint.
 
 ## Release sequence
 
@@ -142,4 +137,4 @@ Do not run `version:set`, create or move a tag manually, or publish artifacts fr
 
 ## Definition of done
 
-The template is complete when protected `main` contains PRs #10 and #12, fork safety and a real generated consumer are proven, Release Please has produced `v0.4.0`, all published artifacts are verified, and the post-release template proof passes.
+The template is complete when protected `main` contains PRs #10 and #12, all intended protection fields are administratively confirmed, fork safety and a real generated consumer are proven, Release Please has produced `v0.4.0`, all published artifacts are verified, and the post-release template proof passes.
