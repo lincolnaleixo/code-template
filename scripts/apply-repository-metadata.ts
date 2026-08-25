@@ -7,7 +7,7 @@ function option(name: string): string | undefined {
   return args.find((argument) => argument.startsWith(prefix))?.slice(prefix.length)
 }
 
-const repository = option('repository') ?? process.env.GITHUB_REPOSITORY ?? 'matrix-hq/code-template'
+const repository = option('repository') ?? process.env.GITHUB_REPOSITORY ?? 'lincolnaleixo/code-template'
 const description =
   option('description') ??
   process.env.REPOSITORY_DESCRIPTION ??
