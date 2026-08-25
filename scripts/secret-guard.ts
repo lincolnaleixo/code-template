@@ -281,7 +281,13 @@ function secretlintResult(root: string, fileName: string, content: Uint8Array): 
 
   return runCommand(
     process.execPath,
-    ['x', 'secretlint', '--secretlintrc', '.secretlintrc.json', '--stdin', '--stdinFileName', fileName],
+    [
+      'x',
+      'secretlint',
+      '--secretlintrc',
+      '.secretlintrc.json',
+      `--stdinFileName=${fileName}`,
+    ],
     root,
     content,
   )
@@ -305,7 +311,7 @@ function scanWithSecretlint(root: string, fileName: string, content: Uint8Array)
   if (result.status === 1) {
     return false
   }
-  throw commandError(process.execPath, ['x', 'secretlint', '--stdin'], result)
+  throw commandError(process.execPath, ['x', 'secretlint', `--stdinFileName=${fileName}`], result)
 }
 
 export function verifySecretlintCanary(root: string): void {
