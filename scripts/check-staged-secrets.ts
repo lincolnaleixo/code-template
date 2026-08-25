@@ -3,6 +3,7 @@ import {
   parseNullSeparated,
   repositoryRoot,
   scanSecretBlob,
+  stagedBlobOid,
   verifySecretlintCanary,
 } from './secret-guard'
 
@@ -21,7 +22,8 @@ verifySecretlintCanary(root)
 let scannedFiles = 0
 let failed = false
 for (const path of stagedPaths) {
-  const content = gitBytes(root, ['show', `:${path}`])
+  const blobOid = stagedBlobOid(root, path)
+  const content = gitBytes(root, ['cat-file', 'blob', blobOid])
   scannedFiles += 1
   if (!scanSecretBlob(root, path, content)) {
     failed = true
