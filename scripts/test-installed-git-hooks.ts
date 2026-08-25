@@ -72,6 +72,7 @@ try {
           'prepush:check': 'bun -e "process.exit(0)"',
           'security:commit-message': 'bun guard-scripts/check-commit-message-secrets.ts',
           'security:push': 'bun guard-scripts/check-push-secrets.ts',
+          'security:secrets:ignore': 'bun guard-scripts/verify-secret-guards.ts --ignore-only',
           'security:staged': 'bun guard-scripts/check-staged-secrets.ts',
         },
       },
