@@ -31,6 +31,7 @@ jobs:
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
       - run: bun ci
       - run: bun run template:validate
+      - run: bun run workflow:safety
       - run: bun run docs:check
       - run: bun run lint:ci
       - run: bun run generated:check
