@@ -103,6 +103,7 @@
     "security:policy": "bun run scripts/check-tracked-secret-policy.ts",
     "security:push": "bun run scripts/check-push-secrets.ts",
     "security:secrets": "bun run scripts/check-tracked-secrets.ts",
+    "security:secrets:ignore": "bun run scripts/verify-secret-guards.ts --ignore-only",
     "security:secrets:verify": "bun run scripts/verify-secret-guards.ts",
     "security:staged": "bun run scripts/check-staged-secrets.ts",
     "prepush:check": "bun run check",
@@ -117,7 +118,7 @@
     "infra:up": "docker compose up -d postgres minio minio-init",
     "infra:full": "docker compose --profile full up --build -d",
     "infra:observability": "OTEL_ENABLED=true docker compose --profile full --profile observability up --build -d",
-    "infra:logs": "docker compose --profile full --profile observability logs -f",
+    "infra:logs": "OTEL_ENABLED=true docker compose --profile full --profile observability logs -f",
     "infra:down": "docker compose --profile full --profile observability down",
     "infra:reset": "docker compose --profile full --profile observability down -v --remove-orphans"
   },
