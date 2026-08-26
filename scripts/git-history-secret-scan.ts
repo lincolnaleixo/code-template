@@ -27,14 +27,14 @@ export function scanCommitHistory(root: string, commits: Iterable<string>): Hist
           '-r',
           '-m',
           '-z',
-          '--diff-filter=ACMR',
+          '--diff-filter=ACMRT',
           commit,
         ]),
       ),
     )
 
     for (const path of changedPaths) {
-      const oid = treeBlobOid(root, commit, path)
+      const oid = treeBlobOid(root, commit, `:(literal)${path}`)
       if (!oid) {
         continue
       }
