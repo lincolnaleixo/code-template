@@ -9,7 +9,7 @@ import {
 
 const root = repositoryRoot()
 const stagedPaths = parseNullSeparated(
-  gitBytes(root, ['diff', '--cached', '--name-only', '--diff-filter=ACMR', '-z']),
+  gitBytes(root, ['diff', '--cached', '--name-only', '--diff-filter=ACMRT', '-z']),
 )
 
 if (stagedPaths.length === 0) {
@@ -22,7 +22,7 @@ verifySecretlintCanary(root)
 let scannedFiles = 0
 let failed = false
 for (const path of stagedPaths) {
-  const blobOid = stagedBlobOid(root, path)
+  const blobOid = stagedBlobOid(root, `:(literal)${path}`)
   const content = gitBytes(root, ['cat-file', 'blob', blobOid])
   scannedFiles += 1
   if (!scanSecretBlob(root, path, content)) {
