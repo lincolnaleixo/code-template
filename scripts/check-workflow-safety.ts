@@ -229,7 +229,9 @@ const expectedPublisherCount =
   Number(templateFeatures.containerReleases) + Number(templateFeatures.nativeReleases)
 const releaseCreatedGuardCount = release.split(releaseCreatedGuard).length - 1
 if (releaseCreatedGuardCount < expectedPublisherCount) {
-  errors.push(`${releasePath}: every enabled publisher must require Release Please to report a created release.`)
+  errors.push(
+    `${releasePath}: every enabled publisher must require Release Please to report a created release.`,
+  )
 }
 requireText(
   releasePath,
