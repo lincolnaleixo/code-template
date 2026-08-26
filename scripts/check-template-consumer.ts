@@ -152,12 +152,12 @@ try {
   await verifyPublisherCapabilityRemoval(
     'containerReleases',
     '.github/workflows/release-containers.yml',
-    (workflow) => workflow.replace(/\n  publish-containers:[\s\S]*?(?=\n  publish-native:)/u, ''),
+    (workflow) => workflow.replace(/\n {2}publish-containers:[\s\S]*?(?=\n {2}publish-native:)/u, ''),
   )
   await verifyPublisherCapabilityRemoval(
     'nativeReleases',
     '.github/workflows/release-native.yml',
-    (workflow) => workflow.replace(/\n  publish-native:[\s\S]*$/u, ''),
+    (workflow) => workflow.replace(/\n {2}publish-native:[\s\S]*$/u, ''),
   )
 
   console.log(
