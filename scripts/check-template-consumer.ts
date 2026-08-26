@@ -45,6 +45,26 @@ async function run(command: string[], env: Record<string, string> = {}): Promise
   }
 }
 
+async function expectFailure(command: string[]): Promise<void> {
+  const child = Bun.spawn(command, {
+    cwd: consumerRoot,
+    env: process.env,
+    stderr: 'pipe',
+    stdout: 'pipe',
+  })
+  const [stdout, stderr, exitCode] = await Promise.all([
+    new Response(child.stdout).text(),
+    new Response(child.stderr).text(),
+    child.exited,
+  ])
+
+  if (exitCode === 0) {
+    throw new Error(
+      `Consumer smoke command unexpectedly passed: ${command.join(' ')}\nstdout:\n${stdout}\nstderr:\n${stderr}`,
+    )
+  }
+}
+
 async function capture(command: string[]): Promise<string> {
   const child = Bun.spawn(command, {
     cwd: consumerRoot,
@@ -84,8 +104,36 @@ async function verifyPublisherCapabilityRemoval(
   await writeFile(templateConfigPath, templateConfig.replace(enabledMarker, `${feature}: false`))
   await writeFile(releaseWorkflowPath, updatedReleaseWorkflow)
   await rm(join(consumerRoot, workflowPath))
-  await run(['git', 'add', '-A'])
   await run(['bun', 'run', 'template:validate'])
+  await run(['bun', 'run', 'workflow:safety'])
+  await run(['git', 'reset', '--hard', 'HEAD'])
+}
+
+async function verifyDockerFreeWorkflowSafety(): Promise<void> {
+  const templateConfigPath = join(consumerRoot, 'template.config.ts')
+  const templateConfig = await readFile(templateConfigPath, 'utf8')
+  await writeFile(templateConfigPath, templateConfig.replace('docker: true', 'docker: false'))
+  await rm(join(consumerRoot, '.github', 'workflows', 'preview-images.yml'))
+  await run(['bun', 'run', 'workflow:safety'])
+  await run(['git', 'reset', '--hard', 'HEAD'])
+}
+
+async function verifyE2eFreeWorkflowSafety(): Promise<void> {
+  const templateConfigPath = join(consumerRoot, 'template.config.ts')
+  const ciPath = join(consumerRoot, '.github', 'workflows', 'ci.yml')
+  const templateConfig = await readFile(templateConfigPath, 'utf8')
+  const ci = await readFile(ciPath, 'utf8')
+  const ciWithoutE2e = ci.replace(/\n {2}e2e:[\s\S]*$/u, '')
+
+  if (ciWithoutE2e === ci) {
+    throw new Error('Template consumer could not remove the E2E job for workflow-safety testing.')
+  }
+
+  await writeFile(
+    templateConfigPath,
+    templateConfig.replace('endToEndTests: true', 'endToEndTests: false'),
+  )
+  await writeFile(ciPath, ciWithoutE2e)
   await run(['bun', 'run', 'workflow:safety'])
   await run(['git', 'reset', '--hard', 'HEAD'])
 }
@@ -149,6 +197,19 @@ try {
     throw new Error(`Consumer validation changed tracked source files:\n${status}`)
   }
 
+  const untrackedUnsafeWorkflow = join(
+    consumerRoot,
+    '.github',
+    'workflows',
+    'untracked-unsafe-canary.yml',
+  )
+  await writeFile(
+    untrackedUnsafeWorkflow,
+    'name: unsafe canary\non:\n  pull_request_target:\njobs:\n  unsafe:\n    runs-on: ubuntu-24.04\n    steps:\n      - run: echo unsafe\n',
+  )
+  await expectFailure(['bun', 'run', 'workflow:safety'])
+  await rm(untrackedUnsafeWorkflow)
+
   await verifyPublisherCapabilityRemoval(
     'containerReleases',
     '.github/workflows/release-containers.yml',
@@ -159,9 +220,11 @@ try {
     '.github/workflows/release-native.yml',
     (workflow) => workflow.replace(/\n {2}publish-native:[\s\S]*$/u, ''),
   )
+  await verifyDockerFreeWorkflowSafety()
+  await verifyE2eFreeWorkflowSafety()
 
   console.log(
-    `Fresh template consumer smoke test passed with source bootstrap ${sourceBootstrapSha.slice(0, 12)} removed and optional release publishers removable.`,
+    `Fresh template consumer smoke test passed with source bootstrap ${sourceBootstrapSha.slice(0, 12)} removed and workflow capabilities safely removable.`,
   )
 } finally {
   if (keepWorkspace) console.log(`Template consumer retained at ${consumerRoot}`)
