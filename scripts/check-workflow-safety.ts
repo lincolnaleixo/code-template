@@ -1,11 +1,12 @@
 import { spawnSync } from 'node:child_process'
+import { existsSync } from 'node:fs'
 import { templateFeatures } from '../template.config'
 
 const requiredWorkflowPaths = [
   '.github/workflows/ci.yml',
-  '.github/workflows/preview-images.yml',
   '.github/workflows/release-please.yml',
   '.github/workflows/security.yml',
+  ...(templateFeatures.docker ? ['.github/workflows/preview-images.yml'] : []),
   ...(templateFeatures.containerReleases ? ['.github/workflows/release-containers.yml'] : []),
   ...(templateFeatures.nativeReleases ? ['.github/workflows/release-native.yml'] : []),
 ]
@@ -15,6 +16,9 @@ function discoverAutomationPaths(): string[] {
     'git',
     [
       'ls-files',
+      '--cached',
+      '--others',
+      '--exclude-standard',
       '-z',
       '--',
       ':(glob).github/workflows/*.yml',
@@ -30,7 +34,14 @@ function discoverAutomationPaths(): string[] {
     throw new Error(`Unable to enumerate GitHub automation files${detail ? `: ${detail}` : '.'}`)
   }
 
-  return (result.stdout ?? '').split('\0').filter(Boolean).sort()
+  return [
+    ...new Set(
+      (result.stdout ?? '')
+        .split('\0')
+        .filter(Boolean)
+        .filter((path) => existsSync(path)),
+    ),
+  ].sort()
 }
 
 const errors: string[] = []
@@ -113,28 +124,32 @@ for (const [path, text] of workflows) {
 const sameRepository = 'github.event.pull_request.head.repo.full_name == github.repository'
 
 const previewPath = '.github/workflows/preview-images.yml'
-const preview = workflows.get(previewPath) ?? ''
-requireText(
-  previewPath,
-  preview,
-  `if: github.event_name == 'workflow_dispatch' || ${sameRepository}`,
-  'preview publication must be limited to same-repository pull requests or explicit manual verification.',
-)
-requireText(
-  previewPath,
-  preview,
-  'packages: write',
-  'the gated preview job must own its package-write permission explicitly.',
-)
+if (templateFeatures.docker) {
+  const preview = workflows.get(previewPath) ?? ''
+  requireText(
+    previewPath,
+    preview,
+    `if: github.event_name == 'workflow_dispatch' || ${sameRepository}`,
+    'preview publication must be limited to same-repository pull requests or explicit manual verification.',
+  )
+  requireText(
+    previewPath,
+    preview,
+    'packages: write',
+    'the gated preview job must own its package-write permission explicitly.',
+  )
+}
 
 const ciPath = '.github/workflows/ci.yml'
 const ci = workflows.get(ciPath) ?? ''
-requireText(
-  ciPath,
-  ci,
-  `if: always() && (github.event_name != 'pull_request' || ${sameRepository})`,
-  'browser reports must not be uploaded from fork pull requests.',
-)
+if (templateFeatures.endToEndTests) {
+  requireText(
+    ciPath,
+    ci,
+    `if: always() && (github.event_name != 'pull_request' || ${sameRepository})`,
+    'browser reports must not be uploaded from fork pull requests.',
+  )
+}
 
 const nativePath = '.github/workflows/release-native.yml'
 if (templateFeatures.nativeReleases) {
