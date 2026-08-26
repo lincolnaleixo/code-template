@@ -129,10 +129,7 @@ async function verifyE2eFreeWorkflowSafety(): Promise<void> {
     throw new Error('Template consumer could not remove the E2E job for workflow-safety testing.')
   }
 
-  await writeFile(
-    templateConfigPath,
-    templateConfig.replace('endToEndTests: true', 'endToEndTests: false'),
-  )
+  await writeFile(templateConfigPath, templateConfig.replace('endToEndTests: true', 'endToEndTests: false'))
   await writeFile(ciPath, ciWithoutE2e)
   await run(['bun', 'run', 'workflow:safety'])
   await run(['git', 'reset', '--hard', 'HEAD'])
@@ -197,12 +194,7 @@ try {
     throw new Error(`Consumer validation changed tracked source files:\n${status}`)
   }
 
-  const untrackedUnsafeWorkflow = join(
-    consumerRoot,
-    '.github',
-    'workflows',
-    'untracked-unsafe-canary.yml',
-  )
+  const untrackedUnsafeWorkflow = join(consumerRoot, '.github', 'workflows', 'untracked-unsafe-canary.yml')
   await writeFile(
     untrackedUnsafeWorkflow,
     'name: unsafe canary\non:\n  pull_request_target:\njobs:\n  unsafe:\n    runs-on: ubuntu-24.04\n    steps:\n      - run: echo unsafe\n',
