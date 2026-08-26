@@ -61,6 +61,35 @@ async function capture(command: string[]): Promise<string> {
   return output.trim()
 }
 
+async function verifyPublisherCapabilityRemoval(
+  feature: 'containerReleases' | 'nativeReleases',
+  workflowPath: string,
+  removePublisherJob: (workflow: string) => string,
+): Promise<void> {
+  const templateConfigPath = join(consumerRoot, 'template.config.ts')
+  const releaseWorkflowPath = join(consumerRoot, '.github', 'workflows', 'release-please.yml')
+  const templateConfig = await readFile(templateConfigPath, 'utf8')
+  const releaseWorkflow = await readFile(releaseWorkflowPath, 'utf8')
+  const enabledMarker = `${feature}: true`
+
+  if (!templateConfig.includes(enabledMarker)) {
+    throw new Error(`Template consumer expected ${enabledMarker} before capability-removal testing.`)
+  }
+
+  const updatedReleaseWorkflow = removePublisherJob(releaseWorkflow)
+  if (updatedReleaseWorkflow === releaseWorkflow) {
+    throw new Error(`Template consumer could not remove the ${feature} publisher job.`)
+  }
+
+  await writeFile(templateConfigPath, templateConfig.replace(enabledMarker, `${feature}: false`))
+  await writeFile(releaseWorkflowPath, updatedReleaseWorkflow)
+  await rm(join(consumerRoot, workflowPath))
+  await run(['git', 'add', '-A'])
+  await run(['bun', 'run', 'template:validate'])
+  await run(['bun', 'run', 'workflow:safety'])
+  await run(['git', 'reset', '--hard', 'HEAD'])
+}
+
 try {
   console.log(`Creating isolated template consumer at ${consumerRoot}`)
   await cp(repositoryRoot, consumerRoot, {
@@ -120,8 +149,19 @@ try {
     throw new Error(`Consumer validation changed tracked source files:\n${status}`)
   }
 
+  await verifyPublisherCapabilityRemoval(
+    'containerReleases',
+    '.github/workflows/release-containers.yml',
+    (workflow) => workflow.replace(/\n  publish-containers:[\s\S]*?(?=\n  publish-native:)/u, ''),
+  )
+  await verifyPublisherCapabilityRemoval(
+    'nativeReleases',
+    '.github/workflows/release-native.yml',
+    (workflow) => workflow.replace(/\n  publish-native:[\s\S]*$/u, ''),
+  )
+
   console.log(
-    `Fresh template consumer smoke test passed with source bootstrap ${sourceBootstrapSha.slice(0, 12)} removed.`,
+    `Fresh template consumer smoke test passed with source bootstrap ${sourceBootstrapSha.slice(0, 12)} removed and optional release publishers removable.`,
   )
 } finally {
   if (keepWorkspace) console.log(`Template consumer retained at ${consumerRoot}`)
