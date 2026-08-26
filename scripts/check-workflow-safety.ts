@@ -134,36 +134,26 @@ requireText(
   `if: always() && (github.event_name != 'pull_request' || ${sameRepository})`,
   'browser reports must not be uploaded from fork pull requests.',
 )
+requireText(ciPath, ci, 'fetch-depth: 0', 'the pull-request history guard must receive complete Git history.')
 requireText(
   ciPath,
   ci,
-  'fetch-depth: 0',
-  'the pull-request history guard must receive complete Git history.',
-)
-requireText(
-  ciPath,
-  ci,
-  'SECRET_GUARD_BASE: ${{ github.event.pull_request.base.sha }}',
+  'github.event.pull_request.base.sha',
   'the pull-request history guard must start from the exact base SHA.',
 )
 requireText(
   ciPath,
   ci,
-  'SECRET_GUARD_HEAD: ${{ github.event.pull_request.head.sha }}',
+  'github.event.pull_request.head.sha',
   'the pull-request history guard must scan the exact head SHA.',
 )
 requireText(
   ciPath,
   ci,
-  'SECRET_GUARD_BASE: ${{ github.event.before }}',
+  'github.event.before',
   'the push history guard must start from the previous main SHA.',
 )
-requireText(
-  ciPath,
-  ci,
-  'SECRET_GUARD_HEAD: ${{ github.sha }}',
-  'the push history guard must scan the pushed SHA.',
-)
+requireText(ciPath, ci, 'github.sha', 'the push history guard must scan the pushed SHA.')
 const historyCommand = 'bun run security:history "$SECRET_GUARD_BASE" "$SECRET_GUARD_HEAD"'
 if (ci.split(historyCommand).length - 1 < 2) {
   errors.push(

@@ -1,5 +1,5 @@
-import { gitText, isZeroOid, repositoryRoot, verifySecretlintCanary } from './secret-guard'
 import { scanCommitHistory } from './git-history-secret-scan'
+import { gitText, isZeroOid, repositoryRoot, verifySecretlintCanary } from './secret-guard'
 
 const [baseRevision, headRevision] = process.argv.slice(2)
 if (!baseRevision || !headRevision) {

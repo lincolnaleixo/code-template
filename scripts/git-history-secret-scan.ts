@@ -6,10 +6,7 @@ export interface HistorySecretScanResult {
   scannedBlobCount: number
 }
 
-export function scanCommitHistory(
-  root: string,
-  commits: Iterable<string>,
-): HistorySecretScanResult {
+export function scanCommitHistory(root: string, commits: Iterable<string>): HistorySecretScanResult {
   const uniqueCommits = [...new Set(commits)]
   const scannedBlobs = new Set<string>()
   let failed = false
