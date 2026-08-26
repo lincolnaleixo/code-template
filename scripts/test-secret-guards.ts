@@ -10,6 +10,7 @@ const temporaryRoot = await mkdtemp(join(tmpdir(), 'matrix-secret-guards-'))
 const repositoryRoot = join(temporaryRoot, 'repository')
 const remoteRoot = join(temporaryRoot, 'remote.git')
 const commitMessageGuard = join(sourceRoot, 'scripts', 'check-commit-message-secrets.ts')
+const historyGuard = join(sourceRoot, 'scripts', 'check-history-secrets.ts')
 const stagedGuard = join(sourceRoot, 'scripts', 'check-staged-secrets.ts')
 const pushGuard = join(sourceRoot, 'scripts', 'check-push-secrets.ts')
 const trackedGuard = join(sourceRoot, 'scripts', 'check-tracked-secrets.ts')
@@ -182,6 +183,19 @@ try {
   git(['rm', '--cached', 'invalid-utf8.bin'])
   await rm(join(repositoryRoot, 'invalid-utf8.bin'))
 
+  const lateBinary = new Uint8Array(64 * 1024 + 1)
+  lateBinary.fill(0x61, 0, lateBinary.byteLength - 1)
+  lateBinary[lateBinary.byteLength - 1] = 0
+  await writeFile(join(repositoryRoot, 'late-binary.txt'), lateBinary)
+  git(['add', 'late-binary.txt'])
+  expectStatus(
+    execute(process.execPath, [stagedGuard], repositoryRoot),
+    1,
+    'binary content after the first 64 KiB scan',
+  )
+  git(['rm', '--cached', 'late-binary.txt'])
+  await rm(join(repositoryRoot, 'late-binary.txt'))
+
   await mkdir(join(repositoryRoot, 'certificates'), { recursive: true })
   await writeFile(join(repositoryRoot, 'certificates', 'public.pem'), canarySecret())
   git(['add', 'certificates/public.pem'])
@@ -192,6 +206,19 @@ try {
   )
   git(['rm', '--cached', 'certificates/public.pem'])
   await rm(join(repositoryRoot, 'certificates'), { recursive: true })
+
+  await writeFile(join(repositoryRoot, 'intermediate-policy.bin'), new Uint8Array([0, 1, 2, 3]))
+  git(['add', 'intermediate-policy.bin'])
+  git(['commit', '-m', 'test: add unsafe intermediate binary'])
+  git(['rm', 'intermediate-policy.bin'])
+  git(['commit', '-m', 'test: remove unsafe intermediate binary'])
+  const unsafeHistoryOid = git(['rev-parse', 'HEAD'])
+  expectStatus(
+    execute(process.execPath, [historyGuard, remoteOid, unsafeHistoryOid], repositoryRoot),
+    1,
+    'intermediate commit policy scan',
+  )
+  git(['reset', '--hard', remoteOid])
 
   await writeFile(join(repositoryRoot, 'outgoing.txt'), canarySecret())
   git(['add', 'outgoing.txt'])
@@ -225,6 +252,11 @@ try {
     ),
     0,
     'safe outgoing commit scan',
+  )
+  expectStatus(
+    execute(process.execPath, [historyGuard, remoteOid, safeOutgoingOid], repositoryRoot),
+    0,
+    'safe commit history scan',
   )
   expectStatus(
     execute(
@@ -261,6 +293,15 @@ try {
     'annotated tag-message scan',
   )
 
+  git(['tag', '-a', 'v0.0.0-outer-canary', '-m', 'safe outer annotation', 'v0.0.0-canary'])
+  const outerTagOid = git(['rev-parse', 'refs/tags/v0.0.0-outer-canary'])
+  const outerTagInput = `refs/tags/v0.0.0-outer-canary ${outerTagOid} refs/tags/v0.0.0-outer-canary ${zeroOid}\n`
+  expectStatus(
+    execute(process.execPath, [pushGuard, 'origin', remoteRoot], repositoryRoot, outerTagInput),
+    1,
+    'nested annotated tag-message scan',
+  )
+
   expectStatus(
     execute(
       process.execPath,
@@ -272,7 +313,7 @@ try {
     'already-published range scan',
   )
 
-  console.log('Local commit-message, pre-commit, and pre-push secret guard behavior passed.')
+  console.log('Local commit-message, pre-commit, pre-push, and CI history secret guards passed.')
 } finally {
   await rm(temporaryRoot, { force: true, recursive: true })
 }

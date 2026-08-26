@@ -1,11 +1,11 @@
+import { scanCommitHistory } from './git-history-secret-scan'
 import {
+  annotatedTagChain,
   gitBytes,
   gitText,
   isZeroOid,
-  parseNullSeparated,
   repositoryRoot,
   scanSecretBlob,
-  treeBlobOid,
   verifySecretlintCanary,
 } from './secret-guard'
 
@@ -40,9 +40,8 @@ for (const [, localOid] of refUpdates) {
     continue
   }
 
-  const objectType = gitText(root, ['cat-file', '-t', localOid])
-  if (objectType === 'tag') {
-    annotatedTags.add(localOid)
+  for (const tagOid of annotatedTagChain(root, localOid)) {
+    annotatedTags.add(tagOid)
   }
 
   const revisionArgs = configuredRemotes.has(remoteName)
@@ -56,7 +55,6 @@ for (const [, localOid] of refUpdates) {
 }
 
 let failed = false
-const scannedBlobs = new Set<string>()
 
 for (const tagOid of annotatedTags) {
   const tagContent = gitBytes(root, ['cat-file', 'tag', tagOid])
@@ -65,43 +63,9 @@ for (const tagOid of annotatedTags) {
   }
 }
 
-for (const commit of commits) {
-  const commitMessage = gitBytes(root, ['show', '-s', '--format=%B', commit])
-  if (!scanSecretBlob(root, `.git-commit-message-${commit}.txt`, commitMessage)) {
-    failed = true
-  }
-
-  const changedPaths = new Set(
-    parseNullSeparated(
-      gitBytes(root, [
-        'diff-tree',
-        '--root',
-        '--no-commit-id',
-        '--name-only',
-        '-r',
-        '-m',
-        '-z',
-        '--diff-filter=ACMR',
-        commit,
-      ]),
-    ),
-  )
-
-  for (const path of changedPaths) {
-    const oid = treeBlobOid(root, commit, path)
-    if (!oid) {
-      continue
-    }
-    const blobKey = `${oid}\0${path}`
-    if (scannedBlobs.has(blobKey)) {
-      continue
-    }
-    scannedBlobs.add(blobKey)
-    const content = gitBytes(root, ['cat-file', 'blob', oid])
-    if (!scanSecretBlob(root, path, content)) {
-      failed = true
-    }
-  }
+const historyResult = scanCommitHistory(root, commits)
+if (historyResult.failed) {
+  failed = true
 }
 
 if (failed) {
@@ -111,5 +75,5 @@ if (failed) {
 }
 
 console.log(
-  `Pre-push secret guard passed for ${commits.size} outgoing commit(s), ${annotatedTags.size} annotated tag(s), and ${scannedBlobs.size} changed blob(s).`,
+  `Pre-push secret guard passed for ${historyResult.commitCount} outgoing commit(s), ${annotatedTags.size} annotated tag(s), and ${historyResult.scannedBlobCount} changed blob(s).`,
 )

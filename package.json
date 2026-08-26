@@ -99,6 +99,7 @@
     "generated:check": "bun run scripts/check-generated.ts",
     "security:audit": "bun audit --audit-level=high",
     "security:commit-message": "bun run scripts/check-commit-message-secrets.ts",
+    "security:history": "bun run scripts/check-history-secrets.ts",
     "security:hooks:verify": "bun run scripts/verify-git-hooks.ts",
     "security:policy": "bun run scripts/check-tracked-secret-policy.ts",
     "security:push": "bun run scripts/check-push-secrets.ts",

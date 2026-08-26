@@ -4,7 +4,6 @@ import { extname, resolve } from 'node:path'
 
 const MAX_PROCESS_OUTPUT_BYTES = 32 * 1024 * 1024
 const MAX_SCANNABLE_TEXT_BYTES = 8 * 1024 * 1024
-const MAX_BINARY_SNIFF_BYTES = 64 * 1024
 const MIN_PRINTABLE_STRING_LENGTH = 4
 const ZERO_OID_PATTERN = /^0+$/u
 const NULL_BYTE = 0
@@ -184,13 +183,12 @@ function containsBinaryControlCharacter(text: string): boolean {
 }
 
 export function isBinaryContent(content: Uint8Array): boolean {
-  const inspected = content.subarray(0, Math.min(content.byteLength, MAX_BINARY_SNIFF_BYTES))
-  if (inspected.includes(NULL_BYTE)) {
+  if (content.includes(NULL_BYTE)) {
     return true
   }
 
   try {
-    const text = strictUtf8Decoder.decode(inspected)
+    const text = strictUtf8Decoder.decode(content)
     return containsBinaryControlCharacter(text)
   } catch {
     return true
@@ -415,6 +413,29 @@ export function treeBlobOid(root: string, commit: string, fileName: string): str
     return undefined
   }
   return match[2]
+}
+
+export function annotatedTagChain(root: string, oid: string): string[] {
+  const tags: string[] = []
+  const visited = new Set<string>()
+  let current = oid
+
+  while (gitText(root, ['cat-file', '-t', current]) === 'tag') {
+    if (visited.has(current)) {
+      throw new Error(`Annotated tag chain contains a cycle at ${current}.`)
+    }
+    visited.add(current)
+    tags.push(current)
+
+    const tagContent = utf8Decoder.decode(gitBytes(root, ['cat-file', 'tag', current]))
+    const target = tagContent.match(/^object ([0-9a-f]+)(?:\r?\n|$)/u)?.[1]
+    if (!target) {
+      throw new Error(`Unable to resolve the target of annotated tag ${current}.`)
+    }
+    current = target
+  }
+
+  return tags
 }
 
 export function isZeroOid(oid: string): boolean {

@@ -27,7 +27,7 @@ Release Please owns `CHANGELOG.md`, `version.txt`, `.release-please-manifest.jso
 
 The commit-message hook:
 
-- strips Git comment lines before scanning
+- scans the complete commit-message file, including lines beginning with `#`, because Git can preserve them with verbatim cleanup
 - rejects credentials pasted into a message before the commit is created
 - uses the same fail-closed Secretlint canaries as the file guards
 
@@ -42,8 +42,8 @@ The pre-commit hook:
 The pre-push hook:
 
 - reads the ref updates supplied by Git
-- scans annotated tags, commit messages, and every unique changed blob in commits that are not already on the remote
-- catches secrets that were added in an intermediate commit and removed later
+- scans every object in annotated-tag chains, commit messages, and every unique changed blob in commits that are not already on the remote
+- catches secrets or unsafe payloads that were added in an intermediate commit and removed later
 - runs `bun run check` after the outgoing-history scan passes
 
 Run the guards directly when diagnosing them:
@@ -54,9 +54,10 @@ bun run security:secrets:verify
 bun run security:policy
 bun run security:secrets
 bun run security:staged
+bun run security:history <base-commit> <head-commit>
 ```
 
-CI applies the high-risk path, text-size, binary-signature, and binary-metadata policy to every tracked blob. It then runs Secretlint across tracked text. Existing Gitleaks, Trivy, dependency-review, and CodeQL checks remain independent remote controls.
+CI scans every pull-request commit message and every changed blob with the same high-risk path, text-size, binary-signature, and binary-metadata policy. It then repeats the policy against the final tracked tree and runs Secretlint across every tracked text path. Existing Gitleaks, Trivy, dependency-review, and CodeQL checks remain independent remote controls.
 
 A hook can be deliberately bypassed with Git's `--no-verify` behavior or by disabling Husky. Treat bypass as an exceptional local action, record why it was necessary, and never use it to merge around a failing CI check. False positives must be handled with a narrow, documented rule allowance rather than a broad ignored path.
 
