@@ -15,7 +15,7 @@ let failed = false
 let scannedFiles = 0
 
 for (const path of trackedPaths) {
-  const oid = treeBlobOid(root, 'HEAD', path)
+  const oid = treeBlobOid(root, 'HEAD', `:(literal)${path}`)
   if (!oid) {
     console.error(`Secret policy could not resolve a tracked blob at HEAD: ${path}`)
     failed = true
