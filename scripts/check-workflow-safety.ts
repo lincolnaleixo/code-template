@@ -23,8 +23,8 @@ function discoverAutomationPaths(): string[] {
       '--',
       ':(glob).github/workflows/*.yml',
       ':(glob).github/workflows/*.yaml',
-      ':(glob).github/actions/**/action.yml',
-      ':(glob).github/actions/**/action.yaml',
+      ':(glob)**/action.yml',
+      ':(glob)**/action.yaml',
     ],
     { encoding: 'utf8' },
   )
