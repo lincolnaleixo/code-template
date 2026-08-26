@@ -47,6 +47,7 @@ jobs:
           SECRET_GUARD_HEAD: ${{ github.sha }}
         run: bun run security:history "$SECRET_GUARD_BASE" "$SECRET_GUARD_HEAD"
       - run: bun run test:secret-guards
+      - run: bun run scripts/test-secret-guard-git-edge-cases.ts
       - run: bun run security:policy
       - run: bun run security:secrets
       - run: bun run template:validate
