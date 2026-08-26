@@ -1,12 +1,13 @@
 import { spawnSync } from 'node:child_process'
+import { templateFeatures } from '../template.config'
 
 const requiredWorkflowPaths = [
   '.github/workflows/ci.yml',
   '.github/workflows/preview-images.yml',
-  '.github/workflows/release-containers.yml',
-  '.github/workflows/release-native.yml',
   '.github/workflows/release-please.yml',
   '.github/workflows/security.yml',
+  ...(templateFeatures.containerReleases ? ['.github/workflows/release-containers.yml'] : []),
+  ...(templateFeatures.nativeReleases ? ['.github/workflows/release-native.yml'] : []),
 ]
 
 function discoverAutomationPaths(): string[] {
@@ -136,68 +137,72 @@ requireText(
 )
 
 const nativePath = '.github/workflows/release-native.yml'
-const native = workflows.get(nativePath) ?? ''
-const nativeArtifactGuard = `if: github.event_name != 'pull_request' || ${sameRepository}`
-const nativeArtifactGuardCount = native.split(nativeArtifactGuard).length - 1
-if (nativeArtifactGuardCount < 3) {
-  errors.push(
-    `${nativePath}: desktop, Android, and iOS artifact retention must all reject fork pull requests.`,
+if (templateFeatures.nativeReleases) {
+  const native = workflows.get(nativePath) ?? ''
+  const nativeArtifactGuard = `if: github.event_name != 'pull_request' || ${sameRepository}`
+  const nativeArtifactGuardCount = native.split(nativeArtifactGuard).length - 1
+  if (nativeArtifactGuardCount < 3) {
+    errors.push(
+      `${nativePath}: desktop, Android, and iOS artifact retention must all reject fork pull requests.`,
+    )
+  }
+  if (/\$\{\{\s*vars\./u.test(native)) {
+    errors.push(`${nativePath}: untrusted native pull requests must not read repository variables.`)
+  }
+  if (/\bpublish\s*:/u.test(dispatchSection(native))) {
+    errors.push(`${nativePath}: workflow_dispatch must not expose a publication input.`)
+  }
+  requireText(
+    nativePath,
+    native,
+    'if: inputs.publish == true',
+    'release attachment must require internal publication authorization.',
+  )
+  requireText(
+    nativePath,
+    native,
+    'gh release view "$RELEASE_TAG"',
+    'native publication must require an existing GitHub Release.',
+  )
+  requireText(
+    nativePath,
+    native,
+    'test "$(git rev-list -n 1 "$RELEASE_TAG")" = "$(git rev-parse HEAD)"',
+    'native publication must verify that the release tag matches the checked-out source.',
   )
 }
-if (/\$\{\{\s*vars\./u.test(native)) {
-  errors.push(`${nativePath}: untrusted native pull requests must not read repository variables.`)
-}
-if (/\bpublish\s*:/u.test(dispatchSection(native))) {
-  errors.push(`${nativePath}: workflow_dispatch must not expose a publication input.`)
-}
-requireText(
-  nativePath,
-  native,
-  'if: inputs.publish == true',
-  'release attachment must require internal publication authorization.',
-)
-requireText(
-  nativePath,
-  native,
-  'gh release view "$RELEASE_TAG"',
-  'native publication must require an existing GitHub Release.',
-)
-requireText(
-  nativePath,
-  native,
-  'test "$(git rev-list -n 1 "$RELEASE_TAG")" = "$(git rev-parse HEAD)"',
-  'native publication must verify that the release tag matches the checked-out source.',
-)
 
 const containersPath = '.github/workflows/release-containers.yml'
-const containers = workflows.get(containersPath) ?? ''
-if (/\bpublish\s*:/u.test(dispatchSection(containers))) {
-  errors.push(`${containersPath}: workflow_dispatch must not expose a publication input.`)
+if (templateFeatures.containerReleases) {
+  const containers = workflows.get(containersPath) ?? ''
+  if (/\bpublish\s*:/u.test(dispatchSection(containers))) {
+    errors.push(`${containersPath}: workflow_dispatch must not expose a publication input.`)
+  }
+  requireText(
+    containersPath,
+    containers,
+    'if: inputs.publish == true',
+    'container publication must require internal publication authorization.',
+  )
+  requireText(
+    containersPath,
+    containers,
+    'push: false',
+    'manual container execution must build without publishing.',
+  )
+  requireText(
+    containersPath,
+    containers,
+    'gh release view "$RELEASE_TAG"',
+    'container publication must require an existing GitHub Release.',
+  )
+  requireText(
+    containersPath,
+    containers,
+    'test "$(git rev-list -n 1 "$RELEASE_TAG")" = "$(git rev-parse HEAD)"',
+    'container publication must verify that the release tag matches the checked-out source.',
+  )
 }
-requireText(
-  containersPath,
-  containers,
-  'if: inputs.publish == true',
-  'container publication must require internal publication authorization.',
-)
-requireText(
-  containersPath,
-  containers,
-  'push: false',
-  'manual container execution must build without publishing.',
-)
-requireText(
-  containersPath,
-  containers,
-  'gh release view "$RELEASE_TAG"',
-  'container publication must require an existing GitHub Release.',
-)
-requireText(
-  containersPath,
-  containers,
-  'test "$(git rev-list -n 1 "$RELEASE_TAG")" = "$(git rev-parse HEAD)"',
-  'container publication must verify that the release tag matches the checked-out source.',
-)
 
 const releasePath = '.github/workflows/release-please.yml'
 const release = workflows.get(releasePath) ?? ''
@@ -220,8 +225,11 @@ if (/secrets\.GITHUB_TOKEN|github\.token/u.test(release)) {
   errors.push(`${releasePath}: the release orchestrator must not fall back to the automatic GitHub token.`)
 }
 const releaseCreatedGuard = "needs.release-please.outputs.release_created == 'true'"
-if (release.split(releaseCreatedGuard).length - 1 < 2) {
-  errors.push(`${releasePath}: every publisher must require Release Please to report a created release.`)
+const expectedPublisherCount =
+  Number(templateFeatures.containerReleases) + Number(templateFeatures.nativeReleases)
+const releaseCreatedGuardCount = release.split(releaseCreatedGuard).length - 1
+if (releaseCreatedGuardCount < expectedPublisherCount) {
+  errors.push(`${releasePath}: every enabled publisher must require Release Please to report a created release.`)
 }
 requireText(
   releasePath,
