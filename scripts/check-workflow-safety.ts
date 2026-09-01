@@ -1,6 +1,9 @@
 import { spawnSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
+import { YAML } from 'bun'
 import { templateFeatures } from '../template.config'
+
+type YamlRecord = Record<string, unknown>
 
 const requiredWorkflowPaths = [
   '.github/workflows/ci.yml',
@@ -44,9 +47,69 @@ function discoverAutomationPaths(): string[] {
   ].sort()
 }
 
+function isRecord(value: unknown): value is YamlRecord {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function visitYaml(
+  value: unknown,
+  visitor: (key: string, child: unknown) => void,
+  visited = new WeakSet<object>(),
+): void {
+  if (typeof value !== 'object' || value === null) return
+  if (visited.has(value)) return
+  visited.add(value)
+
+  if (Array.isArray(value)) {
+    for (const child of value) visitYaml(child, visitor, visited)
+    return
+  }
+
+  for (const [key, child] of Object.entries(value)) {
+    visitor(key, child)
+    visitYaml(child, visitor, visited)
+  }
+}
+
+function hasOwn(record: YamlRecord, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(record, key)
+}
+
+function triggerConfiguration(root: YamlRecord, trigger: string): unknown {
+  const on = root.on
+  if (typeof on === 'string') return on === trigger ? true : undefined
+  if (Array.isArray(on)) return on.includes(trigger) ? true : undefined
+  if (!isRecord(on)) return undefined
+  return hasOwn(on, trigger) ? on[trigger] : undefined
+}
+
+function hasTrigger(root: YamlRecord, trigger: string): boolean {
+  return triggerConfiguration(root, trigger) !== undefined
+}
+
+function hasWorkflowDispatchPublishInput(root: YamlRecord): boolean {
+  const dispatch = triggerConfiguration(root, 'workflow_dispatch')
+  if (!isRecord(dispatch)) return false
+  const inputs = dispatch.inputs
+  return isRecord(inputs) && hasOwn(inputs, 'publish')
+}
+
+function referencesSelfHosted(value: unknown): boolean {
+  if (typeof value === 'string') return value.toLowerCase() === 'self-hosted'
+  return Array.isArray(value) && value.some((entry) => referencesSelfHosted(entry))
+}
+
+function validatesExternalActionReference(reference: string): boolean {
+  if (reference.startsWith('./')) return true
+  const separator = reference.lastIndexOf('@')
+  const revision = separator >= 0 ? reference.slice(separator + 1) : ''
+  return /^[0-9a-f]{40}$/iu.test(revision)
+}
+
 const errors: string[] = []
 const automationPaths = discoverAutomationPaths()
 const workflows = new Map<string, string>()
+const documents = new Map<string, YamlRecord>()
 
 for (const path of requiredWorkflowPaths) {
   if (!automationPaths.includes(path)) {
@@ -58,7 +121,20 @@ if (automationPaths.length === 0) {
 }
 
 for (const path of automationPaths) {
-  workflows.set(path, await Bun.file(path).text())
+  const text = await Bun.file(path).text()
+  workflows.set(path, text)
+
+  try {
+    const parsed = YAML.parse(text)
+    if (!isRecord(parsed)) {
+      errors.push(`${path}: GitHub automation YAML must contain one top-level mapping.`)
+      continue
+    }
+    documents.set(path, parsed)
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error)
+    errors.push(`${path}: invalid YAML: ${detail}`)
+  }
 }
 
 function requireText(path: string, text: string, expected: string, reason: string): void {
@@ -67,57 +143,56 @@ function requireText(path: string, text: string, expected: string, reason: strin
   }
 }
 
-function headerBeforeJobs(text: string): string {
-  const jobsIndex = text.indexOf('\njobs:')
-  return jobsIndex >= 0 ? text.slice(0, jobsIndex) : text
-}
+for (const [path, document] of documents) {
+  const actionReferences = new Set<string>()
+  let pullRequestTarget = false
+  let writeAll = false
+  let inheritsSecrets = false
+  let continuesOnError = false
+  let selfHosted = false
 
-function dispatchSection(text: string): string {
-  const start = text.indexOf('  workflow_dispatch:')
-  if (start < 0) return ''
-  const end = text.indexOf('\npermissions:', start)
-  return end >= 0 ? text.slice(start, end) : text.slice(start)
-}
+  visitYaml(document, (key, value) => {
+    if (key === 'pull_request_target') pullRequestTarget = true
+    if (key === 'permissions' && value === 'write-all') writeAll = true
+    if (key === 'secrets' && value === 'inherit') inheritsSecrets = true
+    if (key === 'continue-on-error' && value === true) continuesOnError = true
+    if (key === 'runs-on' && referencesSelfHosted(value)) selfHosted = true
+    if (key === 'uses') {
+      if (typeof value === 'string') actionReferences.add(value)
+      else errors.push(`${path}: every uses value must be a string.`)
+    }
+  })
 
-for (const [path, text] of workflows) {
-  if (/\bpull_request_target\s*:/u.test(text)) {
+  if (pullRequestTarget) {
     errors.push(
       `${path}: pull_request_target is forbidden because it can expose privileged context to fork code.`,
     )
   }
-  if (/permissions:\s*write-all/u.test(text)) {
-    errors.push(`${path}: write-all permissions are forbidden.`)
-  }
-  if (/\bsecrets:\s*inherit\b/u.test(text)) {
+  if (writeAll) errors.push(`${path}: write-all permissions are forbidden.`)
+  if (inheritsSecrets) {
     errors.push(`${path}: reusable workflows must not inherit every repository secret.`)
   }
-  if (/continue-on-error:\s*true/u.test(text)) {
+  if (continuesOnError) {
     errors.push(`${path}: required security and delivery checks must not continue after errors.`)
   }
-  if (/runs-on:\s*(?:self-hosted|\[[^\]\n]*self-hosted)/iu.test(text)) {
+  if (selfHosted) {
     errors.push(`${path}: the public template baseline must use explicit GitHub-hosted runner images.`)
   }
 
-  for (const match of text.matchAll(/^\s*(?:-\s+)?uses:\s+([^\s#]+)/gmu)) {
-    const reference = match[1]
-    if (!reference || reference.startsWith('./')) continue
-
-    const separator = reference.lastIndexOf('@')
-    const revision = separator >= 0 ? reference.slice(separator + 1) : ''
-    if (!/^[0-9a-f]{40}$/iu.test(revision)) {
+  for (const reference of actionReferences) {
+    if (!validatesExternalActionReference(reference)) {
       errors.push(`${path}: external action ${reference} must be pinned to a full commit SHA.`)
     }
   }
 
-  const header = headerBeforeJobs(text)
-  if (
-    /\b(?:actions|checks|contents|deployments|id-token|issues|packages|pull-requests|security-events|statuses):\s*write\b/u.test(
-      header,
-    )
-  ) {
-    errors.push(
-      `${path}: workflow-level permissions must remain read-only; grant writes only to the narrow job that needs them.`,
-    )
+  const workflowPermissions = document.permissions
+  if (isRecord(workflowPermissions)) {
+    const writablePermission = Object.entries(workflowPermissions).find(([, value]) => value === 'write')
+    if (writablePermission) {
+      errors.push(
+        `${path}: workflow-level permission ${writablePermission[0]} must remain read-only; grant writes only to the narrow job that needs them.`,
+      )
+    }
   }
 }
 
@@ -154,6 +229,7 @@ if (templateFeatures.endToEndTests) {
 const nativePath = '.github/workflows/release-native.yml'
 if (templateFeatures.nativeReleases) {
   const native = workflows.get(nativePath) ?? ''
+  const nativeDocument = documents.get(nativePath)
   const nativeArtifactGuard = `if: github.event_name != 'pull_request' || ${sameRepository}`
   const nativeArtifactGuardCount = native.split(nativeArtifactGuard).length - 1
   if (nativeArtifactGuardCount < 3) {
@@ -164,7 +240,7 @@ if (templateFeatures.nativeReleases) {
   if (/\$\{\{\s*vars\./u.test(native)) {
     errors.push(`${nativePath}: untrusted native pull requests must not read repository variables.`)
   }
-  if (/\bpublish\s*:/u.test(dispatchSection(native))) {
+  if (nativeDocument && hasWorkflowDispatchPublishInput(nativeDocument)) {
     errors.push(`${nativePath}: workflow_dispatch must not expose a publication input.`)
   }
   requireText(
@@ -190,7 +266,8 @@ if (templateFeatures.nativeReleases) {
 const containersPath = '.github/workflows/release-containers.yml'
 if (templateFeatures.containerReleases) {
   const containers = workflows.get(containersPath) ?? ''
-  if (/\bpublish\s*:/u.test(dispatchSection(containers))) {
+  const containersDocument = documents.get(containersPath)
+  if (containersDocument && hasWorkflowDispatchPublishInput(containersDocument)) {
     errors.push(`${containersPath}: workflow_dispatch must not expose a publication input.`)
   }
   requireText(
@@ -221,7 +298,8 @@ if (templateFeatures.containerReleases) {
 
 const releasePath = '.github/workflows/release-please.yml'
 const release = workflows.get(releasePath) ?? ''
-if (/\bworkflow_dispatch\s*:/u.test(release)) {
+const releaseDocument = documents.get(releasePath)
+if (releaseDocument && hasTrigger(releaseDocument, 'workflow_dispatch')) {
   errors.push(`${releasePath}: the official release orchestrator must not be manually dispatchable.`)
 }
 requireText(
