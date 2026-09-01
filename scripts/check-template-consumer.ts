@@ -205,7 +205,7 @@ try {
   const untrackedUnsafeComposite = join(consumerRoot, 'apps', 'web', 'action.yml')
   await writeFile(
     untrackedUnsafeComposite,
-    'name: unsafe composite\ndescription: mutable action canary\nruns:\n  using: composite\n  steps:\n    - uses: actions/checkout@v6\n',
+    'name: unsafe flow composite\ndescription: mutable action canary\nruns: { using: composite, steps: [{ uses: actions/checkout@v6 }] }\n',
   )
   await expectFailure(['bun', 'run', 'workflow:safety'])
   await rm(untrackedUnsafeComposite)
