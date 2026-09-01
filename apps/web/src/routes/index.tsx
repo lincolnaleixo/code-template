@@ -9,6 +9,7 @@ import {
   BuildingIcon,
   Button,
   Card,
+  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
@@ -29,6 +30,7 @@ import {
   SparklesIcon,
   StatCard,
   Tabs,
+  TabsContent,
   TabsList,
   TabsTrigger,
   ThemeToggle,
@@ -127,6 +129,62 @@ function AuthPanel() {
     authenticate.mutate()
   }
 
+  const authForm = (
+    <form className="space-y-4" onSubmit={submit}>
+      {mode === 'sign-up' && (
+        <FormField htmlFor="auth-name" label="Name">
+          <Input
+            autoComplete="name"
+            id="auth-name"
+            minLength={2}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Ada Lovelace"
+            required
+            value={name}
+          />
+        </FormField>
+      )}
+
+      <FormField htmlFor="auth-email" label="Email">
+        <Input
+          autoComplete="email"
+          id="auth-email"
+          onChange={(event) => setEmail(event.target.value)}
+          placeholder="ada@example.com"
+          required
+          type="email"
+          value={email}
+        />
+      </FormField>
+
+      <FormField
+        description={mode === 'sign-up' ? 'Use at least 12 characters.' : undefined}
+        htmlFor="auth-password"
+        label="Password"
+      >
+        <Input
+          autoComplete={mode === 'sign-up' ? 'new-password' : 'current-password'}
+          id="auth-password"
+          minLength={12}
+          onChange={(event) => setPassword(event.target.value)}
+          required
+          type="password"
+          value={password}
+        />
+      </FormField>
+
+      {errorMessage && (
+        <Alert variant="destructive">
+          <AlertDescription>{errorMessage}</AlertDescription>
+        </Alert>
+      )}
+
+      <Button className="w-full" disabled={authenticate.isPending} type="submit">
+        {authenticate.isPending ? 'Working...' : mode === 'sign-up' ? 'Create account' : 'Sign in'}
+      </Button>
+    </form>
+  )
+
   return (
     <div className="relative min-h-dvh overflow-hidden bg-background">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[34rem] bg-[radial-gradient(circle_at_top_left,color-mix(in_oklab,var(--primary)_16%,transparent),transparent_56%)]" />
@@ -152,13 +210,16 @@ function AuthPanel() {
             One TypeScript product across web, API, mobile and desktop.
           </h1>
           <p className="mt-6 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg sm:leading-8">
-            A clean product foundation with typed contracts, secure identity, replaceable infrastructure,
-            and a design system that adapts through semantic tokens.
+            A clean product foundation with typed contracts, secure identity, replaceable infrastructure, and
+            a design system that adapts through semantic tokens.
           </p>
 
           <div className="mt-8 grid gap-3 sm:grid-cols-2">
             {productCapabilities.map((capability) => (
-              <div className="flex items-start gap-3 rounded-xl border bg-card/70 p-4 shadow-xs backdrop-blur" key={capability}>
+              <div
+                className="flex items-start gap-3 rounded-xl border bg-card/70 p-4 shadow-xs backdrop-blur"
+                key={capability}
+              >
                 <div className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
                   <ArrowRightIcon className="size-3.5" />
                 </div>
@@ -181,61 +242,9 @@ function AuthPanel() {
                 <TabsTrigger value="sign-up">Create account</TabsTrigger>
                 <TabsTrigger value="sign-in">Sign in</TabsTrigger>
               </TabsList>
+              <TabsContent value="sign-up">{mode === 'sign-up' && authForm}</TabsContent>
+              <TabsContent value="sign-in">{mode === 'sign-in' && authForm}</TabsContent>
             </Tabs>
-
-            <form className="mt-5 space-y-4" onSubmit={submit}>
-              {mode === 'sign-up' && (
-                <FormField htmlFor="auth-name" label="Name">
-                  <Input
-                    autoComplete="name"
-                    id="auth-name"
-                    minLength={2}
-                    onChange={(event) => setName(event.target.value)}
-                    placeholder="Ada Lovelace"
-                    required
-                    value={name}
-                  />
-                </FormField>
-              )}
-
-              <FormField htmlFor="auth-email" label="Email">
-                <Input
-                  autoComplete="email"
-                  id="auth-email"
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder="ada@example.com"
-                  required
-                  type="email"
-                  value={email}
-                />
-              </FormField>
-
-              <FormField
-                description={mode === 'sign-up' ? 'Use at least 12 characters.' : undefined}
-                htmlFor="auth-password"
-                label="Password"
-              >
-                <Input
-                  autoComplete={mode === 'sign-up' ? 'new-password' : 'current-password'}
-                  id="auth-password"
-                  minLength={12}
-                  onChange={(event) => setPassword(event.target.value)}
-                  required
-                  type="password"
-                  value={password}
-                />
-              </FormField>
-
-              {errorMessage && (
-                <Alert variant="destructive">
-                  <AlertDescription>{errorMessage}</AlertDescription>
-                </Alert>
-              )}
-
-              <Button className="w-full" disabled={authenticate.isPending} type="submit">
-                {authenticate.isPending ? 'Working...' : mode === 'sign-up' ? 'Create account' : 'Sign in'}
-              </Button>
-            </form>
           </CardContent>
         </Card>
       </main>
@@ -369,7 +378,13 @@ function Workspace() {
             value={organizationName}
           />
         </FormField>
-        <Button className="w-full" disabled={createOrganization.isPending} size="sm" type="submit" variant="secondary">
+        <Button
+          className="w-full"
+          disabled={createOrganization.isPending}
+          size="sm"
+          type="submit"
+          variant="secondary"
+        >
           <PlusIcon className="size-3.5" />
           {createOrganization.isPending ? 'Creating...' : 'Create organization'}
         </Button>
@@ -475,7 +490,9 @@ function Workspace() {
               <div className="mb-4 flex items-center justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-semibold tracking-tight">Projects</h2>
-                  <p className="text-sm text-muted-foreground">A clean card grid ready for real product data.</p>
+                  <p className="text-sm text-muted-foreground">
+                    A clean card grid ready for real product data.
+                  </p>
                 </div>
                 <Badge variant="secondary">{projects.data?.length ?? 0} total</Badge>
               </div>
@@ -500,15 +517,16 @@ function Workspace() {
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {projects.data?.map((item) => (
-                    <Card className="group transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-md" key={item.id}>
+                    <Card
+                      className="group transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-md"
+                      key={item.id}
+                    >
                       <CardHeader>
                         <div className="mb-3 grid size-10 place-items-center rounded-lg bg-primary/10 text-primary">
                           <FolderIcon className="size-5" />
                         </div>
                         <CardTitle>{item.name}</CardTitle>
-                        <CardDescription>
-                          Created {new Date(item.createdAt).toLocaleString()}
-                        </CardDescription>
+                        <CardDescription>Created {new Date(item.createdAt).toLocaleString()}</CardDescription>
                       </CardHeader>
                     </Card>
                   ))}

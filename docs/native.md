@@ -11,6 +11,12 @@ bun run build:native
 
 Native clients cannot use the browser same-origin proxy. `VITE_API_URL` must be an externally reachable HTTPS API endpoint for production builds.
 
+The native build writes the prerendered static shell to `apps/web/.output/public`.
+Tauri packages that directory through `frontendDist`; do not point it at the
+browser-only `dist/client` output. Desktop bundle icons are generated from
+`apps/desktop/src-tauri/icons/icon.svg` and checked in so hosted release builds
+do not depend on local product assets.
+
 ## Capacitor
 
 Initial setup:

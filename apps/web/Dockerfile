@@ -28,17 +28,15 @@ ENV VITE_APP_NAME=${VITE_APP_NAME}
 
 RUN bun run build:web
 
-FROM dependencies AS production-dependencies
-RUN rm -rf node_modules && bun ci --production
-
 FROM oven/bun:1.3.14-alpine AS runtime
 WORKDIR /app
+
+RUN apk upgrade --no-cache
 
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=3000
 
-COPY --from=production-dependencies --chown=bun:bun /app/node_modules ./node_modules
 COPY --from=build --chown=bun:bun /app/apps/web/.output ./apps/web/.output
 
 USER bun

@@ -47,6 +47,9 @@ export function Sheet({
       onClick={(event) => {
         if (event.target === event.currentTarget) onOpenChange(false)
       }}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') onOpenChange(false)
+      }}
       ref={ref}
     >
       <section
@@ -59,9 +62,7 @@ export function Sheet({
         <header className="flex items-start justify-between gap-4 border-b p-5">
           <div className="space-y-1">
             <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
-            {description && (
-              <div className="text-sm leading-6 text-muted-foreground">{description}</div>
-            )}
+            {description && <div className="text-sm leading-6 text-muted-foreground">{description}</div>}
           </div>
           <Button
             aria-label="Close panel"

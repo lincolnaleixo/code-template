@@ -3,6 +3,9 @@
 
 # Keep high-risk surfaces explicit for review and future team delegation.
 /.github/ @lincolnaleixo
+/.husky/ @lincolnaleixo
+/.secretlintignore @lincolnaleixo
+/.secretlintrc.json @lincolnaleixo
 /apps/ @lincolnaleixo
 /packages/ @lincolnaleixo
 /scripts/ @lincolnaleixo

@@ -1,9 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended",
-    "helpers:pinGitHubActionDigests"
-  ],
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
   "rangeStrategy": "pin",
   "minimumReleaseAge": "3 days",
   "dependencyDashboard": true,
@@ -49,9 +46,5 @@
       "dependencyDashboardApproval": true
     }
   ],
-  "ignorePaths": [
-    "apps/mobile/android/**",
-    "apps/mobile/ios/**",
-    "apps/desktop/src-tauri/target/**"
-  ]
+  "ignorePaths": ["apps/mobile/android/**", "apps/mobile/ios/**", "apps/desktop/src-tauri/target/**"]
 }

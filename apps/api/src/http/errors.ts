@@ -1,4 +1,4 @@
-import { DomainError } from '@matrix/domain'
+import type { DomainError } from '@matrix/domain'
 
 export interface ApiErrorBody {
   error: {

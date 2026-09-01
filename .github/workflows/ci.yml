@@ -19,9 +19,11 @@ env:
 jobs:
   quality:
     name: Quality, schema drift and unit tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
           bun-version: ${{ env.BUN_VERSION }}
@@ -30,7 +32,26 @@ jobs:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
       - run: bun ci
+      - run: bun run security:hooks:verify
+      - run: bun run security:secrets:verify
+      - name: Scan every pull-request commit for secrets and unsafe blobs
+        if: github.event_name == 'pull_request'
+        env:
+          SECRET_GUARD_BASE: ${{ github.event.pull_request.base.sha }}
+          SECRET_GUARD_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: bun run security:history "$SECRET_GUARD_BASE" "$SECRET_GUARD_HEAD"
+      - name: Scan every pushed commit for secrets and unsafe blobs
+        if: github.event_name == 'push'
+        env:
+          SECRET_GUARD_BASE: ${{ github.event.before }}
+          SECRET_GUARD_HEAD: ${{ github.sha }}
+        run: bun run security:history "$SECRET_GUARD_BASE" "$SECRET_GUARD_HEAD"
+      - run: bun run test:secret-guards
+      - run: bun run scripts/test-secret-guard-git-edge-cases.ts
+      - run: bun run security:policy
+      - run: bun run security:secrets
       - run: bun run template:validate
+      - run: bun run workflow:safety
       - run: bun run docs:check
       - run: bun run lint:ci
       - run: bun run generated:check
@@ -40,7 +61,7 @@ jobs:
 
   build:
     name: Build web, API and native web bundle
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
@@ -59,7 +80,7 @@ jobs:
 
   consumer:
     name: Fresh template consumer smoke
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [quality, build]
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -74,7 +95,7 @@ jobs:
 
   integration:
     name: PostgreSQL authentication and authorization integration
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgres:17.11-alpine
@@ -114,7 +135,7 @@ jobs:
 
   e2e:
     name: Hardened Docker Compose E2E
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [quality, build, consumer, integration]
     env:
       E2E_BASE_URL: http://localhost:8080
@@ -135,7 +156,7 @@ jobs:
       - name: Wait for reverse proxy and database readiness
         shell: bash
         run: |
-          for attempt in $(seq 1 90); do
+          for _attempt in $(seq 1 90); do
             if curl --fail --silent http://localhost:8080/ready > /dev/null; then
               exit 0
             fi
@@ -153,7 +174,7 @@ jobs:
         if: failure()
         run: docker compose --profile full logs --no-color
       - name: Upload browser and accessibility reports
-        if: always()
+        if: always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: browser-reports
@@ -161,7 +182,7 @@ jobs:
             playwright-report
             test-results
           if-no-files-found: ignore
-          retention-days: 7
+          retention-days: 1
       - name: Stop the stack
         if: always()
         run: docker compose --profile full down -v --remove-orphans

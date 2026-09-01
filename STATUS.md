@@ -1,141 +1,140 @@
 # Current Status
 
-Last reviewed: 2026-08-23
+Last reviewed: 2026-08-25
 
-This file is the persistent handoff point for continuing work on `matrix-hq/code-template`.
+This file is the persistent handoff point for `lincolnaleixo/code-template`.
 
-## Baseline
+## Main baseline
 
-The latest completed repository-side baseline before this status document is:
-
-```text
-aa185b8bb8eb5fcec774f93c13e9fb413dc3ef6d
-```
-
-PR #7 completed the final quality and governance package. The template remains at version `0.3.0`; the next release work is intentionally kept under `Unreleased` until executable validation is complete.
-
-The detailed continuation checklist lives in GitHub issue #8:
+The current `main` commit is:
 
 ```text
-https://github.com/matrix-hq/code-template/issues/8
+314b58ec6ad0218b4942f46571a903054e113291
 ```
 
-## Completed
+The public template remains at version `0.3.0`. PR #10 contains the Release Please publication gate, explicit GitHub-hosted runners, public pull-request safety controls, repository governance updates, and fixes proven by executable platform builds. PR #12 is the separate stacked follow-up for local Git secret guards. Issue #8 is the completion checklist.
+
+## Completed foundation
 
 Do not redo these areas unless an executable failure proves a concrete defect:
 
-- production-oriented Bun and TypeScript monorepo architecture
+- Bun and TypeScript monorepo architecture
 - React and TanStack Start web application
 - Bun, Elysia, and Eden API
-- PostgreSQL and committed Drizzle migrations
+- PostgreSQL with committed Drizzle migrations
 - Better Auth, organizations, roles, browser cookies, native bearer sessions, and server-side authorization
 - S3-compatible storage with MinIO for local development
 - Docker Compose and Caddy topology
 - structured logging, request IDs, metrics, and optional OpenTelemetry
-- Capacitor and Tauri thin wrappers
-- repository-owned semantic OKLCH UI system
-- light, dark, and system themes plus compact and comfortable density
-- `/ui` and `/ui-advanced` playgrounds
-- shadcn monorepo configuration
-- KISS/YAGNI-focused engineering rules
-- README, contribution, bootstrap, customization, UI, licensing, governance, deployment, native, and release documentation
-- capability, dependency, UI, documentation-link, and synchronized-version validation
-- logger secret-redaction fix and regression tests
-- axe accessibility audit command
-- isolated fresh-template consumer smoke command
-- CODEOWNERS
-- explicit private `UNLICENSED` policy for the template
-- dry-run-first repository metadata and branch-protection commands
-- GitHub Template Repository setting
+- Capacitor and Tauri wrappers
+- repository-owned semantic UI system with light, dark, system, compact, and comfortable modes
+- Playwright authenticated lifecycle and axe accessibility audit
+- isolated fresh-template consumer smoke test
+- CODEOWNERS and dry-run-first repository governance commands
 
-## Intentionally pending
+## Public repository transition
 
-### 1. Runner routing
+Completed and verified:
 
-The organization already documents:
+- repository visibility is public
+- GitHub Template Repository status is enabled
+- repository description and topics are populated
+- squash merge is enabled while merge commits and rebase merge are disabled
+- merged branches are deleted automatically
+- root `private: true` prevents package-registry publication and does not control GitHub visibility
+- public source remains explicitly `UNLICENSED`
+- historical browser artifacts `9464035422` and `9464176353` are unavailable
+- current tree, reachable history, workflows, environment examples, known logs, issues, pull requests, and known artifacts were reviewed
+- no live credential, private key, customer data, production endpoint, signing material, or personal dataset was found
 
-```text
-runner-linux-01
-  [self-hosted, linux, x64, matrix]
+Historical Git author metadata remains reachable. It is not a credential. History was not rewritten because doing so would replace commit SHAs and invalidate bootstrap references.
 
-runner-macos-01
-  [self-hosted, matrix, macOS, ARM64]
-```
+## Branch governance
 
-The `code-template` workflows still request GitHub-hosted labels. Runner routing is intentionally deferred to a separate session.
-
-There is no shared Matrix Windows runner documented yet. Decide whether to add one or gate Windows validation until it exists.
-
-### 2. Full executable validation
-
-After runner routing is corrected, execute and record:
-
-```bash
-bun ci
-bun run check
-bun run build
-VITE_API_URL=https://api.example.com bun run build:native
-bun run test:integration
-bun run test:template-consumer
-bun run test:a11y
-bun run test:e2e
-```
-
-Also validate Docker images, full Compose readiness, PostgreSQL migrations from an empty database, auth integration, Playwright through Caddy, security scans, Tauri targets, Android, and iOS.
-
-### 3. Real GitHub template consumer proof
-
-Create a temporary repository with **Use this template**, follow `docs/project-bootstrap.md`, run the minimal product lifecycle, and confirm there are no hidden assumptions tied to the source repository.
-
-`bun run test:template-consumer` is useful but does not replace the real GitHub template-generation proof.
-
-### 4. Administrative GitHub settings
-
-Known current state:
+The public branch endpoint confirms that `main` is protected and requires the stable CI, Security, CodeQL, dependency review, container, browser, Android, iOS, Linux, macOS, and Windows checks listed below:
 
 ```text
-is_template: true
-description: empty
-topics: empty
-main branch protection: not yet applied or confirmed
+Audit, secrets and repository scan
+Build and scan OCI images
+Build web, API and native web bundle
+Capacitor Android
+Capacitor iOS simulator
+CodeQL
+Dependency review
+Fresh template consumer smoke
+Hardened Docker Compose E2E
+PostgreSQL authentication and authorization integration
+Quality, schema drift and unit tests
+Tauri macos-15
+Tauri ubuntu-24.04
+Tauri windows-2025
 ```
 
-Prepared commands:
+The connected GitHub App receives HTTP 403 from the full branch-protection endpoint. An administrator must still confirm that protection applies to administrators, force pushes and deletion are disabled, pull requests are required, and conversation resolution is enabled. Do not mark those fields complete solely from the public branch summary.
 
-```bash
-GITHUB_ADMIN_TOKEN=... bun run repo:metadata --apply
-GITHUB_ADMIN_TOKEN=... bun run repo:protect --apply
-```
+## PR #10 validation
 
-Apply required CI check names only after the final runner-backed check names are stable.
+PR #10 implements:
 
-### 5. Release 0.4.0
+- Release Please as the single release preparation and publication gate
+- Conventional Commits as the SemVer input
+- focused changelog categories
+- manual container and native workflows that are structurally verify-only
+- publisher checks requiring the canonical tag and an existing GitHub Release
+- one repository-level release concurrency gate
+- mandatory `RELEASE_PLEASE_TOKEN` with no `GITHUB_TOKEN` fallback
+- explicit `ubuntu-24.04`, `macos-15`, and `windows-2025` images
+- same-repository-only preview publication
+- no repository-variable reads from untrusted native pull requests
+- no browser-report or native-binary artifact uploads from fork pull requests
+- Playwright Git metadata capture disabled and one-day browser-report retention
 
-Do not publish `0.4.0` until retained platforms have executable evidence.
+Previous current-head evidence completed successfully for CI, PostgreSQL, consumer smoke, Docker Compose, Playwright, axe, Gitleaks, Trivy, dependency review, CodeQL, OCI scans, Tauri on three operating systems, Android, iOS, and preview image builds. Every new commit must rerun the same gates before merge.
 
-When validation is complete:
+## PR #12 validation
 
-```bash
-bun run version:set 0.4.0 --dry-run
-bun run version:set 0.4.0
-```
+PR #12 adds:
 
-Then move `Unreleased` entries into a dated `0.4.0` section, rerun release checks, create `v0.4.0`, verify artifacts, and repeat the fresh-template proof.
+- `commit-msg` secret scanning
+- exact staged-index scanning in `pre-commit`
+- outgoing commit, intermediate blob, commit-message, and annotated-tag scanning in `pre-push`
+- fail-closed Secretlint canaries
+- high-risk path, text-size, binary-signature, and printable binary-metadata policy
+- CI parity so local `--no-verify` does not remove the remote barrier
+- hook installation and behavior tests in temporary repositories
 
-## Resume order
+Its current stacked head has successful CI, Security, Native, and Preview runs. After PR #10 lands, retarget PR #12 to `main`, update it, verify its focused diff, rerun the suites, and merge it independently.
 
-When continuing in another session, use this order:
+## Remaining evidence
 
-1. read this file and issue #8
-2. fix runner routing only
-3. run minimal Linux and macOS probes
-4. run the full executable validation set
-5. fix only defects proven by those checks
-6. run the real GitHub template consumer proof
-7. apply repository metadata and branch protection
-8. publish `0.4.0`
-9. close issue #8
+Before merging PR #10:
+
+1. configure and prove that repository-scoped `RELEASE_PLEASE_TOKEN` exists without exposing its value
+2. confirm the full `main` protection fields through an administrative UI or token
+3. execute a real fork pull request and prove it receives no repository secrets, package-write path, release path, preview publication, or repository-hosted native binary upload
+4. create a temporary repository through GitHub **Use this template**
+5. follow `docs/project-bootstrap.md` in that generated repository
+6. remove or reseed the source-specific Release Please `bootstrap-sha`
+7. prove install, documentation, minimal web/API lifecycle, and source-independent identity
+8. delete or archive the temporary proof repository after recording evidence
+
+The connected GitHub integration can verify repository files, pull requests, workflow runs, public branch protection summaries, and required check names. It cannot enumerate or create Actions secrets, read the full protection payload, create a fork under another account, or create a new repository through the template endpoint.
+
+## Release sequence
+
+1. complete the remaining evidence
+2. mark PR #10 ready only while its current head is green
+3. squash-merge PR #10 with its Conventional Commit title
+4. confirm the `main` push runs Release Please using `RELEASE_PLEASE_TOKEN`
+5. retarget and finish PR #12 so the first release can include the local guards
+6. review the generated release pull request, synchronized versions, and changelog
+7. merge the release pull request only as explicit publication approval
+8. verify `v0.4.0`, the immutable tag, GitHub Release, GHCR images, SBOM, provenance, and native assets
+9. repeat the real template proof against the released tag
+10. close issue #8 only after all evidence is recorded
+
+Do not run `version:set`, create or move a tag manually, or publish artifacts from a manual workflow during the normal release path.
 
 ## Definition of done
 
-The template is ready for `0.4.0` when runner routing is intentional, all retained platform claims have executable evidence, the generated-consumer path is proven, GitHub governance is applied, and the release can be reproduced from its tag without overstating unsupported platforms.
+The template is complete when protected `main` contains PRs #10 and #12, all intended protection fields are administratively confirmed, fork safety and a real generated consumer are proven, Release Please has produced `v0.4.0`, all published artifacts are verified, and the post-release template proof passes.

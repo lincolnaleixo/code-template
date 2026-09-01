@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+
+bun run security:secrets:ignore
+bun run security:commit-message "$1"

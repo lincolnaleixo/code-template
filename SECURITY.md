@@ -4,7 +4,7 @@
 
 Do not disclose suspected vulnerabilities in public issues, discussions, pull requests, or chat channels.
 
-Use GitHub private vulnerability reporting when it is enabled for this repository. Otherwise, contact the organization maintainers through an approved private channel and include:
+Use GitHub private vulnerability reporting when it is enabled for this repository. Otherwise, contact the repository maintainers through an approved private channel and include:
 
 - affected component and version
 - impact and realistic attack scenario
@@ -28,9 +28,10 @@ The default workflows provide:
 
 - reproducible Bun installs from a committed lockfile
 - dependency audit
+- local staged-index, commit-message, and outgoing-history secret gates
+- dependency review and CodeQL on public repositories
 - secret scanning with Gitleaks
 - source, configuration, and container scanning with Trivy
-- CodeQL and dependency review when GitHub Advanced Security is available
 - non-root application containers with restricted capabilities
 - immutable database migrations
 - structured log redaction
@@ -38,6 +39,32 @@ The default workflows provide:
 - SBOM and provenance generation for released OCI images
 
 These controls are a baseline. Each generated project must complete its own threat model and adapt the controls to its data, users, jurisdictions, integrations, and deployment environment.
+
+## Local secret gates
+
+`bun ci` runs Husky's `prepare` script and installs repository-owned `commit-msg`, `pre-commit`, and `pre-push` hooks automatically. Verify the installation and scanner policy at any time with:
+
+```bash
+bun run security:hooks:verify
+bun run security:secrets:ignore
+bun run security:secrets:verify
+bun run security:history <base-commit> <head-commit>
+```
+
+The hooks use Secretlint with the repository policy in `.secretlintrc.json`:
+
+- `commit-msg` scans the complete message file, including lines beginning with `#` that Git may preserve under verbatim cleanup
+- `pre-commit` reads the exact blobs staged in the Git index, not unstaged worktree content
+- `pre-push` reads every outgoing commit, including intermediate add-then-remove commits, plus outgoing commit messages and every object in nested annotated-tag chains
+- high-risk credential paths such as non-template `.env*`, private key stores, credential directories, and Terraform state fail closed even when content scanning finds no provider token
+- unknown binary payloads and oversized text payloads fail closed because content scanners cannot inspect them reliably
+- reviewed image and font payloads are accepted only when their extension matches a known file signature, and printable binary metadata is still scanned for secrets
+- safe and secret canaries run before repository content so a missing, broken, or over-broad scanner blocks the operation instead of silently passing
+- `.secretlintignore` is locked to the exact reviewed image and font extension patterns, so a future broad path or additional extension cannot silently weaken local hooks or CI
+
+CI scans every pull-request commit message and every changed blob with the same path, size, binary-signature, and binary-metadata policy used by pre-push. It then repeats that policy against every blob in the final tracked tree and performs an exact Secretlint scan of every Git-tracked text path with Git ignore handling disabled. The image and font patterns skipped by the text batch remain covered by signature validation and printable-metadata scanning. Existing Gitleaks, Trivy, dependency-review, and CodeQL jobs remain independent remote barriers.
+
+Local hooks are defense in depth and can be bypassed deliberately with Git's `--no-verify`. Bypass does not waive the CI gate or the requirement to rotate a credential that may have been exposed. Handle false positives with narrow reviewed examples or fingerprints. Do not add broad ignored directories or disable a provider rule merely to make a check pass.
 
 ## Secrets and credentials
 

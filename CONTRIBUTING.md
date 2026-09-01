@@ -16,17 +16,73 @@ This repository is a product template. Changes should improve the default withou
 2. Keep the change scoped to one problem.
 3. Add or update tests at the level where the behavior can fail.
 4. Update documentation when commands, architecture, configuration, or supported behavior changes.
-5. Add an entry under `Unreleased` in [CHANGELOG.md](CHANGELOG.md) for a material change.
-6. Open a pull request using the repository template and explain any validation marked not applicable.
+5. Open a pull request using the repository template and explain any validation marked not applicable.
+6. Make sure the commit or squash title that will land on `main` follows Conventional Commits.
 
-Commit messages should describe intent and use a conventional prefix when practical, for example:
+Release Please owns `CHANGELOG.md`, `version.txt`, `.release-please-manifest.json`, and the release version fields in package, Tauri, and Cargo metadata. Do not change those release values during ordinary feature work.
+
+## Local Git secret guards
+
+`bun ci` installs the repository hooks through Husky. The hooks are defense in depth and do not replace protected branches or CI.
+
+The commit-message hook:
+
+- scans the complete commit-message file, including lines beginning with `#`, because Git can preserve them with verbatim cleanup
+- rejects credentials pasted into a message before the commit is created
+- uses the same fail-closed Secretlint canaries as the file guards
+
+The pre-commit hook:
+
+- reads the exact blobs in Git's staged index, not the potentially different working-tree files
+- rejects high-risk credential, environment, signing, state, and key filenames
+- verifies Secretlint against a safe canary and a known-secret canary before trusting it
+- scans staged text with Secretlint while masking detected values
+- allows only reviewed image and font binary types and blocks unreviewed binary payloads
+
+The pre-push hook:
+
+- reads the ref updates supplied by Git
+- scans every object in annotated-tag chains, commit messages, and every unique changed blob in commits that are not already on the remote
+- catches secrets or unsafe payloads that were added in an intermediate commit and removed later
+- runs `bun run check` after the outgoing-history scan passes
+
+Run the guards directly when diagnosing them:
+
+```bash
+bun run security:hooks:verify
+bun run security:secrets:verify
+bun run security:policy
+bun run security:secrets
+bun run security:staged
+bun run security:history <base-commit> <head-commit>
+```
+
+CI scans every pull-request commit message and every changed blob with the same high-risk path, text-size, binary-signature, and binary-metadata policy. It then repeats the policy against the final tracked tree and runs Secretlint across every tracked text path. Existing Gitleaks, Trivy, dependency-review, and CodeQL checks remain independent remote controls.
+
+A hook can be deliberately bypassed with Git's `--no-verify` behavior or by disabling Husky. Treat bypass as an exceptional local action, record why it was necessary, and never use it to merge around a failing CI check. False positives must be handled with a narrow, documented rule allowance rather than a broad ignored path.
+
+## Commit messages and versions
+
+Conventional Commits are part of the release contract, not just a naming preference. Use a focused type and optional scope, for example:
 
 ```text
-feat(ui): add a reusable command palette
 fix(auth): preserve native bearer sessions
-chore(deps): update the TanStack group
+feat(ui): add a reusable command palette
+perf(api): reduce duplicate project queries
 docs: clarify project initialization
+test(auth): cover expired native sessions
+ci(release): validate published artifacts
 ```
+
+The version policy is:
+
+- `fix: ...` produces a patch release.
+- `feat: ...` produces a minor release.
+- `feat!: ...` or a `BREAKING CHANGE:` footer produces a major release, including before `1.0.0`.
+- `docs`, `refactor`, `test`, `build`, `ci`, and `chore` do not create a release by themselves.
+- `perf`, `deps`, and `security` are user-facing release-note categories and produce a patch when they are the highest-impact release change.
+
+If the repository uses squash merging, the pull request title becomes the effective release commit and must follow the same convention. See [docs/release.md](docs/release.md) for the complete release policy.
 
 ## Architecture boundaries
 
@@ -122,7 +178,7 @@ A checkbox may be marked not applicable only with a short reason. Do not claim a
 
 ## Licensing and ownership
 
-The template is private and explicitly `UNLICENSED`. Changes that introduce copied source, assets, fonts, icons, generated SDKs, or distributable binaries must consider their license and attribution obligations.
+The source template is public and explicitly `UNLICENSED`. Changes that introduce copied source, assets, fonts, icons, generated SDKs, or distributable binaries must consider their license and attribution obligations.
 
 Do not add a public license or change ownership policy without an explicit repository-owner decision. See [docs/licensing.md](docs/licensing.md).
 
