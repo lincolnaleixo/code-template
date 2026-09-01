@@ -57,10 +57,7 @@ export function SidebarSection({ className, ...props }: HTMLAttributes<HTMLDivEl
 export function SidebarLabel({ className, ...props }: HTMLAttributes<HTMLParagraphElement>) {
   return (
     <p
-      className={cn(
-        'px-2 text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground',
-        className,
-      )}
+      className={cn('px-2 text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground', className)}
       {...props}
     />
   )

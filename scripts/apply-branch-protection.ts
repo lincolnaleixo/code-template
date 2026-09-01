@@ -47,7 +47,7 @@ function parseChecks(value: string | undefined): string[] {
     .filter(Boolean)
 }
 
-const repository = option('repository') ?? process.env.GITHUB_REPOSITORY ?? 'matrix-hq/code-template'
+const repository = option('repository') ?? process.env.GITHUB_REPOSITORY ?? 'lincolnaleixo/code-template'
 const branch = option('branch') ?? process.env.BRANCH_NAME ?? 'main'
 const approvals = integerOption('approvals', 0)
 const requireCodeOwnerReview = booleanOption(
@@ -89,9 +89,7 @@ function createProtection(requiredStatusChecks: RequiredStatusChecks | null) {
   }
 }
 
-const configuredStatusChecks = replaceChecks
-  ? { strict: true, contexts: configuredChecks }
-  : null
+const configuredStatusChecks = replaceChecks ? { strict: true, contexts: configuredChecks } : null
 const preview = createProtection(configuredStatusChecks)
 
 console.log(`Repository: ${repository}`)
@@ -147,9 +145,7 @@ if (!replaceChecks && !clearChecks) {
     requiredStatusChecks = null
   } else {
     const body = await existingResponse.text()
-    throw new Error(
-      `Unable to read existing branch protection, HTTP ${existingResponse.status}: ${body}`,
-    )
+    throw new Error(`Unable to read existing branch protection, HTTP ${existingResponse.status}: ${body}`)
   }
 }
 

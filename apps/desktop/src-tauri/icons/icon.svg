@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <title>Matrix Template</title>
+  <rect width="1024" height="1024" rx="224" fill="#111827"/>
+  <g fill="none" stroke="#67e8f9" stroke-linecap="round" stroke-width="88">
+    <path d="M276 276h472v472H276z"/>
+    <path d="M276 512h472M512 276v472"/>
+  </g>
+</svg>

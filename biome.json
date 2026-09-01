@@ -1,16 +1,16 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.5.9/schema.json",
   "files": {
     "includes": [
       "**",
-      "!**/node_modules/**",
-      "!**/dist/**",
-      "!**/.output/**",
-      "!**/target/**",
+      "!**/node_modules",
+      "!**/dist",
+      "!**/.output",
+      "!**/target",
       "!**/routeTree.gen.ts",
-      "!**/drizzle/meta/**",
-      "!apps/mobile/android/**",
-      "!apps/mobile/ios/**"
+      "!**/drizzle/meta",
+      "!apps/mobile/android",
+      "!apps/mobile/ios"
     ]
   },
   "formatter": {
@@ -29,7 +29,16 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
+      "a11y": {
+        "noLabelWithoutControl": {
+          "level": "error",
+          "options": {
+            "inputComponents": ["Checkbox"],
+            "labelComponents": ["Label"]
+          }
+        }
+      },
       "suspicious": {
         "noExplicitAny": "warn"
       }
@@ -40,6 +49,11 @@
       "source": {
         "organizeImports": "on"
       }
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
     }
   }
 }

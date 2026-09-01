@@ -16,17 +16,33 @@ This repository is a product template. Changes should improve the default withou
 2. Keep the change scoped to one problem.
 3. Add or update tests at the level where the behavior can fail.
 4. Update documentation when commands, architecture, configuration, or supported behavior changes.
-5. Add an entry under `Unreleased` in [CHANGELOG.md](CHANGELOG.md) for a material change.
-6. Open a pull request using the repository template and explain any validation marked not applicable.
+5. Open a pull request using the repository template and explain any validation marked not applicable.
+6. Make sure the commit or squash title that will land on `main` follows Conventional Commits.
 
-Commit messages should describe intent and use a conventional prefix when practical, for example:
+Release Please owns `CHANGELOG.md`, `version.txt`, `.release-please-manifest.json`, and the release version fields in package, Tauri, and Cargo metadata. Do not change those release values during ordinary feature work.
+
+## Commit messages and versions
+
+Conventional Commits are part of the release contract, not just a naming preference. Use a focused type and optional scope, for example:
 
 ```text
-feat(ui): add a reusable command palette
 fix(auth): preserve native bearer sessions
-chore(deps): update the TanStack group
+feat(ui): add a reusable command palette
+perf(api): reduce duplicate project queries
 docs: clarify project initialization
+test(auth): cover expired native sessions
+ci(release): validate published artifacts
 ```
+
+The version policy is:
+
+- `fix: ...` produces a patch release.
+- `feat: ...` produces a minor release.
+- `feat!: ...` or a `BREAKING CHANGE:` footer produces a major release, including before `1.0.0`.
+- `docs`, `refactor`, `test`, `build`, `ci`, and `chore` do not create a release by themselves.
+- `perf`, `deps`, and `security` are user-facing release-note categories and produce a patch when they are the highest-impact release change.
+
+If the repository uses squash merging, the pull request title becomes the effective release commit and must follow the same convention. See [docs/release.md](docs/release.md) for the complete release policy.
 
 ## Architecture boundaries
 
@@ -122,7 +138,7 @@ A checkbox may be marked not applicable only with a short reason. Do not claim a
 
 ## Licensing and ownership
 
-The template is private and explicitly `UNLICENSED`. Changes that introduce copied source, assets, fonts, icons, generated SDKs, or distributable binaries must consider their license and attribution obligations.
+The source template is public and explicitly `UNLICENSED`. Changes that introduce copied source, assets, fonts, icons, generated SDKs, or distributable binaries must consider their license and attribution obligations.
 
 Do not add a public license or change ownership policy without an explicit repository-owner decision. See [docs/licensing.md](docs/licensing.md).
 

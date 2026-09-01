@@ -23,7 +23,7 @@ test('completes the authenticated organization project lifecycle', async ({ page
   await page.getByRole('button', { name: 'Create account', exact: true }).last().click()
 
   await expect(page.getByRole('heading', { name: 'E2E User' })).toBeVisible()
-  await expect(page.getByText(email, { exact: true })).toBeVisible()
+  await expect(page.getByRole('complementary').getByText(email, { exact: true })).toBeVisible()
 
   await page.getByLabel('New organization').fill(organizationName)
   await page.getByRole('button', { name: 'Create organization' }).click()

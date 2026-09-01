@@ -1,13 +1,6 @@
-import { type ReactNode } from 'react'
+import type { ReactNode } from 'react'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/table'
 import { cn } from '../utils'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '../components/table'
 
 export interface DataTableColumn<T> {
   cell: (row: T) => ReactNode
@@ -23,12 +16,7 @@ export interface DataTableProps<T> {
   rows: T[]
 }
 
-export function DataTable<T>({
-  columns,
-  empty = 'No results.',
-  getRowKey,
-  rows,
-}: DataTableProps<T>) {
+export function DataTable<T>({ columns, empty = 'No results.', getRowKey, rows }: DataTableProps<T>) {
   return (
     <Table>
       <TableHeader>
@@ -43,10 +31,7 @@ export function DataTable<T>({
       <TableBody>
         {rows.length === 0 ? (
           <TableRow className="hover:bg-transparent">
-            <TableCell
-              className="h-28 text-center text-muted-foreground"
-              colSpan={columns.length}
-            >
+            <TableCell className="h-28 text-center text-muted-foreground" colSpan={columns.length}>
               {empty}
             </TableCell>
           </TableRow>

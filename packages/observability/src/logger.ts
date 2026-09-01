@@ -54,9 +54,7 @@ function redactContext(context: LogContext): Record<string, unknown> {
   return redacted as Record<string, unknown>
 }
 
-export function createLogger(
-  options: { level?: LogLevel; base?: LogContext } = {},
-): Logger {
+export function createLogger(options: { level?: LogLevel; base?: LogContext } = {}): Logger {
   const minimumLevel = options.level ?? 'info'
   const base = options.base ?? {}
 

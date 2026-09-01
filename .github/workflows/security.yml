@@ -17,11 +17,12 @@ concurrency:
 
 env:
   BUN_VERSION: 1.3.14
+  GITLEAKS_IMAGE: ghcr.io/gitleaks/gitleaks:v8.30.1
 
 jobs:
   open-source-scans:
     name: Audit, secrets and repository scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -32,24 +33,105 @@ jobs:
       - run: bun ci
       - name: Audit JavaScript dependencies
         run: bun run security:audit
-      - name: Scan Git history for secrets
-        run: >-
-          docker run --rm
-          -v "$PWD:/repo"
-          ghcr.io/gitleaks/gitleaks:v8.30.1
-          git /repo --redact --no-banner
+      - name: Verify Gitleaks safe and secret canaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          canary_dir="$RUNNER_TEMP/gitleaks-canary"
+          safe_log="$RUNNER_TEMP/gitleaks-safe-canary.log"
+          secret_log="$RUNNER_TEMP/gitleaks-secret-canary.log"
+          rm -rf "$canary_dir"
+          mkdir -p "$canary_dir"
+
+          printf 'public_example = "not-a-secret"\n' > "$canary_dir/safe.txt"
+          docker run --rm \
+            -v "$canary_dir:/canary:ro" \
+            "$GITLEAKS_IMAGE" \
+            dir /canary --redact --no-banner --no-color \
+            > "$safe_log" 2>&1
+
+          rm "$canary_dir/safe.txt"
+          printf 'github_token = "ghp_%s%s%s"\n' \
+            '7Qm4vZ2xN9cR' \
+            '6sT8uW3yA5bD' \
+            '1eF0gHkJpLqM' \
+            > "$canary_dir/secret.txt"
+
+          set +e
+          docker run --rm \
+            -v "$canary_dir:/canary:ro" \
+            "$GITLEAKS_IMAGE" \
+            dir /canary --redact --no-banner --no-color \
+            > "$secret_log" 2>&1
+          status=$?
+          set -e
+          rm -rf "$canary_dir"
+
+          if [ "$status" -eq 0 ]; then
+            cat "$secret_log"
+            echo "::error::Gitleaks did not detect the generated GitHub token canary."
+            exit 1
+          fi
+          if [ "$status" -ne 1 ]; then
+            cat "$secret_log"
+            echo "::error::Gitleaks canary failed with unexpected exit code $status."
+            exit 1
+          fi
+          echo "Gitleaks safe and secret canaries passed."
+      - name: Scan complete Git history for secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_commits="$(git rev-list --all --count)"
+          if [ "$expected_commits" -eq 0 ]; then
+            echo "::error::The full-history checkout contains no commits."
+            exit 1
+          fi
+
+          history_log="$RUNNER_TEMP/gitleaks-history.log"
+          set +e
+          docker run --rm \
+            -v "$PWD:/repo:ro" \
+            "$GITLEAKS_IMAGE" \
+            git /repo --redact --no-banner --no-color --verbose \
+            > "$history_log" 2>&1
+          status=$?
+          set -e
+          cat "$history_log"
+
+          if [ "$status" -ne 0 ]; then
+            if [ "$status" -eq 1 ]; then
+              echo "::error::Gitleaks found a secret in reachable Git history."
+            else
+              echo "::error::Gitleaks failed with exit code $status."
+            fi
+            exit "$status"
+          fi
+
+          scanned_commits="$(
+            sed -nE 's/.*[[:space:]]([0-9]+) commits scanned\..*/\1/p' "$history_log" |
+              tail -n 1
+          )"
+          if [ -z "$scanned_commits" ] || [ "$scanned_commits" -eq 0 ]; then
+            echo "::error::Gitleaks returned success without proving that it scanned Git history."
+            exit 1
+          fi
+          echo "Gitleaks scanned $scanned_commits commit(s); checkout contains $expected_commits reachable commit(s)."
       - name: Scan source, lockfile and infrastructure
+        # Bun audit checks the resolved application graph. Some installed
+        # packages also ship unrelated development lockfiles in node_modules.
         run: >-
           docker run --rm
           -v "$PWD:/workspace"
           aquasec/trivy:0.70.0
           fs --exit-code 1 --severity HIGH,CRITICAL
           --scanners vuln,secret,misconfig
+          --skip-dirs /workspace/node_modules
           /workspace
 
   container-scan:
     name: Build and scan OCI images
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - name: Build API image
@@ -78,10 +160,10 @@ jobs:
     if: github.event_name == 'pull_request' && (github.event.repository.visibility == 'public' || vars.GHAS_ENABLED == 'true')
     permissions:
       contents: read
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-      - uses: actions/dependency-review-action@v5
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5
         with:
           fail-on-severity: high
           comment-summary-in-pr: always
@@ -94,13 +176,13 @@ jobs:
       contents: read
       packages: read
       security-events: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-      - uses: github/codeql-action/init@v4
+      - uses: github/codeql-action/init@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4
         with:
           languages: javascript-typescript
           build-mode: none
-      - uses: github/codeql-action/analyze@v4
+      - uses: github/codeql-action/analyze@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4
         with:
           category: /language:javascript-typescript

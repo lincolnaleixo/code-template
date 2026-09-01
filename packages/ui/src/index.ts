@@ -1,4 +1,4 @@
-export { Alert, AlertDescription, AlertTitle, type AlertProps } from './components/alert'
+export { Alert, AlertDescription, type AlertProps, AlertTitle } from './components/alert'
 export { Avatar, AvatarFallback, AvatarImage } from './components/avatar'
 export { Badge, type BadgeProps, badgeVariants } from './components/badge'
 export { Button, type ButtonProps, buttonVariants } from './components/button'
@@ -50,15 +50,6 @@ export {
   WarningIcon,
 } from './icons'
 export {
-  AppearanceProvider,
-  DensityToggle,
-  ThemeToggle,
-  type Density,
-  type Theme,
-  useAppearance,
-} from './theme-provider'
-export { cn } from './utils'
-export {
   AppShell,
   type AppShellProps,
   SidebarItem,
@@ -81,3 +72,12 @@ export { Pagination, type PaginationProps } from './patterns/pagination'
 export { SearchInput, type SearchInputProps } from './patterns/search-input'
 export { SettingsSection, type SettingsSectionProps } from './patterns/settings-section'
 export { StatCard, type StatCardProps } from './patterns/stat-card'
+export {
+  AppearanceProvider,
+  type Density,
+  DensityToggle,
+  type Theme,
+  ThemeToggle,
+  useAppearance,
+} from './theme-provider'
+export { cn } from './utils'

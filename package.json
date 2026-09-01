@@ -5,6 +5,11 @@
   "license": "UNLICENSED",
   "type": "module",
   "packageManager": "bun@1.3.14",
+  "overrides": {
+    "@opentelemetry/exporter-prometheus": "0.221.0",
+    "@opentelemetry/propagator-jaeger": "2.10.0",
+    "@opentelemetry/sdk-node": "0.221.0"
+  },
   "workspaces": {
     "packages": [
       "apps/*",
@@ -68,7 +73,7 @@
     "build:native": "bun run --cwd apps/web build:native",
     "build:mobile": "bun run --cwd apps/mobile build",
     "build:desktop": "bun run --cwd apps/desktop build",
-    "check": "bun run template:validate && bun run docs:check && bun run lint:ci && bun run generated:check && bun run typecheck && bun run test:unit",
+    "check": "bun run template:validate && bun run workflow:safety && bun run docs:check && bun run lint:ci && bun run generated:check && bun run typecheck && bun run test:unit",
     "lint": "biome check --write .",
     "lint:ci": "biome ci .",
     "format": "biome format --write .",
@@ -89,6 +94,7 @@
     "generated:check": "bun run scripts/check-generated.ts",
     "security:audit": "bun audit --audit-level=high",
     "template:validate": "bun run scripts/validate-template.ts",
+    "workflow:safety": "bun run scripts/check-workflow-safety.ts",
     "version:set": "bun run scripts/set-version.ts",
     "repo:metadata": "bun run scripts/apply-repository-metadata.ts",
     "repo:protect": "bun run scripts/apply-branch-protection.ts",

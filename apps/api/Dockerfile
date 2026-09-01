@@ -19,7 +19,7 @@ COPY packages/ui/package.json packages/ui/package.json
 RUN --mount=type=cache,target=/root/.bun/install/cache bun ci
 
 FROM dependencies AS source
-COPY . .
+COPY --chown=bun:bun . .
 
 FROM source AS migration
 ENV NODE_ENV=production
@@ -31,6 +31,8 @@ RUN bun run build:api
 
 FROM oven/bun:1.3.14-alpine AS runtime
 WORKDIR /app
+
+RUN apk upgrade --no-cache
 
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0

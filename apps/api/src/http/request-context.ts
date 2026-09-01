@@ -1,5 +1,5 @@
 import { getServerEnv } from '@matrix/env/server'
-import { createLogger, recordHttpRequest, type Logger } from '@matrix/observability'
+import { createLogger, type Logger, recordHttpRequest } from '@matrix/observability'
 
 export interface RequestContext {
   requestId: string

@@ -149,5 +149,5 @@ Before considering work complete, verify that:
 - security and accessibility were considered
 - tests match the risk of the change
 - generated files and migrations are current
-- documentation and changelog entries are updated when behavior or architecture changed
+- documentation reflects changed behavior and release metadata follows the automated release contract
 - relevant automated checks and retained-platform builds pass
